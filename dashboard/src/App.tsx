@@ -9,25 +9,14 @@ import AuditTrailView from './components/AuditTrailView';
 import { useAuthStore } from './store/authStore';
 import { fetchKPIs, KPISummary } from './api/kpi';
 
-const DEMO_KPIS: KPISummary = {
-  total_observations: 86,
-  open_count: 18,
-  in_progress_count: 7,
-  closed_count: 57,
-  escalated_count: 4,
-  open_high_risk_count: 11,
-  avg_time_to_closure_hours: 14.8,
-  sync_rate_pct: 98.2,
-  by_category: { safety: 46, environment: 24, labour: 16 },
-  by_risk: { low: 32, medium: 36, high: 18 },
-};
+import { AlertTriangle } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
-  const { user, isLoading, switchRole, logout, initialize } = useAuthStore();
+  const { user, isLoading, error, switchRole, logout, initialize } = useAuthStore();
 
   // KPI state lifted to App so PillNav badge counts are live
-  const [kpis, setKpis] = useState<KPISummary | null>(DEMO_KPIS);
+  const [kpis, setKpis] = useState<KPISummary | null>(null);
 
   // On mount: auto-login with default role
   useEffect(() => {
@@ -40,8 +29,7 @@ export default function App() {
       const data = await fetchKPIs();
       setKpis(data);
     } catch {
-      // Keep demo KPIs as fallback
-      setKpis((prev) => prev || DEMO_KPIS);
+      setKpis(null);
     }
   }, []);
 
@@ -60,14 +48,44 @@ export default function App() {
 
   const currentRole: UserRole = (user?.role as UserRole) ?? 'mine_official';
 
-  if (isLoading && !user) {
+  if (!user) {
+    if (isLoading) {
+      return (
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 rounded-full border-2 border-black border-t-transparent animate-spin" />
+            <p className="text-xs text-zinc-400 tracking-wider uppercase font-medium">
+              Connecting to Intellifusion API at http://localhost:8000…
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-black border-t-transparent animate-spin" />
-          <p className="text-xs text-zinc-400 tracking-wider uppercase font-medium">
-            Connecting to Intellifusion API…
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full p-8 rounded-3xl bg-white border border-rose-200 shadow-sm text-center">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <h2 className="text-lg font-semibold text-zinc-900 mb-1">
+            Backend Connection Offline
+          </h2>
+          <p className="text-xs text-zinc-500 leading-relaxed mb-4">
+            Cannot reach live Intellifusion backend at <code className="font-mono bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-800">http://localhost:8000</code>.
           </p>
+          {error && (
+            <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-100 text-left mb-5">
+              <span className="text-[10px] uppercase font-mono text-rose-500 font-bold block mb-0.5">Error Detail</span>
+              <p className="text-xs font-mono text-rose-800 break-all">{error}</p>
+            </div>
+          )}
+          <button
+            onClick={() => initialize()}
+            className="w-full py-2.5 rounded-full bg-zinc-900 hover:bg-black text-white text-xs font-semibold tracking-wider uppercase transition-colors"
+          >
+            Retry Live Connection
+          </button>
         </div>
       </div>
     );
