@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Intellifusion",
+    "slug": "intellifusion-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0F172A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.intellifusion.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Required for geo-tagging mine observations.",
+        "NSCameraUsageDescription": "Required to capture evidence photos for inspections.",
+        "NSPhotoLibraryUsageDescription": "Required to attach photos from your gallery.",
+        "UIBackgroundModes": ["fetch", "processing"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F172A"
+      },
+      "package": "com.intellifusion.mobile",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECEIVE_BOOT_COMPLETED"
+      ]
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Intellifusion to use your location for geo-tagging inspections."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Intellifusion to access photos for attaching evidence.",
+          "cameraPermission": "Allow Intellifusion to use the camera to capture inspection evidence."
+        }
+      ],
+      [
+        "expo-background-fetch",
+        {
+          "statusBarColor": "#0F172A"
+        }
+      ]
+    ],
+    "extra": {
+      "backendUrl": "http://localhost:8000",
+      "syncIntervalMs": 30000
+    }
+  }
+}

@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgis/postgis:15-3.4
+    container_name: intellifusion_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: intellifusion
+      POSTGRES_PASSWORD: intellifusion_dev
+      POSTGRES_DB: intellifusion
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intellifusion -d intellifusion"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: intellifusion_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://intellifusion:intellifusion_dev@db:5432/intellifusion
+      DATABASE_URL_SYNC: postgresql://intellifusion:intellifusion_dev@db:5432/intellifusion
+      JWT_SECRET: dev_secret_change_in_prod
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRE_MINUTES: "60"
+      ENVIRONMENT: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - photo_storage:/app/photos
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  pgdata:
+  photo_storage:

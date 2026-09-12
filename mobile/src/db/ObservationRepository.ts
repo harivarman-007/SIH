@@ -1,0 +1,116 @@
+/**
+ * ObservationRepository.ts
+ * CRUD operations for local_observations table.
+ */
+
+import { getDatabase, LocalObservation, ObservationCategory, RiskFlag } from "./schema";
+
+export interface NewObservationInput {
+  category: ObservationCategory;
+  description: string;
+  photo_uri?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  beacon_id?: string | null;
+  mine_site_id?: string | null;
+  zone_id?: string | null;
+  edge_score?: number | null;
+  edge_flag?: RiskFlag | null;
+  edge_reasons_json?: string | null;
+}
+
+export class ObservationRepository {
+  async insert(input: NewObservationInput): Promise<number> {
+    const db = await getDatabase();
+    const now = new Date().toISOString();
+
+    const result = await db.runAsync(
+      `INSERT INTO local_observations (
+        category, description, photo_uri, lat, lng, beacon_id,
+        mine_site_id, zone_id,
+        edge_score, edge_flag, edge_reasons_json,
+        created_at, queued_at, sync_status, retry_count
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
+      [
+        input.category,
+        input.description,
+        input.photo_uri ?? null,
+        input.lat ?? null,
+        input.lng ?? null,
+        input.beacon_id ?? null,
+        input.mine_site_id ?? null,
+        input.zone_id ?? null,
+        input.edge_score ?? null,
+        input.edge_flag ?? null,
+        input.edge_reasons_json ?? null,
+        now,
+        now,
+      ]
+    );
+    return result.lastInsertRowId as number;
+  }
+
+  async getAll(): Promise<LocalObservation[]> {
+    const db = await getDatabase();
+    return db.getAllAsync<LocalObservation>(
+      `SELECT * FROM local_observations ORDER BY created_at DESC`
+    );
+  }
+
+  async getById(localId: number): Promise<LocalObservation | null> {
+    const db = await getDatabase();
+    return db.getFirstAsync<LocalObservation>(
+      `SELECT * FROM local_observations WHERE local_id = ?`,
+      [localId]
+    );
+  }
+
+  async getPending(limit = 50): Promise<LocalObservation[]> {
+    const db = await getDatabase();
+    return db.getAllAsync<LocalObservation>(
+      `SELECT * FROM local_observations WHERE sync_status = 'pending' ORDER BY queued_at ASC LIMIT ?`,
+      [limit]
+    );
+  }
+
+  async markSynced(localId: number, serverUuid: string): Promise<void> {
+    const db = await getDatabase();
+    await db.runAsync(
+      `UPDATE local_observations SET sync_status = 'synced', server_uuid = ?, last_error = NULL WHERE local_id = ?`,
+      [serverUuid, localId]
+    );
+  }
+
+  async markError(localId: number, error: string): Promise<void> {
+    const db = await getDatabase();
+    await db.runAsync(
+      `UPDATE local_observations SET sync_status = 'error', last_error = ?, retry_count = retry_count + 1 WHERE local_id = ?`,
+      [error, localId]
+    );
+  }
+
+  async resetToPending(localId: number): Promise<void> {
+    const db = await getDatabase();
+    await db.runAsync(
+      `UPDATE local_observations SET sync_status = 'pending', last_error = NULL WHERE local_id = ?`,
+      [localId]
+    );
+  }
+
+  async getSyncStats(): Promise<{ total: number; synced: number; pending: number; error: number }> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<{ sync_status: string; cnt: number }>(
+      `SELECT sync_status, COUNT(*) as cnt FROM local_observations GROUP BY sync_status`
+    );
+    const stats = { total: 0, synced: 0, pending: 0, error: 0 };
+    for (const row of rows) {
+      stats.total += row.cnt;
+      if (row.sync_status === "synced") stats.synced += row.cnt;
+      else if (row.sync_status === "pending") stats.pending += row.cnt;
+      else if (row.sync_status === "error") stats.error += row.cnt;
+    }
+    return stats;
+  }
+}
+
+export const observationRepository = new ObservationRepository();
