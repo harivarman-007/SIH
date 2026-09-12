@@ -179,8 +179,9 @@
 
 ## Phase 10 — Problem-Statement Coverage Check
 
-- [ ] Complete problem statement gap analysis across all 9 core capabilities
-- [ ] Present status table (built/partial/not-started) to owner before proceeding
+- [x] Complete problem statement gap analysis across all 9 core capabilities
+- [x] Present status table (built/partial/not-started) to owner before proceeding
+- [x] Document partial and not-started items in `ROADMAP.md`
 
 ---
 
@@ -191,5 +192,5 @@
 
 ---
 
-*Current phase: Phase 9 COMPLETE — 35/35 tests passed. Awaiting owner confirmation before Phase 10.*
+*Current phase: Phase 10 COMPLETE. Presenting coverage table and awaiting design input for Phase 11.*
 

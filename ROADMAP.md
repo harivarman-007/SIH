@@ -1,65 +1,32 @@
-﻿# Intellifusion — Roadmap
+# Intellifusion — Product Roadmap & Problem-Statement Alignment
 
-## What is Demoable Now (MVP)
+*Last updated: Phase 10 — Post-RBAC and Security Hardening Audit*
 
-- Offline field observation capture (mobile) with photo + geo-tag / beacon-ID
-- On-device risk scoring (edge model, zero network dependency)
-- Store-and-forward sync queue with measurable sync-success KPI
-- Cloud-side risk enrichment with explainability output (feature contributions)
-- Suggested corrective action per flagged observation (rule-based)
-- Role-based REST API (inspector / mine official / corporate / regulator)
-- Append-only hash-chained audit trail with verification endpoint
-- Role-based dashboard (map/heatmap, Risk Cards, KPI panel, closure flow)
-- OCR proof-of-concept (English + Hindi) with human-review queue for low-confidence items
-- Simulated tamper-evidence demo via hash-chain verify endpoint
+## Problem-Statement Capability Audit & Status
 
----
-
-## Phase 2 / Scale-Up (Deferred)
-
-### Infrastructure
-- **Kafka event streaming** — replace direct API calls with event-driven architecture for high-throughput mine environments
-- **TimescaleDB** — dedicated sensor time-series pipeline for IoT sensor data (gas levels, vibration, equipment telemetry)
-- **Real object store (S3/GCS)** — replace local filesystem photo storage
-- **WebSocket / SSE** — real-time dashboard push instead of polling
-- **Separate enrichment microservice** — extract cloud enrichment into its own deployable service
-- **JWT refresh token rotation + key rotation** — production-grade auth
-
-### Field / Mobile
-- **Real UWB/BLE hardware mesh** — replace simulated beacon IDs with actual underground positioning hardware
-- **Native push notifications** — alert managers on new high-risk observations without polling
-- **Expo bare workflow / native modules** — if any native dependency proves impossible in managed Expo
-
-### Intelligence
-- **Multi-Agent RAG Statutory Auditor** — full pipeline:
-  - Document classifier
-  - Extractor
-  - Violation matcher against DGMS / Mines Act / CIL circulars
-  - Risk predictor with citation-backed findings
-  - Production-scale statutory knowledge base ingestion
-- **Contractor Trust & Performance Graph** — model contractors as nodes:
-  - Historical violation density
-  - Open observation counts
-  - Geo-tagged activity patterns
-  - "Deployment risk" score before assigning crew to high-risk zones
-- **Full SHAP explainability** — replace path-length-delta approximation with proper SHAP values
-- **Online learning** — edge model updates as new labeled observations accumulate
-
-### Compliance & Governance
-- **Real Hyperledger Fabric blockchain** — replace hash-chain simulation with a production-grade distributed ledger
-- **DGMS portal integration** — automated regulatory report submission
-- **ERP / DigiCOAL integration** — bidirectional data sync with existing Coal India systems
-
-### Language & Accessibility
-- **Full multi-language OCR coverage** — expand beyond English + Hindi to all scheduled languages
-- **Multilingual conversational query interface** — natural-language queries over observation data ("show open high-risk observations in Area X this week")
-- **Voice-to-text observation logging** — for field conditions where typing is impractical
-
-### Analytics
-- **Predictive risk analytics** — anticipate high-risk periods/zones before incidents occur
-- **Contractor performance benchmarking** — cross-mine comparison
-- **Regulatory compliance score trending** — month-over-month compliance health per site
+| PS Capability | Status | Implementation Details |
+|---|---|---|
+| **1. Digitally track statutory compliance** (safety, env, production, labour) | **Partially Built** | Category enum currently covers `safety`, `environment`, `labour`. `production` statutory compliance tracking and specialized regulatory registers are pending. |
+| **2. Real-time monitoring of inspections, observations, violations, corrective actions** | **Partially Built** | REST APIs, status workflow (`open` -> `in_progress` -> `closed` / `escalated`), and 30s dashboard polling are active. True real-time WebSocket / SSE streaming is deferred to scale-up. |
+| **3. AI/analytics for high-risk areas, recurring compliance failures, operational anomalies** | **Already Built & Verified** | On-device Isolation Forest edge model + cloud 15-feature deep Isolation Forest with SHAP-lite feature contributions and DGMS statutory rule engine. |
+| **4. Geo-tagged, time-stamped field reporting via mobile with offline support** | **Already Built & Verified** | React Native/Expo app with `expo-location` GPS coordinates, BLE beacon fallback, camera capture, SQLite outbox, and batch sync engine. |
+| **5. Dashboards for mine officials, corporate management, AND regulatory authorities** | **Partially Built** | Mine Official view (site KPIs, interactive zone map, observation table) and Regulatory Authority view (audit hash chain verification, statutory read access) exist. **Corporate Management multi-mine view is not yet built** (Phase 11). |
+| **6. Automated alerts, reminders, escalation mechanisms** | **Partially Built** | Observation escalation lifecycle (`escalated`, `escalated_at`) and KPI counters exist in backend & frontend. Background cron triggers, automated SLA breach auto-escalation, and SMS/email alerts are not yet built. |
+| **7. Minimize manual paperwork (OCR/document digitization)** | **Already Built & Verified** | Tesseract OCR engine (English + Hindi) with word-level confidence scoring, human review queue API (`/ocr/queue`), and dashboard `OcrQueueView`. |
+| **8. Scalable across multiple mines/subsidiaries** | **Partially Built** | Multi-mine database schema (`MineSite`, `Zone`, `CorporateMineAccess`) with explicit role-based boundary filters. Multi-tier organizational hierarchy (Holding Co -> Subsidiary -> Area -> Mine) is deferred. |
+| **9. Secure digital audit trail (hash-chain)** | **Already Built & Verified** | SHA-256 append-only hash-chain with tamper detection verified in Phase 8 (`verify_audit_chain` + `/audit/verify`). |
 
 ---
 
-*Last updated: Phase 0 - pre-code*
+## Phase Roadmap
+
+### Current Focus: Phase 11 — Corporate Management Dashboard View
+- Multi-mine aggregated KPI cards (Total open risks across granted mines, cross-mine compliance score, contractor incident counts)
+- Cross-mine comparison / risk ranking view
+- Compliance trend visualization across mine sites
+
+### Subsequent Enhancements (Phase 12+)
+1. **Production Statutory Compliance**: Add `production` to `ObservationCategory`, DGMS production safety norms, and statutory shift registers.
+2. **Automated Escalation Daemon**: Background worker / Celery task to auto-escalate observations past SLA (e.g. high-risk unacknowledged after 24h) and trigger dispatch alerts.
+3. **WebSockets / SSE**: Push notifications from backend to dashboard on high-risk sync.
+4. **Multi-tier Corporate Hierarchy**: Holding Company -> Subsidiary (e.g. SECL, BCCL, ECL) -> Area -> Mine site data structures.
