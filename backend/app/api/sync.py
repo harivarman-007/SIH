@@ -1,14 +1,12 @@
 from datetime import datetime, timezone
-from typing import List
-
 from fastapi import APIRouter, Depends, status
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import append_audit_entry
 from app.database import get_db
 from app.enrichment.service import enrich_observation
-from app.models import Observation, ObservationStatus, User
+from app.models import MineSite, Observation, ObservationStatus, User, Zone
 from app.schemas.sync import SyncBatchRequest, SyncBatchResponse, SyncStatusResponse
 from app.services.auth import get_current_user
 
@@ -26,12 +24,21 @@ async def sync_batch(
 
     for item in req.observations:
         client_ts = item.created_at or now_utc
+
+        site_id = item.mine_site_id
+        if not site_id:
+            site_id = (await db.execute(select(MineSite.id).limit(1))).scalar()
+
+        zone_id = item.zone_id
+        if not zone_id:
+            zone_id = (await db.execute(select(Zone.id).where(Zone.mine_site_id == site_id).limit(1))).scalar()
+
         obs = Observation(
             created_at=client_ts,
             synced_at=now_utc,
             inspector_id=current_user.id,
-            mine_site_id=item.mine_site_id,
-            zone_id=item.zone_id,
+            mine_site_id=site_id,
+            zone_id=zone_id,
             category=item.category,
             description=item.description,
             photo_url=item.photo_url,

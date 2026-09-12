@@ -23,6 +23,13 @@ export interface SyncResult {
 export async function syncPending(): Promise<SyncResult> {
   const result: SyncResult = { attempted: 0, succeeded: 0, failed: 0, errors: [] };
 
+  // Reset previously errored items so they can be retried on next sync attempt
+  try {
+    await observationRepository.resetAllErrorsToPending();
+  } catch {
+    // Non-fatal if reset fails
+  }
+
   const pending = await observationRepository.getPending(BATCH_SIZE);
   if (pending.length === 0) return result;
 

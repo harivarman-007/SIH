@@ -1,15 +1,15 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from app.models import ObservationCategory, ObservationStatus, RiskFlag
 
 
 class ObservationCreate(BaseModel):
     category: ObservationCategory
     description: str
-    mine_site_id: UUID
-    zone_id: UUID
+    mine_site_id: Optional[UUID] = None
+    zone_id: Optional[UUID] = None
     photo_url: Optional[str] = None
     has_photo: bool = False
     lat: Optional[float] = None

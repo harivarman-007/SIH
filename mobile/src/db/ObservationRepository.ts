@@ -97,6 +97,13 @@ export class ObservationRepository {
     );
   }
 
+  async resetAllErrorsToPending(): Promise<void> {
+    const db = await getDatabase();
+    await db.runAsync(
+      `UPDATE local_observations SET sync_status = 'pending', last_error = NULL WHERE sync_status = 'error'`
+    );
+  }
+
   async getSyncStats(): Promise<{ total: number; synced: number; pending: number; error: number }> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<{ sync_status: string; cnt: number }>(

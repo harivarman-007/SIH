@@ -3,6 +3,7 @@
     "name": "Intellifusion",
     "slug": "intellifusion-mobile",
     "version": "1.0.0",
+    "sdkVersion": "57.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -16,7 +17,10 @@
         "NSLocationWhenInUseUsageDescription": "Required for geo-tagging mine observations.",
         "NSCameraUsageDescription": "Required to capture evidence photos for inspections.",
         "NSPhotoLibraryUsageDescription": "Required to attach photos from your gallery.",
-        "UIBackgroundModes": ["fetch", "processing"]
+        "UIBackgroundModes": [
+          "fetch",
+          "processing"
+        ]
       }
     },
     "android": {
@@ -35,7 +39,6 @@
       ]
     },
     "plugins": [
-      "expo-sqlite",
       "expo-secure-store",
       [
         "expo-location",
@@ -50,15 +53,10 @@
           "cameraPermission": "Allow Intellifusion to use the camera to capture inspection evidence."
         }
       ],
-      [
-        "expo-background-fetch",
-        {
-          "statusBarColor": "#0F172A"
-        }
-      ]
+      "expo-status-bar"
     ],
     "extra": {
-      "backendUrl": "http://localhost:8000",
+      "backendUrl": "http://10.178.236.88:8000",
       "syncIntervalMs": 30000
     }
   }

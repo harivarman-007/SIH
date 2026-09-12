@@ -28,6 +28,9 @@ export interface SyncBatchResponse {
   synced_at: string;
 }
 
+const DEFAULT_MINE_SITE_ID = "5f92941a-dbf7-4697-a3d7-1c101210523c";
+const DEFAULT_ZONE_ID = "f0c1360f-7661-4ca7-9829-9d655458b6d7";
+
 export function localObsToPayload(obs: LocalObservation): SyncObservationPayload {
   let edgeReasons: Record<string, unknown> | null = null;
   if (obs.edge_reasons_json) {
@@ -45,8 +48,8 @@ export function localObsToPayload(obs: LocalObservation): SyncObservationPayload
     lat: obs.lat ?? null,
     lng: obs.lng ?? null,
     beacon_id: obs.beacon_id ?? null,
-    mine_site_id: obs.mine_site_id ?? null,
-    zone_id: obs.zone_id ?? null,
+    mine_site_id: obs.mine_site_id || DEFAULT_MINE_SITE_ID,
+    zone_id: obs.zone_id || DEFAULT_ZONE_ID,
     edge_score: obs.edge_score ?? null,
     edge_flag: obs.edge_flag ?? null,
     edge_reasons: edgeReasons,

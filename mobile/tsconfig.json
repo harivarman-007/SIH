@@ -3,14 +3,32 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@db/*": ["./src/db/*"],
-      "@api/*": ["./src/api/*"],
-      "@store/*": ["./src/store/*"],
-      "@sync/*": ["./src/sync/*"],
-      "@screens/*": ["./src/screens/*"],
-      "@navigation/*": ["./src/navigation/*"],
-      "@models/*": ["./src/models/*"]
+      "@db/*": [
+        "./src/db/*"
+      ],
+      "@api/*": [
+        "./src/api/*"
+      ],
+      "@store/*": [
+        "./src/store/*"
+      ],
+      "@sync/*": [
+        "./src/sync/*"
+      ],
+      "@screens/*": [
+        "./src/screens/*"
+      ],
+      "@navigation/*": [
+        "./src/navigation/*"
+      ],
+      "@models/*": [
+        "./src/models/*"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.d.ts", "expo-env.d.ts"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.d.ts"
+  ]
 }
