@@ -95,3 +95,18 @@ class ContractorAssignmentOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class EscalationItem(BaseModel):
+    observation_id: UUID
+    category: ObservationCategory
+    risk_flag: RiskFlag
+    age_hours: float
+    reason: str
+    escalated_at: datetime
+
+
+class EscalationResponse(BaseModel):
+    evaluated_count: int
+    escalated_count: int
+    escalated_items: List[EscalationItem]

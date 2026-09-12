@@ -21,6 +21,8 @@ from app.models import (
 from app.schemas.observation import (
     ContractorAssignRequest,
     ContractorAssignmentOut,
+    EscalationItem,
+    EscalationResponse,
     ObservationCloseRequest,
     ObservationCreate,
     ObservationOut,
@@ -318,3 +320,131 @@ async def assign_contractor(
         actor_id=current_user.id,
     )
     return ContractorAssignmentOut.model_validate(assignment)
+
+
+@router.post(
+    "/escalate-overdue",
+    response_model=EscalationResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def escalate_overdue_observations(
+    mine_site_id: Optional[UUID] = Query(default=None, description="Optional filter by mine site"),
+    high_risk_sla_hours: float = Query(default=24.0, ge=0.1, description="SLA threshold for high risk in hours"),
+    medium_risk_sla_hours: float = Query(default=72.0, ge=0.1, description="SLA threshold for medium risk in hours"),
+    low_risk_sla_hours: float = Query(default=168.0, ge=0.1, description="SLA threshold for low risk in hours"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(
+            UserRole.super_admin,
+            UserRole.corporate_management,
+            UserRole.mine_official,
+            UserRole.regulator,
+        )
+    ),
+):
+    """
+    Automated SLA Escalation Engine.
+    Scans unresolved observations (status open or in_progress) exceeding statutory SLA deadlines:
+      - High risk: > 24 hours (default)
+      - Medium risk: > 72 hours (default)
+      - Low risk: > 168 hours (7 days default)
+    Transitions matching observations to 'escalated', timestamps 'escalated_at',
+    increments entity version, and appends a tamper-evident audit log entry.
+    """
+    now_utc = datetime.now(timezone.utc)
+
+    # Base query: unresolved observations
+    stmt = select(Observation).where(
+        Observation.status.in_([ObservationStatus.open, ObservationStatus.in_progress])
+    )
+
+    # Scoping according to caller role
+    if current_user.role == UserRole.mine_official:
+        if not current_user.mine_site_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Mine official without an assigned mine site cannot trigger escalation",
+            )
+        stmt = stmt.where(Observation.mine_site_id == current_user.mine_site_id)
+    elif current_user.role == UserRole.corporate_management:
+        subq = select(CorporateMineAccess.mine_site_id).where(CorporateMineAccess.user_id == current_user.id)
+        stmt = stmt.where(Observation.mine_site_id.in_(subq))
+
+    if mine_site_id:
+        stmt = stmt.where(Observation.mine_site_id == mine_site_id)
+
+    res = await db.execute(stmt)
+    unresolved_obs = res.scalars().all()
+
+    escalated_items: List[EscalationItem] = []
+
+    for obs in unresolved_obs:
+        eff_flag = obs.cloud_flag or obs.edge_flag or RiskFlag.low
+        obs_dt = obs.created_at
+        if obs_dt.tzinfo is None:
+            obs_dt = obs_dt.replace(tzinfo=timezone.utc)
+
+        age_hours = round((now_utc - obs_dt).total_seconds() / 3600.0, 2)
+        should_escalate = False
+        reason = ""
+
+        if eff_flag == RiskFlag.high and age_hours >= high_risk_sla_hours:
+            should_escalate = True
+            reason = f"Statutory SLA breached: High-risk observation unclosed after {age_hours:.1f} hours (limit: {high_risk_sla_hours}h)"
+        elif eff_flag == RiskFlag.medium and age_hours >= medium_risk_sla_hours:
+            should_escalate = True
+            reason = f"Statutory SLA breached: Medium-risk observation unclosed after {age_hours:.1f} hours (limit: {medium_risk_sla_hours}h)"
+        elif eff_flag == RiskFlag.low and age_hours >= low_risk_sla_hours:
+            should_escalate = True
+            reason = f"Statutory SLA breached: Low-risk observation unclosed after {age_hours:.1f} hours (limit: {low_risk_sla_hours}h)"
+
+        if should_escalate:
+            prev_status = obs.status.value
+            obs.status = ObservationStatus.escalated
+            obs.escalated_at = now_utc
+            obs.version += 1
+
+            sla_limit = (
+                high_risk_sla_hours
+                if eff_flag == RiskFlag.high
+                else medium_risk_sla_hours
+                if eff_flag == RiskFlag.medium
+                else low_risk_sla_hours
+            )
+
+            await append_audit_entry(
+                db=db,
+                action="observation.auto_escalated",
+                payload={
+                    "observation_id": str(obs.id),
+                    "previous_status": prev_status,
+                    "new_status": "escalated",
+                    "risk_flag": eff_flag.value,
+                    "age_hours": age_hours,
+                    "sla_threshold_hours": sla_limit,
+                    "reason": reason,
+                    "escalated_at": now_utc.isoformat(),
+                    "triggered_by": str(current_user.id),
+                },
+                actor_id=current_user.id,
+            )
+
+            escalated_items.append(
+                EscalationItem(
+                    observation_id=obs.id,
+                    category=obs.category,
+                    risk_flag=eff_flag,
+                    age_hours=age_hours,
+                    reason=reason,
+                    escalated_at=now_utc,
+                )
+            )
+
+    await db.flush()
+
+    return EscalationResponse(
+        evaluated_count=len(unresolved_obs),
+        escalated_count=len(escalated_items),
+        escalated_items=escalated_items,
+    )
+

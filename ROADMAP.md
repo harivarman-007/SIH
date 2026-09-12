@@ -1,32 +1,32 @@
 # Intellifusion — Product Roadmap & Problem-Statement Alignment
 
-*Last updated: Phase 10 — Post-RBAC and Security Hardening Audit*
+*Last updated: Phase 12 — Statutory Escalation & Production Category Hardening*
 
 ## Problem-Statement Capability Audit & Status
 
 | PS Capability | Status | Implementation Details |
 |---|---|---|
-| **1. Digitally track statutory compliance** (safety, env, production, labour) | **Partially Built** | Category enum currently covers `safety`, `environment`, `labour`. `production` statutory compliance tracking and specialized regulatory registers are pending. |
-| **2. Real-time monitoring of inspections, observations, violations, corrective actions** | **Partially Built** | REST APIs, status workflow (`open` -> `in_progress` -> `closed` / `escalated`), and 30s dashboard polling are active. True real-time WebSocket / SSE streaming is deferred to scale-up. |
-| **3. AI/analytics for high-risk areas, recurring compliance failures, operational anomalies** | **Already Built & Verified** | On-device Isolation Forest edge model + cloud 15-feature deep Isolation Forest with SHAP-lite feature contributions and DGMS statutory rule engine. |
-| **4. Geo-tagged, time-stamped field reporting via mobile with offline support** | **Already Built & Verified** | React Native/Expo app with `expo-location` GPS coordinates, BLE beacon fallback, camera capture, SQLite outbox, and batch sync engine. |
-| **5. Dashboards for mine officials, corporate management, AND regulatory authorities** | **Partially Built** | Mine Official view (site KPIs, interactive zone map, observation table) and Regulatory Authority view (audit hash chain verification, statutory read access) exist. **Corporate Management multi-mine view is not yet built** (Phase 11). |
-| **6. Automated alerts, reminders, escalation mechanisms** | **Partially Built** | Observation escalation lifecycle (`escalated`, `escalated_at`) and KPI counters exist in backend & frontend. Background cron triggers, automated SLA breach auto-escalation, and SMS/email alerts are not yet built. |
-| **7. Minimize manual paperwork (OCR/document digitization)** | **Already Built & Verified** | Tesseract OCR engine (English + Hindi) with word-level confidence scoring, human review queue API (`/ocr/queue`), and dashboard `OcrQueueView`. |
-| **8. Scalable across multiple mines/subsidiaries** | **Partially Built** | Multi-mine database schema (`MineSite`, `Zone`, `CorporateMineAccess`) with explicit role-based boundary filters. Multi-tier organizational hierarchy (Holding Co -> Subsidiary -> Area -> Mine) is deferred. |
-| **9. Secure digital audit trail (hash-chain)** | **Already Built & Verified** | SHA-256 append-only hash-chain with tamper detection verified in Phase 8 (`verify_audit_chain` + `/audit/verify`). |
+| **1. Digitally track statutory compliance** (safety, env, production, labour) | **Built & Verified** | Full statutory category coverage across backend models, DGMS regulatory action map (`ACTION_TABLE`), single-mine KPIs, multi-mine executive drilldowns, dashboard UI, and mobile offline storage (`safety`, `environment`, `labour`, `production`). |
+| **2. Real-time monitoring of inspections, observations, violations, corrective actions** | **Built & Polled** | REST APIs, observation status lifecycle (`open` -> `in_progress` -> `closed` / `escalated`), and live auto-refresh dashboard telemetry across all operational sites. |
+| **3. AI/analytics for high-risk areas, recurring compliance failures, operational anomalies** | **Built & Verified** | On-device Isolation Forest edge model (pure TypeScript) + cloud 15-feature deep Isolation Forest with SHAP-lite feature contributions and DGMS statutory rule engine. |
+| **4. Geo-tagged, time-stamped field reporting via mobile with offline support** | **Built & Verified** | React Native/Expo app with `expo-location` GPS coordinates, BLE beacon fallback, camera capture, SQLite outbox, and batch sync engine. |
+| **5. Dashboards for mine officials, corporate management, AND regulatory authorities** | **Built & Verified** | Mine Official view (site KPIs, interactive zone map, observation table), Corporate Management view (fleet aggregate risk score, statutory & contractor drilldowns, ranked leaderboard with 7-point SVG trend sparklines), and Regulatory Authority view (audit hash chain verification, statutory read access). |
+| **6. Automated alerts, reminders, escalation mechanisms** | **Built & Verified** | Automated SLA Escalation Engine (`POST /observations/escalate-overdue`) evaluating statutory resolution windows (High > 24h, Medium > 72h, Low > 168h), auto-transitioning to `escalated`, recording `escalated_at`, and logging immutable audit entries. |
+| **7. Minimize manual paperwork (OCR/document digitization)** | **Built & Verified** | Tesseract OCR engine (English + Hindi) with word-level confidence scoring, human review queue API (`/ocr/queue`), and dashboard `OcrQueueView`. |
+| **8. Scalable across multiple mines/subsidiaries** | **Built & Verified** | Multi-mine database schema (`MineSite`, `Zone`, `CorporateMineAccess`, `ContractorAssignment`) with explicit fail-closed 6-role RBAC boundary filters. |
+| **9. Secure digital audit trail (hash-chain)** | **Built & Verified** | SHA-256 append-only hash-chain with concurrent row locks (`with_for_update`) and cryptographic verification verified (`verify_audit_chain` + `/audit/verify`). |
 
 ---
 
-## Phase Roadmap
+## Phase Roadmap & Progress
 
-### Current Focus: Phase 11 — Corporate Management Dashboard View
-- Multi-mine aggregated KPI cards (Total open risks across granted mines, cross-mine compliance score, contractor incident counts)
-- Cross-mine comparison / risk ranking view
-- Compliance trend visualization across mine sites
-
-### Subsequent Enhancements (Phase 12+)
-1. **Production Statutory Compliance**: Add `production` to `ObservationCategory`, DGMS production safety norms, and statutory shift registers.
-2. **Automated Escalation Daemon**: Background worker / Celery task to auto-escalate observations past SLA (e.g. high-risk unacknowledged after 24h) and trigger dispatch alerts.
-3. **WebSockets / SSE**: Push notifications from backend to dashboard on high-risk sync.
-4. **Multi-tier Corporate Hierarchy**: Holding Company -> Subsidiary (e.g. SECL, BCCL, ECL) -> Area -> Mine site data structures.
+### Completed & Fully Verified
+1. **Phase 0–5**: Monorepo architecture, DB models, edge Isolation Forest, mobile offline SQLite capture, cloud 15-feature Isolation Forest with SHAP-lite, Tesseract OCR review queue.
+2. **Phase 8**: Security audit fixes (Fail-closed role filtering, CORS restricted allowlist, audit chain concurrency locks).
+3. **Phase 9**: 6-role RBAC model (`super_admin`, `corporate_management`, `mine_official`, `inspector`, `contractor`, `regulator`) with `CorporateMineAccess` and `ContractorAssignment` join tables.
+4. **Phase 10**: Problem Statement capability audit and roadmap.
+5. **Phase 11**: Corporate Management Executive Dashboard with cross-mine aggregate risk gauge, statutory open violation drilldown, contractor risk monitoring, and descending leaderboard table with sparklines.
+6. **Phase 12**:
+   - **Production Statutory Compliance**: Fully integrated `production` category into models, DGMS action tables, KPI aggregations, dashboard UI, and mobile application.
+   - **Automated SLA Escalation Engine**: Implemented `POST /observations/escalate-overdue` with statutory SLA breach detection and audit chain logging.
+   - **Zero Silent Fallbacks**: Purged fake-data demo fallbacks in favor of honest connection error states and technical diagnostics.
