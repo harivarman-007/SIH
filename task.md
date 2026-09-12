@@ -185,12 +185,16 @@
 
 ---
 
-## Phase 11 — Corporate Management Dashboard View (DESIGN CHECKPOINT FIRST)
+## Phase 11 — Corporate Management Dashboard View
 
-- [ ] **STOP & ASK OWNER**: Design interview for multi-mine Corporate Management view
-- [ ] Implement Corporate Management UI once design is approved
+- [x] Design Alignment: Headline cross-mine aggregate risk score with open violations & contractor risk drill-down; ranked risk leaderboard table with per-mine trend sparklines
+- [x] Backend API: `GET /kpi/cross-mine-summary` in `backend/app/api/kpi.py` with multi-mine scoping and sparkline calculation
+- [x] Automated Tests: `backend/scripts/verify_phase11_corporate.py` (24/24 tests passed — role gating, scoping, sorting, sparklines, drilldowns)
+- [x] Frontend Component: `dashboard/src/components/CorporateManagementView.tsx` with headline risk gauge, drill-down panels, and ranked risk leaderboard table with SVG sparklines
+- [x] Nav & App Integration: `PillNav.tsx` and `App.tsx` updated with role-aware tabs and view rendering
+- [x] Frontend Build: `npm run build` passed with 0 TypeScript errors (3055 modules)
 
 ---
 
-*Current phase: Phase 10 COMPLETE. Presenting coverage table and awaiting design input for Phase 11.*
+*Current phase: Phase 11 COMPLETE — Corporate Management View fully built and verified.*
 

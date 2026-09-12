@@ -17,7 +17,7 @@ import {
   Settings
 } from 'lucide-react';
 
-export type NavTab = 'overview' | 'observations' | 'map' | 'ocr' | 'audit';
+export type NavTab = 'overview' | 'corporate' | 'observations' | 'map' | 'ocr' | 'audit';
 export type UserRole = 'inspector' | 'mine_official' | 'regulator' | 'super_admin' | 'corporate_management' | 'contractor';
 
 export interface PillNavProps {
@@ -31,13 +31,34 @@ export interface PillNavProps {
   onLogout?: () => void;
 }
 
-const NAV_ITEMS: { id: NavTab; label: string; icon: React.ElementType }[] = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'observations', label: 'Hazards', icon: AlertTriangle },
-  { id: 'map', label: 'Mine Map', icon: MapIcon },
-  { id: 'ocr', label: 'OCR Queue', icon: FileScan },
-  { id: 'audit', label: 'Audit Trail', icon: ShieldCheck },
-];
+const getNavItems = (role: UserRole): { id: NavTab; label: string; icon: React.ElementType }[] => {
+  const items: { id: NavTab; label: string; icon: React.ElementType }[] = [];
+
+  if (role === 'corporate_management') {
+    items.push({ id: 'overview', label: 'Corporate View', icon: BarChart3 });
+  } else {
+    items.push({ id: 'overview', label: 'Overview', icon: LayoutDashboard });
+  }
+
+  if (role === 'super_admin') {
+    items.push({ id: 'corporate', label: 'Corporate Fleet', icon: BarChart3 });
+  }
+
+  items.push(
+    { id: 'observations', label: 'Hazards', icon: AlertTriangle },
+    { id: 'map', label: 'Mine Map', icon: MapIcon }
+  );
+
+  if (role === 'mine_official' || role === 'super_admin' || role === 'regulator') {
+    items.push({ id: 'ocr', label: 'OCR Queue', icon: FileScan });
+  }
+
+  if (role === 'regulator' || role === 'super_admin' || role === 'corporate_management') {
+    items.push({ id: 'audit', label: 'Audit Trail', icon: ShieldCheck });
+  }
+
+  return items;
+};
 
 const ROLES: { id: UserRole; title: string; subtitle: string; icon: React.ElementType }[] = [
   { id: 'super_admin', title: 'Super Admin', subtitle: 'Platform-wide management', icon: Settings },
@@ -77,7 +98,7 @@ export const PillNav: React.FC<PillNavProps> = ({
 
         {/* Navigation Tabs (Pills with sliding indicator) */}
         <div className="flex items-center gap-1">
-          {NAV_ITEMS.map((item) => {
+          {getNavItems(currentRole).map((item) => {
             const isActive = activeTab === item.id;
             const Icon = item.icon;
             const badgeCount =

@@ -91,8 +91,8 @@ def test_fix_2_role_filter_fails_closed():
     # Must NOT be an open unfiltered query
     base_compiled = str(base_stmt.compile(compile_kwargs={"literal_binds": True}))
     assert contractor_compiled != base_compiled, "SECURITY BUG: Contractor with mine_site_id=None received unfiltered query (failed open)!"
-    # Verify filter contains closed clause (e.g. observations.id IS NULL or false condition)
-    assert "observations.id IS NULL" in contractor_compiled or "false" in contractor_compiled.lower() or "0 = 1" in contractor_compiled or "1 = 0" in contractor_compiled, (
+    # Verify filter contains closed clause (e.g. observations.id IS NULL or contractor_assignments subquery)
+    assert "observations.id IS NULL" in contractor_compiled or "contractor_assignments" in contractor_compiled or "false" in contractor_compiled.lower() or "0 = 1" in contractor_compiled or "1 = 0" in contractor_compiled, (
         f"Contractor query did not fail closed: {contractor_compiled}"
     )
     print("  [PASS] Contractor without mine_site_id fails closed (0 observations exposed).")

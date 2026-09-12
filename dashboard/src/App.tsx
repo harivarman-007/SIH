@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PillNav, NavTab, UserRole } from './components/PillNav';
 import AdvancedStats from './components/AdvancedStats';
+import { CorporateManagementView } from './components/CorporateManagementView';
 import ObservationTable from './components/ObservationTable';
 import MineMap from './components/MineMap';
 import OcrQueueView from './components/OcrQueueView';
@@ -78,14 +79,22 @@ export default function App() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-200">
           <div>
             <div className="text-xs uppercase tracking-wider text-zinc-400 font-medium mb-1">
-              Sector 4 &bull; Jharia Coalfield
+              {currentRole === 'corporate_management' || activeTab === 'corporate'
+                ? 'Enterprise Multi-Mine Oversight • Central Command'
+                : 'Sector 4 • Jharia Coalfield'}
             </div>
             <h1 className="text-2xl font-semibold tracking-tight text-black">
-              {activeTab === 'overview' && 'Overview'}
-              {activeTab === 'observations' && 'Hazards & Observations'}
-              {activeTab === 'map' && 'Mine Spatial Map'}
-              {activeTab === 'ocr' && 'OCR Review Queue'}
-              {activeTab === 'audit' && 'Cryptographic Audit Trail'}
+              {activeTab === 'corporate' || (activeTab === 'overview' && currentRole === 'corporate_management')
+                ? 'Corporate Fleet Risk & Compliance'
+                : activeTab === 'overview'
+                ? 'Overview'
+                : activeTab === 'observations'
+                ? 'Hazards & Observations'
+                : activeTab === 'map'
+                ? 'Mine Spatial Map'
+                : activeTab === 'ocr'
+                ? 'OCR Review Queue'
+                : 'Cryptographic Audit Trail'}
             </h1>
           </div>
 
@@ -104,7 +113,10 @@ export default function App() {
 
         {/* Content Container */}
         <div className="mt-8">
-          {activeTab === 'overview' && (
+          {(activeTab === 'corporate' || (activeTab === 'overview' && currentRole === 'corporate_management')) && (
+            <CorporateManagementView onRefreshKpis={refreshKpis} />
+          )}
+          {activeTab === 'overview' && currentRole !== 'corporate_management' && (
             <AdvancedStats kpiData={kpis} onRefresh={refreshKpis} />
           )}
           {activeTab === 'observations' && (
