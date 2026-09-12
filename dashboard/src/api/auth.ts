@@ -4,11 +4,13 @@
  */
 import apiClient from './client';
 
+export type AuthRole = 'inspector' | 'mine_official' | 'regulator' | 'super_admin' | 'corporate_management' | 'contractor';
+
 export interface UserInfo {
   id: string;
   email: string;
   full_name: string;
-  role: 'inspector' | 'mine_official' | 'regulator' | 'contractor';
+  role: AuthRole;
   mine_site_id: string | null;
   is_active: boolean;
 }

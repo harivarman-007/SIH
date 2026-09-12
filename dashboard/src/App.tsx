@@ -9,12 +9,25 @@ import AuditTrailView from './components/AuditTrailView';
 import { useAuthStore } from './store/authStore';
 import { fetchKPIs, KPISummary } from './api/kpi';
 
+const DEMO_KPIS: KPISummary = {
+  total_observations: 86,
+  open_count: 18,
+  in_progress_count: 7,
+  closed_count: 57,
+  escalated_count: 4,
+  open_high_risk_count: 11,
+  avg_time_to_closure_hours: 14.8,
+  sync_rate_pct: 98.2,
+  by_category: { safety: 46, environment: 24, labour: 16 },
+  by_risk: { low: 32, medium: 36, high: 18 },
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
   const { user, isLoading, switchRole, logout, initialize } = useAuthStore();
 
   // KPI state lifted to App so PillNav badge counts are live
-  const [kpis, setKpis] = useState<KPISummary | null>(null);
+  const [kpis, setKpis] = useState<KPISummary | null>(DEMO_KPIS);
 
   // On mount: auto-login with default role
   useEffect(() => {
@@ -27,7 +40,8 @@ export default function App() {
       const data = await fetchKPIs();
       setKpis(data);
     } catch {
-      // backend may be down — silently skip
+      // Keep demo KPIs as fallback
+      setKpis((prev) => prev || DEMO_KPIS);
     }
   }, []);
 
