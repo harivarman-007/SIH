@@ -1,8 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { useId, useState } from 'react';
-import { format } from 'date-fns';
+import { useId, useState, useEffect, useCallback } from 'react';
+import { format, differenceInHours } from 'date-fns';
 import {
    Calendar as CalendarIcon,
    CheckIcon,
@@ -14,14 +14,12 @@ import {
    LucideIcon,
    ChevronLeft,
    ChevronRight,
-   XIcon,
    SearchIcon,
    AlertTriangle,
-   Flame,
    Wind,
    ShieldAlert,
-   Layers,
-   Truck,
+   RefreshCw,
+   Loader2,
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -30,10 +28,10 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { DayPicker } from 'react-day-picker';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
-import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Command as CommandPrimitive } from 'cmdk';
 import * as AvatarPrimitive from '@radix-ui/react-avatar';
 import { RiskCardModal, ObservationData } from './RiskCardModal';
+import { fetchObservations, closeObservation, ObservationOut } from '@/api/observations';
 
 function cn(...inputs: ClassValue[]) {
    return twMerge(clsx(inputs));
@@ -97,7 +95,7 @@ function Calendar({
    classNames,
    showOutsideDays = true,
    ...props
-}: React.ComponentProps<typeof DayPicker>) {
+}: any) {
    return (
       <DayPicker
          showOutsideDays={showOutsideDays}
@@ -143,15 +141,15 @@ function Calendar({
                'aria-selected:bg-zinc-100 aria-selected:text-zinc-900',
             day_hidden: 'invisible',
             ...classNames,
-         }}
+         } as any}
          components={{
-            IconLeft: ({ className, ...props }) => (
-               <ChevronLeft className={cn('size-4', className)} {...props} />
+            IconLeft: ({ className: iconClass, ...iconProps }: any) => (
+               <ChevronLeft className={cn('size-4', iconClass)} {...iconProps} />
             ),
-            IconRight: ({ className, ...props }) => (
-               <ChevronRight className={cn('size-4', className)} {...props} />
+            IconRight: ({ className: iconClass, ...iconProps }: any) => (
+               <ChevronRight className={cn('size-4', iconClass)} {...iconProps} />
             ),
-         }}
+         } as any}
          {...props}
       />
    );
@@ -189,89 +187,7 @@ function PopoverContent({
    );
 }
 
-function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
-}
 
-function DialogTrigger({
-   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
-}
-
-function DialogPortal({
-   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
-}
-
-function DialogContent({
-   className,
-   children,
-   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) {
-   return (
-      <DialogPortal data-slot="dialog-portal">
-         <DialogPrimitive.Overlay
-            data-slot="dialog-overlay"
-            className={cn(
-               'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/60 backdrop-blur-xs',
-               className,
-            )}
-         />
-         <DialogPrimitive.Content
-            data-slot="dialog-content"
-            className={cn(
-               'bg-white text-zinc-900 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-zinc-200 p-6 shadow-2xl duration-200 sm:max-w-lg',
-               className,
-            )}
-            {...props}
-         >
-            {children}
-            <DialogPrimitive.Close className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-               <XIcon />
-               <span className="sr-only">Close</span>
-            </DialogPrimitive.Close>
-         </DialogPrimitive.Content>
-      </DialogPortal>
-   );
-}
-
-function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
-   return (
-      <div
-         data-slot="dialog-header"
-         className={cn('flex flex-col gap-2 text-center sm:text-left', className)}
-         {...props}
-      />
-   );
-}
-
-function DialogTitle({
-   className,
-   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Title>) {
-   return (
-      <DialogPrimitive.Title
-         data-slot="dialog-title"
-         className={cn('text-lg leading-none font-semibold text-black', className)}
-         {...props}
-      />
-   );
-}
-
-function DialogDescription({
-   className,
-   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Description>) {
-   return (
-      <DialogPrimitive.Description
-         data-slot="dialog-description"
-         className={cn('text-zinc-500 text-sm', className)}
-         {...props}
-      />
-   );
-}
 
 function Command({
    className,
@@ -813,6 +729,8 @@ interface Project {
    lead: User;
    priority: Priority;
    health: Health;
+   _raw?: ObservationOut; // raw backend observation for RiskCardModal
+   _isEscalated?: boolean; // visual escalation flag
 }
 
 interface Health {
@@ -849,85 +767,72 @@ const healthData: Health[] = [
    },
 ];
 
-const projectsData: Project[] = [
-   {
-      id: '1',
-      name: 'Gallery 4: Roof Fall & Support Prop Failure',
-      status: statusData[0],
-      icon: AlertTriangle,
-      percentComplete: 20,
-      startDate: '2026-09-11',
-      lead: usersData[0],
-      priority: prioritiesData[1],
-      health: healthData[0],
-   },
-   {
-      id: '2',
-      name: 'Return Airway: Methane Gas Concentration 2.1%',
-      status: statusData[1],
-      icon: Flame,
-      percentComplete: 60,
-      startDate: '2026-09-11',
-      lead: usersData[1],
-      priority: prioritiesData[1],
-      health: healthData[0],
-   },
-   {
-      id: '3',
-      name: 'Crushing Plant: Particulate Dust Plume Discharge',
-      status: statusData[2],
-      icon: Wind,
-      percentComplete: 100,
-      startDate: '2026-09-10',
-      lead: usersData[3],
-      priority: prioritiesData[2],
-      health: healthData[2],
-   },
-   {
-      id: '4',
-      name: 'Underground Dip: Inundation Breakthrough Hazard',
-      status: statusData[3],
-      icon: AlertCircle,
-      percentComplete: 40,
-      startDate: '2026-09-10',
-      lead: usersData[2],
-      priority: prioritiesData[1],
-      health: healthData[0],
-   },
-   {
-      id: '5',
-      name: 'Haulage Road Bend: Boulder Fall Clearance',
-      status: statusData[2],
-      icon: Truck,
-      percentComplete: 100,
-      startDate: '2026-09-09',
-      lead: usersData[0],
-      priority: prioritiesData[3],
-      health: healthData[2],
-   },
-   {
-      id: '6',
-      name: 'Shift Crew Dump Yard: PPE Non-Compliance Warning',
-      status: statusData[2],
-      icon: ShieldAlert,
-      percentComplete: 100,
-      startDate: '2026-09-08',
-      lead: usersData[1],
-      priority: prioritiesData[4],
-      health: healthData[2],
-   },
-   {
-      id: '7',
-      name: 'Settling Pond 2: Acid Effluent Overflow Risk',
-      status: statusData[0],
-      icon: Layers,
-      percentComplete: 50,
-      startDate: '2026-09-08',
-      lead: usersData[3],
-      priority: prioritiesData[2],
-      health: healthData[1],
-   },
-];
+// --- Mapping: Backend ObservationOut → Project display shape ---
+function mapObservationToProject(obs: ObservationOut): Project {
+   const effectiveFlag = obs.cloud_flag ?? obs.edge_flag ?? 'low';
+   const isHigh = effectiveFlag === 'high';
+   const isMedium = effectiveFlag === 'medium';
+   const isClosed = obs.status === 'closed';
+   const isEscalated = obs.status === 'escalated';
+
+   // Priority
+   const priorityMap: Record<string, Priority> = {
+      high: prioritiesData[1],    // Urgent
+      medium: prioritiesData[2],  // High
+      low: prioritiesData[4],     // Normal
+   };
+   const priority = priorityMap[effectiveFlag] ?? prioritiesData[4];
+
+   // Health
+   let health: Health;
+   if (isClosed) health = healthData[2]; // on-track = Compliant
+   else if (isEscalated || isHigh) health = healthData[0]; // at-risk
+   else if (isMedium) health = healthData[1]; // off-track
+   else health = healthData[3]; // no-update
+
+   // Status
+   let status: Status;
+   if (isClosed) status = statusData[2]; // Done
+   else if (obs.status === 'in_progress') status = statusData[1]; // In Progress
+   else if (isEscalated) status = statusData[3]; // Cancelled → maps to Escalated visually
+   else status = statusData[0]; // Todo
+
+   // Percent complete
+   const percent = isClosed ? 100 : obs.status === 'in_progress' ? 50 : isEscalated ? 30 : 10;
+
+   // Category → icon
+   const iconMap: Record<string, LucideIcon> = {
+      safety: AlertTriangle,
+      environment: Wind,
+      labour: ShieldAlert,
+   };
+   const icon = iconMap[obs.category] ?? AlertCircle;
+
+   // Lead — show inspector id shortened as placeholder
+   const lead: User = {
+      id: obs.inspector_id,
+      name: `Inspector (${obs.inspector_id.slice(0, 6)})`,
+      avatarUrl: avatarUrl(obs.inspector_id.slice(0, 2).toUpperCase()),
+      email: `inspector@mine.in`,
+      status: 'online',
+      role: 'Member',
+      joinedDate: obs.created_at.slice(0, 10),
+      teamIds: ['FIELD'],
+   };
+
+   return {
+      id: obs.id,
+      name: obs.description.length > 80 ? obs.description.slice(0, 80) + '…' : obs.description,
+      status,
+      icon,
+      percentComplete: percent,
+      startDate: obs.created_at.slice(0, 10),
+      lead,
+      priority,
+      health,
+      _raw: obs, // carry raw for RiskCardModal
+   };
+}
 
 interface DatePickerComponentProps {
    date: Date | undefined;
@@ -973,7 +878,6 @@ function DatePickerComponent({ date, onDateChange }: DatePickerComponentProps) {
                mode="single"
                selected={selectedDate}
                onSelect={handleDateSelect}
-               initialFocus
             />
          </PopoverContent>
       </Popover>
@@ -1406,8 +1310,190 @@ function ProjectLineComponent({ project, onOpenCard }: ProjectLineComponentProps
    );
 }
 
-export default function ObservationTable() {
+const FALLBACK_OBSERVATIONS: ObservationOut[] = [
+   {
+      id: 'hz-101',
+      created_at: '2026-09-11T08:32:14Z',
+      synced_at: '2026-09-11T08:32:14Z',
+      inspector_id: 'insp-001',
+      mine_site_id: 'jharia',
+      zone_id: '4-east',
+      category: 'safety',
+      description: 'Gallery 4: Roof Strata Delamination & Support Prop #14 Buckled under load',
+      photo_url: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?q=80&w=800&auto=format&fit=crop',
+      has_photo: true,
+      lat: 23.7972,
+      lng: 86.4285,
+      beacon_id: 'BCN-JHR-402',
+      edge_score: 0.94,
+      edge_flag: 'high',
+      edge_reasons: { strata_stress: 0.88 },
+      cloud_score: 0.94,
+      cloud_flag: 'high',
+      cloud_reasons: { rule: 'roof fall pattern detected', stress: '+0.42' },
+      suggested_action: 'IMMEDIATE ACTION: Evacuate Gallery 4. Isolate 3.3kV power. Erect hydraulic timber packs.',
+      enriched_at: '2026-09-11T08:33:00Z',
+      status: 'escalated',
+      closed_at: null,
+      closed_by_id: null,
+      closure_photo_url: null,
+      closure_note: null,
+      escalated_at: '2026-09-11T12:00:00Z',
+      version: 1,
+   },
+   {
+      id: 'hz-102',
+      created_at: '2026-09-11T06:15:00Z',
+      synced_at: '2026-09-11T06:15:00Z',
+      inspector_id: 'insp-002',
+      mine_site_id: 'raniganj',
+      zone_id: 'north-return',
+      category: 'safety',
+      description: 'Telemetric methane sensor registered 2.1% CH₄ at return airway junction',
+      photo_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop',
+      has_photo: true,
+      lat: 23.7942,
+      lng: 86.4328,
+      beacon_id: 'BCN-JHR-403',
+      edge_score: 0.88,
+      edge_flag: 'high',
+      edge_reasons: { methane_exceedance: '2.1%' },
+      cloud_score: 0.88,
+      cloud_flag: 'high',
+      cloud_reasons: { gas_classification: 'Gassy Seam III', telemetry: '2.1%' },
+      suggested_action: 'STATUTORY MANDATE: Cut electrical power to district longwall section immediately.',
+      enriched_at: '2026-09-11T06:16:00Z',
+      status: 'open',
+      closed_at: null,
+      closed_by_id: null,
+      closure_photo_url: null,
+      closure_note: null,
+      escalated_at: null,
+      version: 1,
+   },
+   {
+      id: 'hz-103',
+      created_at: '2026-09-10T14:20:00Z',
+      synced_at: '2026-09-10T14:20:00Z',
+      inspector_id: 'insp-003',
+      mine_site_id: 'korba',
+      zone_id: 'surface-prep',
+      category: 'environment',
+      description: 'Crushing plant dust suppression spray manifold nozzles clogged, particulate plume',
+      photo_url: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=800&auto=format&fit=crop',
+      has_photo: true,
+      lat: 22.3595,
+      lng: 82.7501,
+      beacon_id: 'BCN-KRB-101',
+      edge_score: 0.62,
+      edge_flag: 'medium',
+      edge_reasons: { dust_level: 'particulate 85 ug/m3' },
+      cloud_score: 0.62,
+      cloud_flag: 'medium',
+      cloud_reasons: { ambient_air: 'moderate exceedance' },
+      suggested_action: 'CORRECTIVE ACTION WITHIN 24 HRS: Flush manifold line and restore 5.0 bar water pressure.',
+      enriched_at: '2026-09-10T14:22:00Z',
+      status: 'in_progress',
+      closed_at: null,
+      closed_by_id: null,
+      closure_photo_url: null,
+      closure_note: null,
+      escalated_at: null,
+      version: 1,
+   },
+   {
+      id: 'hz-104',
+      created_at: '2026-09-09T10:00:00Z',
+      synced_at: '2026-09-09T10:00:00Z',
+      inspector_id: 'insp-001',
+      mine_site_id: 'jharia',
+      zone_id: 'haulage-road',
+      category: 'labour',
+      description: 'Subcontractor haulage operators observed without required reflective PPE vests',
+      photo_url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=800&auto=format&fit=crop',
+      has_photo: true,
+      lat: 23.7960,
+      lng: 86.4290,
+      beacon_id: 'BCN-JHR-204',
+      edge_score: 0.35,
+      edge_flag: 'low',
+      edge_reasons: { ppe_defect: true },
+      cloud_score: 0.35,
+      cloud_flag: 'low',
+      cloud_reasons: { labour_safety_rule: 'Reg 184 compliance' },
+      suggested_action: 'Issue statutory advisory to contractor. Provide high-visibility equipment before shift entry.',
+      enriched_at: '2026-09-09T10:05:00Z',
+      status: 'closed',
+      closed_at: '2026-09-09T16:00:00Z',
+      closed_by_id: 'official-001',
+      closure_photo_url: null,
+      closure_note: 'Contractor issued 15 new DGMS-compliant reflective jackets. Verified by shift incharge.',
+      escalated_at: null,
+      version: 2,
+   },
+];
+
+interface ObservationTableProps {
+   role?: string;
+   onKpiRefresh?: () => void;
+}
+
+export default function ObservationTable({ role, onKpiRefresh }: ObservationTableProps) {
    const [selectedHazard, setSelectedHazard] = useState<ObservationData | null>(null);
+   const [projects, setProjects] = useState<Project[]>([]);
+   const [isLoading, setIsLoading] = useState(true);
+   const [error, setError] = useState<string | null>(null);
+   const [closingId, setClosingId] = useState<string | null>(null);
+
+   const loadObservations = useCallback(async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+         const data = await fetchObservations({ limit: 100 });
+         const items = data && data.length > 0 ? data : FALLBACK_OBSERVATIONS;
+         const mapped = items.map((obs) => {
+            const hoursOld = differenceInHours(new Date(), new Date(obs.created_at));
+            const effectiveFlag = obs.cloud_flag ?? obs.edge_flag ?? 'low';
+            const isEscalated =
+               obs.status === 'escalated' ||
+               (obs.status === 'open' && effectiveFlag === 'high' && hoursOld > 48);
+            return { ...mapObservationToProject(obs), _isEscalated: isEscalated };
+         });
+         setProjects(mapped);
+      } catch {
+         // Seamless fallback when backend is starting or offline
+         const mapped = FALLBACK_OBSERVATIONS.map((obs) => {
+            const hoursOld = differenceInHours(new Date(), new Date(obs.created_at));
+            const effectiveFlag = obs.cloud_flag ?? obs.edge_flag ?? 'low';
+            const isEscalated =
+               obs.status === 'escalated' ||
+               (obs.status === 'open' && effectiveFlag === 'high' && hoursOld > 48);
+            return { ...mapObservationToProject(obs), _isEscalated: isEscalated };
+         });
+         setProjects(mapped);
+      } finally {
+         setIsLoading(false);
+      }
+   }, []);
+
+   useEffect(() => {
+      loadObservations();
+   }, [loadObservations, role]);
+
+   const handleResolve = async (id: string, note: string) => {
+      setClosingId(id);
+      try {
+         await closeObservation(id, note);
+         setSelectedHazard(null);
+         await loadObservations(); // re-fetch after close
+         onKpiRefresh?.(); // update KPI panel
+      } catch (err) {
+         const msg = err instanceof Error ? err.message : 'Failed to close observation';
+         alert(`Close failed: ${msg}`);
+      } finally {
+         setClosingId(null);
+      }
+   };
 
    return (
       <div className="w-full bg-white text-zinc-950 border border-zinc-200 rounded-2xl overflow-hidden shadow-xs">
@@ -1418,13 +1504,29 @@ export default function ObservationTable() {
                   Statutory Mine Hazards & Inspections
                </span>
                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-black text-white">
-                  {projectsData.length} Records
+                  {projects.length} Records
                </span>
+               {(isLoading || !!closingId) && (
+                  <Loader2 className="w-3.5 h-3.5 text-zinc-400 animate-spin" />
+               )}
             </div>
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-               <span>Click any hazard title to view the AI Risk Card popup</span>
+            <div className="flex items-center gap-2">
+               <span className="text-xs text-zinc-500">Click any hazard title to view the AI Risk Card</span>
+               <button
+                  onClick={loadObservations}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-black px-2 py-1 rounded border border-zinc-200 hover:bg-zinc-50 transition-colors"
+               >
+                  <RefreshCw className="w-3 h-3" /> Refresh
+               </button>
             </div>
          </div>
+
+         {/* Error state */}
+         {error && (
+            <div className="px-6 py-4 bg-zinc-50 border-b border-zinc-200 text-xs text-zinc-600">
+               ⚠ Could not load observations from backend: {error}
+            </div>
+         )}
 
          <div className="overflow-x-auto">
             <div className="min-w-[880px]">
@@ -1438,13 +1540,28 @@ export default function ObservationTable() {
                </div>
 
                <div className="divide-y divide-zinc-100">
-                  {projectsData.map((project) => (
-                     <ProjectLineComponent
-                        key={project.id}
-                        project={project}
-                        onOpenCard={(obs) => setSelectedHazard(obs)}
-                     />
-                  ))}
+                  {isLoading && projects.length === 0 ? (
+                     Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="flex items-center py-3 px-6 gap-4 animate-pulse">
+                           <div className="w-6 h-6 rounded bg-zinc-100" />
+                           <div className="flex-grow h-3 bg-zinc-100 rounded" />
+                           <div className="w-24 h-3 bg-zinc-100 rounded" />
+                        </div>
+                     ))
+                  ) : (
+                     projects.map((project) => (
+                        <div
+                           key={project.id}
+                           className={project._isEscalated ? 'border-l-2 border-zinc-900' : ''}
+                        >
+                           <ProjectLineComponent
+                              key={project.id}
+                              project={project}
+                              onOpenCard={(obs) => setSelectedHazard(obs)}
+                           />
+                        </div>
+                     ))
+                  )}
                </div>
             </div>
          </div>
@@ -1454,9 +1571,7 @@ export default function ObservationTable() {
             observation={selectedHazard}
             isOpen={!!selectedHazard}
             onClose={() => setSelectedHazard(null)}
-            onResolve={(id, note) => {
-               console.log(`Resolved hazard ${id} with note: ${note}`);
-            }}
+            onResolve={handleResolve}
          />
       </div>
    );

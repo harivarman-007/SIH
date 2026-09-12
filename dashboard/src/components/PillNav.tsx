@@ -169,7 +169,12 @@ export const PillNav: React.FC<PillNavProps> = ({
         </div>
 
         {/* User / Logout Pill */}
-        <div className="flex items-center gap-1 pl-1">
+        <div className="flex items-center gap-1.5 pl-1">
+          {userName && (
+            <span className="text-[11px] font-medium text-zinc-600 hidden md:inline">
+              {userName}
+            </span>
+          )}
           {onLogout && (
             <button
               onClick={onLogout}

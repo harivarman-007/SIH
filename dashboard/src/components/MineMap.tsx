@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -28,6 +28,7 @@ import {
   Search,
 } from 'lucide-react';
 import { RiskCardModal, ObservationData } from './RiskCardModal';
+import { fetchObservations, closeObservation, ObservationOut } from '@/api/observations';
 
 // ---------------------------------------------------------------------------
 // Types & Interfaces
@@ -344,7 +345,7 @@ function MapCameraFlyer({
   zoom: number;
 }) {
   const map = useMap();
-  React.useEffect(() => {
+  useEffect(() => {
     map.flyTo(center, zoom, {
       duration: 1.2,
       easeLinearity: 0.25,
@@ -353,16 +354,79 @@ function MapCameraFlyer({
   return null;
 }
 
+function mapObservationToMapHazard(
+  obs: ObservationOut,
+  index: number,
+  baseLat: number,
+  baseLng: number
+): MapObservation {
+  const effectiveFlag = obs.cloud_flag ?? obs.edge_flag ?? 'low';
+  const effectiveScore = obs.cloud_score ?? obs.edge_score ?? 0.45;
+  const statusMap: Record<string, 'open' | 'in-progress' | 'completed'> = {
+    open: 'open',
+    escalated: 'open',
+    in_progress: 'in-progress',
+    closed: 'completed',
+  };
+
+  const latOffset = ((index % 7) - 3) * 0.0022;
+  const lngOffset = (Math.floor(index / 7) - 2) * 0.0025;
+  const lat = obs.lat ?? baseLat + latOffset;
+  const lng = obs.lng ?? baseLng + lngOffset;
+
+  const schematicX = 18 + ((index * 19) % 65);
+  const schematicY = 22 + ((index * 17) % 55);
+
+  const reasons = (obs.cloud_reasons || obs.edge_reasons || {}) as Record<string, any>;
+  const topContributors = Object.entries(reasons).map(([k, v]) => `${k}: ${String(v)}`);
+  if (topContributors.length === 0) {
+    topContributors.push('Statutory risk indicator assessed');
+  }
+
+  return {
+    id: obs.id,
+    name: obs.description.slice(0, 50) + (obs.description.length > 50 ? '...' : ''),
+    category: (obs.category as any) || 'safety',
+    severity: effectiveFlag,
+    score: effectiveScore,
+    lat,
+    lng,
+    elevation: '-240m UG',
+    zoneName: obs.zone_id ? `Zone ${obs.zone_id}` : 'Underground Section',
+    beaconId: obs.beacon_id ?? `BCN-${obs.id.slice(0, 4).toUpperCase()}`,
+    description: obs.description,
+    location: `Mine Sector, Zone ${obs.zone_id || 'A'}`,
+    photoUrl:
+      obs.photo_url ||
+      'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?q=80&w=800&auto=format&fit=crop',
+    inspectorName: `Inspector ${obs.inspector_id ? obs.inspector_id.slice(0, 8) : 'Staff'}`,
+    date: obs.created_at ? obs.created_at.slice(0, 10) : '2026-09-11',
+    topContributors,
+    suggestedAction: obs.suggested_action || 'Execute safety remediation per SOP.',
+    status: statusMap[obs.status] || 'open',
+    schematicCoords: { x: schematicX, y: schematicY },
+  };
+}
+
+interface MineMapProps {
+  role?: string;
+  onKpiRefresh?: () => void;
+}
+
 // ---------------------------------------------------------------------------
 // Main Component: MineMap
 // ---------------------------------------------------------------------------
-export default function MineMap() {
+export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
   const [selectedSite, setSelectedSite] = useState<MineSite>(MINE_SITES[0]);
   const [viewMode, setViewMode] = useState<MapViewMode>('surface');
   const [filterSeverity, setFilterSeverity] = useState<'all' | 'high' | 'medium' | 'low'>('all');
-  const [filterCategory, setFilterCategory] = useState<'all' | 'safety' | 'environment' | 'labour'>('all');
+  const [filterCategory] = useState<'all' | 'safety' | 'environment' | 'labour'>('all');
   const [showZones, setShowZones] = useState<boolean>(true);
   const [showTelemetrySensors, setShowTelemetrySensors] = useState<boolean>(true);
+
+  // Live hazards state
+  const [hazards, setHazards] = useState<MapObservation[]>(MOCK_MAP_HAZARDS);
+  const [isLoadingHazards, setIsLoadingHazards] = useState<boolean>(false);
 
   // Inspector & Modal State
   const [activeHazard, setActiveHazard] = useState<MapObservation | null>(MOCK_MAP_HAZARDS[0]);
@@ -370,9 +434,33 @@ export default function MineMap() {
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  const loadMapHazards = useCallback(async () => {
+    setIsLoadingHazards(true);
+    try {
+      const data = await fetchObservations({ limit: 60 });
+      if (data && data.length > 0) {
+        const mapped = data.map((obs, idx) =>
+          mapObservationToMapHazard(obs, idx, selectedSite.lat, selectedSite.lng)
+        );
+        setHazards(mapped);
+        if (mapped.length > 0) {
+          setActiveHazard(mapped[0]);
+        }
+      }
+    } catch {
+      // Keep mock hazards as fallback
+    } finally {
+      setIsLoadingHazards(false);
+    }
+  }, [selectedSite.lat, selectedSite.lng]);
+
+  useEffect(() => {
+    loadMapHazards();
+  }, [loadMapHazards, role]);
+
   // Filtered Hazards
   const filteredHazards = useMemo(() => {
-    return MOCK_MAP_HAZARDS.filter((h) => {
+    return hazards.filter((h) => {
       const matchSeverity = filterSeverity === 'all' || h.severity === filterSeverity;
       const matchCat = filterCategory === 'all' || h.category === filterCategory;
       const matchSearch =
@@ -382,7 +470,7 @@ export default function MineMap() {
         (h.beaconId && h.beaconId.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchSeverity && matchCat && matchSearch;
     });
-  }, [filterSeverity, filterCategory, searchQuery]);
+  }, [hazards, filterSeverity, filterCategory, searchQuery]);
 
   // Handle Marker / Pin Click
   const handleSelectHazard = (h: MapObservation) => {
@@ -442,6 +530,11 @@ export default function MineMap() {
                 <Compass className="size-3.5 text-black" />
                 <span>{selectedSite.elevation}</span>
               </div>
+              {isLoadingHazards && (
+                <span className="text-[11px] font-mono text-zinc-400 animate-pulse hidden md:inline">
+                  Syncing live hazards...
+                </span>
+              )}
             </div>
           </div>
 
@@ -990,8 +1083,14 @@ export default function MineMap() {
         observation={riskCardModalItem}
         isOpen={!!riskCardModalItem}
         onClose={() => setRiskCardModalItem(null)}
-        onResolve={(id, note) => {
-          console.log(`Resolved hazard ${id} via Map drilldown: ${note}`);
+        onResolve={async (id, note) => {
+          try {
+            await closeObservation(id, note);
+            await loadMapHazards();
+            onKpiRefresh?.();
+          } catch (err) {
+            console.error('Failed to close observation from map:', err);
+          }
         }}
       />
     </div>

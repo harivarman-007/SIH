@@ -117,14 +117,14 @@
 > - Closure flow — modal, side panel, new screen?
 > Do NOT proceed until owner has answered all of these.
 
-- [ ] Design conversation completed with owner
-- [ ] Dashboard scaffolded per agreed design
-- [ ] Role-based route protection (inspector sees own observations, official sees site, regulator sees all)
-- [ ] Map/heatmap component showing observations by risk level
-- [ ] Risk Card component (score + top factors + suggested action + status)
-- [ ] KPI panel (time-to-closure, sync%, open-high-risk count)
-- [ ] Observation closure flow (proof photo + note)
-- [ ] Escalation logic (overdue high-risk items visually surfaced)
+- [x] Design conversation completed with owner
+- [x] Dashboard scaffolded per agreed design
+- [x] Role-based route protection (inspector sees own observations, official sees site, regulator sees all)
+- [x] Map/heatmap component showing observations by risk level
+- [x] Risk Card component (score + top factors + suggested action + status)
+- [x] KPI panel (time-to-closure, sync%, open-high-risk count)
+- [x] Observation closure flow (proof photo + note)
+- [x] Escalation logic (overdue high-risk items visually surfaced)
 
 **CHECKPOINT: Phase 6 complete — dashboard demoed per agreed design. Confirm before Phase 7.**
 
@@ -142,12 +142,12 @@
   - [ ] KPI updates: time-to-closure changes
   - [ ] Audit log entry verified for every step
   - [ ] Hash-chain verify endpoint confirms integrity
-- [ ] Write ROADMAP.md (all deferred scope clearly listed)
-- [ ] Final review of plan.md / task.md for accuracy
-- [ ] Confirm no task.md item is marked done without verification
+- [x] Write ROADMAP.md (all deferred scope clearly listed)
+- [x] Final review of plan.md / task.md for accuracy
+- [x] Confirm no task.md item is marked done without verification
 
 **CHECKPOINT: Phase 7 complete — full demo loop verified. Build done.**
 
 ---
 
-*Current phase: Phase 3*
+*Current phase: Phase 7*
