@@ -36,8 +36,8 @@ async def append_audit_entry(
     payload: Dict[str, Any],
     actor_id: Optional[UUID] = None,
 ) -> AuditLog:
-    # Fetch the most recent audit entry
-    stmt = select(AuditLog).order_by(AuditLog.id.desc()).limit(1)
+    # Fetch the most recent audit entry with row lock to serialize concurrent appends and prevent chain forks
+    stmt = select(AuditLog).order_by(AuditLog.id.desc()).limit(1).with_for_update()
     result = await db.execute(stmt)
     latest_entry = result.scalar_one_or_none()
 

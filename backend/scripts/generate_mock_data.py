@@ -164,7 +164,16 @@ def seed():
 
     print("Clearing existing data...")
     # Order matters — respect FK constraints
-    for table in ["ocr_review_queue", "audit_log", "observations", "users", "zones", "mine_sites"]:
+    for table in [
+        "contractor_assignments",
+        "corporate_mine_access",
+        "ocr_review_queue",
+        "audit_log",
+        "observations",
+        "users",
+        "zones",
+        "mine_sites",
+    ]:
         cur.execute(f"TRUNCATE TABLE {table} CASCADE")
 
     # -----------------------------------------------------------------------
@@ -220,27 +229,45 @@ def seed():
         )
         return uid_
 
-    regulator_id = make_user("regulator@dgms.gov.in", "A.K. Verma (DGMS)", "regulator")
-    corporate_id = make_user("corporate@coalindia.in", "Priya Sharma (Corporate)", "mine_official")
+    # 1. Super Admin (Platform-wide, exactly one seeded on first setup)
+    super_admin_id = make_user("superadmin@intellifusion.gov.in", "System Super Admin", "super_admin")
 
+    # 2. Regulatory Authority (Platform-wide audit & statutory oversight)
+    regulator_id = make_user("regulator@dgms.gov.in", "A.K. Verma (DGMS)", "regulator")
+
+    # 3. Corporate Management (Multi-mine monitoring, explicit corporate_mine_access)
+    corporate_id = make_user("corporate@coalindia.in", "Priya Sharma (Corporate HQ)", "corporate_management")
+    # Grant corporate access to first 3 mine sites explicitly
+    for sid in site_ids[:3]:
+        cur.execute(
+            "INSERT INTO corporate_mine_access (id, user_id, mine_site_id) VALUES (%s, %s, %s)",
+            (uid(), corporate_id, sid),
+        )
+
+    # 4. Mine Officials (Single mine site scoped)
     official_ids = []
     for i, sid in enumerate(site_ids):
         oid = make_user(f"official{i+1}@mine.in", f"Mine Official {i+1}", "mine_official", sid)
         official_ids.append((oid, sid))
 
+    # 5. Field Inspectors (Conduct inspections, log observations)
     inspector_ids = []
     for i in range(10):
         sid = site_ids[i % len(site_ids)]
         iid = make_user(f"inspector{i+1}@mine.in", f"Inspector {i+1}", "inspector", sid)
         inspector_ids.append((iid, sid))
 
+    # 6. Contractors (Only see work explicitly assigned to them)
     contractor_ids = []
     for i in range(5):
-        sid = site_ids[i % len(site_ids)]
-        cid = make_user(f"contractor{i+1}@contractor.in", f"Contractor Worker {i+1}", "contractor", sid)
-        contractor_ids.append((cid, sid))
+        # Contractors 1-4 will receive assignments; Contractor 5 is left with 0 assignments to verify negative access boundaries
+        cid = make_user(f"contractor{i+1}@contractor.in", f"Contractor Worker {i+1}", "contractor")
+        contractor_ids.append(cid)
 
-    print(f"Inserted users: 1 regulator, 1 corporate, {len(official_ids)} officials, {len(inspector_ids)} inspectors, {len(contractor_ids)} contractors.")
+    print(
+        f"Inserted users: 1 super_admin, 1 regulator, 1 corporate (3 mine access grants), "
+        f"{len(official_ids)} officials, {len(inspector_ids)} inspectors, {len(contractor_ids)} contractors."
+    )
 
     # -----------------------------------------------------------------------
     # Observations (200 total)
@@ -400,6 +427,21 @@ def seed():
     print(f"Inserted {sum(1 for _ in obs_records if _['status']=='escalated')} escalated.")
     print(f"Inserted audit log entries.")
 
+    # -----------------------------------------------------------------------
+    # Contractor Assignments (Explicit work orders)
+    # Assign observations to contractors 1-4; contractor 5 gets 0 assignments
+    # -----------------------------------------------------------------------
+    assignment_count = 0
+    for i, o in enumerate(obs_records[:24]):
+        assigned_contractor = contractor_ids[i % 4]  # leaves contractor_ids[4] unassigned
+        cur.execute(
+            """INSERT INTO contractor_assignments (id, contractor_id, observation_id, notes)
+               VALUES (%s, %s, %s, %s)""",
+            (uid(), assigned_contractor, o["id"], f"Rectification work order #{2001 + i}"),
+        )
+        assignment_count += 1
+    print(f"Inserted {assignment_count} explicit contractor assignments across 4 contractors (1 contractor deliberately unassigned).")
+
     conn.commit()
     cur.close()
     conn.close()
@@ -414,6 +456,10 @@ def seed():
     print(f"   audit_log entries: {cur2.fetchone()[0]}")
     cur2.execute("SELECT COUNT(*) FROM users")
     print(f"   users: {cur2.fetchone()[0]}")
+    cur2.execute("SELECT COUNT(*) FROM corporate_mine_access")
+    print(f"   corporate_mine_access: {cur2.fetchone()[0]}")
+    cur2.execute("SELECT COUNT(*) FROM contractor_assignments")
+    print(f"   contractor_assignments: {cur2.fetchone()[0]}")
     cur2.execute("SELECT status, COUNT(*) FROM observations GROUP BY status")
     for row in cur2.fetchall():
         print(f"   observations[{row[0]}]: {row[1]}")

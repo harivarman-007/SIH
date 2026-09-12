@@ -79,3 +79,19 @@ class RiskCardOut(BaseModel):
     beacon_id: Optional[str] = None
     lat: Optional[float] = None
     lng: Optional[float] = None
+
+
+class ContractorAssignRequest(BaseModel):
+    contractor_id: UUID
+    notes: Optional[str] = None
+
+
+class ContractorAssignmentOut(BaseModel):
+    id: UUID
+    contractor_id: UUID
+    observation_id: UUID
+    assigned_at: datetime
+    notes: Optional[str] = None
+
+    class Config:
+        from_attributes = True

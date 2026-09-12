@@ -1,6 +1,6 @@
 from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from app.models import UserRole
 
 
@@ -13,8 +13,22 @@ class RegisterRequest(BaseModel):
     email: str = Field(..., description="User email address")
     password: str = Field(..., description="User password")
     full_name: str = Field(..., description="Full name")
-    role: UserRole
+    role: UserRole = Field(
+        default=UserRole.inspector,
+        description="Public self-registration role: inspector or contractor only",
+    )
     mine_site_id: Optional[UUID] = None
+
+    @field_validator("role")
+    @classmethod
+    def validate_public_registration_role(cls, v: UserRole) -> UserRole:
+        allowed_public_roles = {UserRole.inspector, UserRole.contractor}
+        if v not in allowed_public_roles:
+            raise ValueError(
+                f"Public self-registration is restricted to {[r.value for r in allowed_public_roles]} only. "
+                f"Role '{v.value}' requires administrative provisioning."
+            )
+        return v
 
 
 class UserOut(BaseModel):
@@ -33,3 +47,12 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserOut
+
+
+class AdminUserCreateRequest(BaseModel):
+    email: str = Field(..., description="User email address")
+    password: str = Field(..., description="User password")
+    full_name: str = Field(..., description="Full name")
+    role: UserRole = Field(..., description="Any of the 6 valid roles")
+    mine_site_id: Optional[UUID] = None
+    corporate_mine_ids: Optional[list[UUID]] = None

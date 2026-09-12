@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.observations import apply_role_filter
 from app.database import get_db
 from app.models import Observation, ObservationCategory, ObservationStatus, RiskFlag, User, UserRole
 from app.schemas.kpi import KPISummaryResponse
@@ -20,16 +21,10 @@ async def get_kpis(
     current_user: User = Depends(get_current_user),
 ):
     stmt = select(Observation)
-    # Role-based restriction
-    if current_user.role == UserRole.inspector:
-        stmt = stmt.where(Observation.inspector_id == current_user.id)
-    elif current_user.role in (UserRole.mine_official, UserRole.contractor):
-        if current_user.mine_site_id:
-            stmt = stmt.where(Observation.mine_site_id == current_user.mine_site_id)
-        elif mine_site_id:
+    stmt = apply_role_filter(stmt, current_user)
+    if mine_site_id:
+        if current_user.role in (UserRole.super_admin, UserRole.regulator, UserRole.corporate_management, UserRole.mine_official):
             stmt = stmt.where(Observation.mine_site_id == mine_site_id)
-    elif current_user.role == UserRole.regulator and mine_site_id:
-        stmt = stmt.where(Observation.mine_site_id == mine_site_id)
 
     result = await db.execute(stmt)
     observations = result.scalars().all()

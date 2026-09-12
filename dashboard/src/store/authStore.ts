@@ -8,8 +8,11 @@ import apiClient from '../api/client';
 
 // Seeded demo credentials from generate_mock_data.py
 const DEMO_CREDENTIALS: Record<string, { email: string; password: string }> = {
-  inspector: { email: 'inspector1@mine.in', password: 'password123' },
+  super_admin: { email: 'superadmin@intellifusion.gov.in', password: 'password123' },
+  corporate_management: { email: 'corporate@coalindia.in', password: 'password123' },
   mine_official: { email: 'official1@mine.in', password: 'password123' },
+  inspector: { email: 'inspector1@mine.in', password: 'password123' },
+  contractor: { email: 'contractor1@contractor.in', password: 'password123' },
   regulator: { email: 'regulator@dgms.gov.in', password: 'password123' },
 };
 
@@ -21,7 +24,7 @@ interface AuthState {
 
   // Actions
   initialize: () => Promise<void>;
-  switchRole: (role: 'inspector' | 'mine_official' | 'regulator') => Promise<void>;
+  switchRole: (role: string) => Promise<void>;
   logout: () => void;
 }
 

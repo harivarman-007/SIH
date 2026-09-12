@@ -117,8 +117,8 @@
 > - Closure flow — modal, side panel, new screen?
 > Do NOT proceed until owner has answered all of these.
 
-- [x] Design conversation completed with owner
-- [x] Dashboard scaffolded per agreed design
+- [ ] Design conversation completed with owner (PENDING: owner design interview not conducted; current UI is provisional)
+- [x] Dashboard scaffolded (provisional baseline implementation)
 - [x] Role-based route protection (inspector sees own observations, official sees site, regulator sees all)
 - [x] Map/heatmap component showing observations by risk level
 - [x] Risk Card component (score + top factors + suggested action + status)
@@ -126,7 +126,7 @@
 - [x] Observation closure flow (proof photo + note)
 - [x] Escalation logic (overdue high-risk items visually surfaced)
 
-**CHECKPOINT: Phase 6 complete — dashboard demoed per agreed design. Confirm before Phase 7.**
+**CHECKPOINT: Phase 6 provisional UI built; awaiting official Design Checkpoint with owner before Phase 11.**
 
 ---
 
@@ -146,8 +146,50 @@
 - [x] Final review of plan.md / task.md for accuracy
 - [x] Confirm no task.md item is marked done without verification
 
-**CHECKPOINT: Phase 7 complete — full demo loop verified. Build done.**
+---
+
+## Phase 8 — RBAC & Security Audit Fixes (Continuation)
+
+- [x] Fix 1: Restrict `POST /auth/register` to public roles (`inspector`/`contractor`), reject elevated roles
+- [x] Fix 2: Update `apply_role_filter` to fail closed when `mine_site_id` is missing
+- [x] Fix 3: Restrict CORS middleware to explicit allowlist from environment variable (`CORS_ALLOWED_ORIGINS`), no wildcard with credentials
+- [x] Fix 4: Add `with_for_update()` row-level lock on audit hash chain append to prevent concurrency race condition
+- [x] Fix 5: Synchronize `JWT_SECRET` across `backend/app/config.py`, `backend/.env.example`, and `docker-compose.yml`
+- [x] Automated Verification: `backend/scripts/verify_phase8_fixes.py` (verified 5/5 tests failing on old code and passing on fixed code)
+
+**CHECKPOINT: Phase 8 complete — all 5 audit findings fixed and verified with tests.**
 
 ---
 
-*Current phase: Phase 7*
+## Phase 9 — Extended Role Model (6 Roles per Problem Statement)
+
+- [x] Extend `UserRole` enum to all 6 roles: `super_admin`, `corporate_management`, `mine_official`, `inspector`, `contractor`, `regulator`
+- [x] Add explicit `corporate_mine_access` scope table/model (no `mine_site_id = None` inference)
+- [x] Add explicit contractor task/site assignment mechanism (`contractor_assignments` table + `POST /observations/{id}/assign-contractor`)
+- [x] Update `apply_role_filter` and endpoint permission checks to branch on all 6 roles explicitly with zero fallthrough
+- [x] Update seed script for single `super_admin` initial provisioning + corporate mine access grants + contractor assignments
+- [x] Automated Verification: `backend/scripts/verify_phase9_roles.py` (35/35 tests passed — all positive + negative boundaries)
+- [x] Dashboard `PillNav` updated with all 6 roles; `authStore` extended with demo credentials
+- [x] Alembic migration `002_extend_roles_and_access.py` written for DB schema changes
+- [x] `npm run build` — 0 TypeScript errors, 3054 modules
+
+**CHECKPOINT: Phase 9 complete — 35/35 role boundary tests PASSED. All 6 roles implemented and verified.**
+
+---
+
+## Phase 10 — Problem-Statement Coverage Check
+
+- [ ] Complete problem statement gap analysis across all 9 core capabilities
+- [ ] Present status table (built/partial/not-started) to owner before proceeding
+
+---
+
+## Phase 11 — Corporate Management Dashboard View (DESIGN CHECKPOINT FIRST)
+
+- [ ] **STOP & ASK OWNER**: Design interview for multi-mine Corporate Management view
+- [ ] Implement Corporate Management UI once design is approved
+
+---
+
+*Current phase: Phase 9 COMPLETE — 35/35 tests passed. Awaiting owner confirmation before Phase 10.*
+

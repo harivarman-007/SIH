@@ -11,11 +11,14 @@ import {
   CheckCircle2,
   HardHat,
   Building2,
-  Scale
+  Scale,
+  Briefcase,
+  BarChart3,
+  Settings
 } from 'lucide-react';
 
 export type NavTab = 'overview' | 'observations' | 'map' | 'ocr' | 'audit';
-export type UserRole = 'inspector' | 'mine_official' | 'regulator';
+export type UserRole = 'inspector' | 'mine_official' | 'regulator' | 'super_admin' | 'corporate_management' | 'contractor';
 
 export interface PillNavProps {
   activeTab: NavTab;
@@ -37,8 +40,11 @@ const NAV_ITEMS: { id: NavTab; label: string; icon: React.ElementType }[] = [
 ];
 
 const ROLES: { id: UserRole; title: string; subtitle: string; icon: React.ElementType }[] = [
-  { id: 'inspector', title: 'Inspector', subtitle: 'Field logging & sync', icon: HardHat },
+  { id: 'super_admin', title: 'Super Admin', subtitle: 'Platform-wide management', icon: Settings },
+  { id: 'corporate_management', title: 'Corporate Management', subtitle: 'Multi-mine monitoring', icon: BarChart3 },
   { id: 'mine_official', title: 'Mine Official', subtitle: 'Site management & closure', icon: Building2 },
+  { id: 'inspector', title: 'Inspector', subtitle: 'Field logging & sync', icon: HardHat },
+  { id: 'contractor', title: 'Contractor', subtitle: 'Assigned work only', icon: Briefcase },
   { id: 'regulator', title: 'Regulator (DGMS)', subtitle: 'Statutory compliance & audit', icon: Scale },
 ];
 

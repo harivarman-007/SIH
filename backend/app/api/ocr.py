@@ -138,7 +138,7 @@ async def submit_ocr(
 @router.get(
     "/queue",
     response_model=List[OcrQueueItemOut],
-    dependencies=[Depends(require_roles(UserRole.mine_official, UserRole.regulator))],
+    dependencies=[Depends(require_roles(UserRole.mine_official, UserRole.regulator, UserRole.super_admin))],
 )
 async def list_ocr_queue(
     status_filter: Optional[OcrReviewStatus] = Query(OcrReviewStatus.pending),
@@ -162,7 +162,7 @@ async def list_ocr_queue(
 @router.get(
     "/queue/{item_id}",
     response_model=OcrQueueItemOut,
-    dependencies=[Depends(require_roles(UserRole.mine_official, UserRole.regulator))],
+    dependencies=[Depends(require_roles(UserRole.mine_official, UserRole.regulator, UserRole.super_admin))],
 )
 async def get_ocr_queue_item(
     item_id: UUID,
@@ -184,7 +184,7 @@ async def get_ocr_queue_item(
 @router.patch(
     "/queue/{item_id}",
     response_model=OcrQueueItemOut,
-    dependencies=[Depends(require_roles(UserRole.mine_official, UserRole.regulator))],
+    dependencies=[Depends(require_roles(UserRole.mine_official, UserRole.regulator, UserRole.super_admin))],
 )
 async def review_ocr_queue_item(
     item_id: UUID,

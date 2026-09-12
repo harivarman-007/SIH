@@ -21,9 +21,11 @@ from app.database import Base
 # ---------------------------------------------------------------------------
 
 class UserRole(str, enum.Enum):
+    super_admin = "super_admin"
+    corporate_management = "corporate_management"
+    mine_official = "mine_official"
     inspector = "inspector"
     contractor = "contractor"
-    mine_official = "mine_official"
     regulator = "regulator"
 
 
@@ -70,6 +72,8 @@ class User(Base):
 
     mine_site = relationship("MineSite", back_populates="users")
     observations = relationship("Observation", back_populates="inspector", foreign_keys="Observation.inspector_id")
+    corporate_mine_accesses = relationship("CorporateMineAccess", back_populates="user", cascade="all, delete-orphan")
+    contractor_assignments = relationship("ContractorAssignment", back_populates="contractor", cascade="all, delete-orphan")
 
 
 # ---------------------------------------------------------------------------
@@ -89,6 +93,7 @@ class MineSite(Base):
     zones = relationship("Zone", back_populates="mine_site")
     users = relationship("User", back_populates="mine_site")
     observations = relationship("Observation", back_populates="mine_site")
+    corporate_accesses = relationship("CorporateMineAccess", back_populates="mine_site")
 
 
 class Zone(Base):
@@ -162,6 +167,7 @@ class Observation(Base):
     inspector = relationship("User", back_populates="observations", foreign_keys=[inspector_id])
     mine_site = relationship("MineSite", back_populates="observations")
     zone = relationship("Zone", back_populates="observations")
+    contractor_assignments = relationship("ContractorAssignment", back_populates="observation", cascade="all, delete-orphan")
 
 
 # ---------------------------------------------------------------------------
@@ -197,3 +203,32 @@ class OcrReviewQueue(Base):
     reviewer_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+# ---------------------------------------------------------------------------
+# Scope & Access Control (Explicit multi-mine and contractor assignment)
+# ---------------------------------------------------------------------------
+
+class CorporateMineAccess(Base):
+    __tablename__ = "corporate_mine_access"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    mine_site_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("mine_sites.id", ondelete="CASCADE"), nullable=False, index=True)
+    granted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="corporate_mine_accesses")
+    mine_site = relationship("MineSite", back_populates="corporate_accesses")
+
+
+class ContractorAssignment(Base):
+    __tablename__ = "contractor_assignments"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    contractor_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    observation_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("observations.id", ondelete="CASCADE"), nullable=False, index=True)
+    assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    contractor = relationship("User", back_populates="contractor_assignments")
+    observation = relationship("Observation", back_populates="contractor_assignments")

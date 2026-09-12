@@ -38,7 +38,7 @@ export default function App() {
   }, [user, refreshKpis]);
 
   const handleRoleChange = async (role: UserRole) => {
-    await switchRole(role as 'inspector' | 'mine_official' | 'regulator');
+    await switchRole(role);
     // Re-fetch KPIs with new role context
     setTimeout(refreshKpis, 300);
   };
