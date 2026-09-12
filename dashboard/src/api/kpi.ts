@@ -12,7 +12,7 @@ export interface KPISummary {
   open_high_risk_count: number;
   avg_time_to_closure_hours: number | null;
   sync_rate_pct: number;
-  by_category: { safety: number; environment: number; labour: number };
+  by_category: { safety: number; environment: number; labour: number; production?: number };
   by_risk: { low: number; medium: number; high: number };
 }
 
@@ -36,6 +36,7 @@ export interface OpenViolationsDrilldown {
   safety: number;
   environment: number;
   labour: number;
+  production?: number;
 }
 
 export interface ContractorRiskDrilldown {

@@ -7,7 +7,7 @@
 import * as SQLite from "expo-sqlite";
 
 export type SyncStatus = "pending" | "synced" | "error";
-export type ObservationCategory = "safety" | "environment" | "labour";
+export type ObservationCategory = "safety" | "environment" | "labour" | "production";
 export type RiskFlag = "low" | "medium" | "high";
 
 export interface LocalObservation {

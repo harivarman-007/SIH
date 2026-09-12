@@ -31,7 +31,7 @@ type Props = {
   route: RouteProp<RootStackParamList, "NewObservation">;
 };
 
-type Category = "safety" | "environment" | "labour";
+type Category = "safety" | "environment" | "labour" | "production";
 
 const engine = new RiskScoringEngine(modelData as never);
 
@@ -39,6 +39,7 @@ const CATEGORY_OPTIONS: { key: Category; label: string; icon: string; color: str
   { key: "safety", label: "Safety", icon: "⚠️", color: "#DC2626" },
   { key: "environment", label: "Environment", icon: "🌿", color: "#16A34A" },
   { key: "labour", label: "Labour", icon: "👷", color: "#D97706" },
+  { key: "production", label: "Production", icon: "⚙️", color: "#2563EB" },
 ];
 
 export default function NewObservationScreen({ navigation }: Props) {

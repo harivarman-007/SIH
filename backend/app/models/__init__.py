@@ -33,6 +33,7 @@ class ObservationCategory(str, enum.Enum):
     safety = "safety"
     environment = "environment"
     labour = "labour"
+    production = "production"
 
 
 class RiskFlag(str, enum.Enum):

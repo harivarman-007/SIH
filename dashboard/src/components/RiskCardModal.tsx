@@ -6,7 +6,7 @@ import { CaseMetricCard } from './CaseMetricCard';
 export interface ObservationData {
   id: string;
   name: string;
-  category: 'safety' | 'environment' | 'labour';
+  category: 'safety' | 'environment' | 'labour' | 'production';
   severity: 'high' | 'medium' | 'low';
   score: number;
   description: string;

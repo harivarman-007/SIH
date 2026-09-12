@@ -293,7 +293,7 @@ export const CorporateManagementView: React.FC<CorporateManagementViewProps> = (
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-zinc-100 text-center">
+                <div className="grid grid-cols-4 gap-2 pt-2 border-t border-zinc-100 text-center">
                   <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100">
                     <span className="text-[10px] uppercase font-mono text-zinc-400 block">Safety</span>
                     <span className="text-sm font-bold text-zinc-900 font-mono">
@@ -310,6 +310,12 @@ export const CorporateManagementView: React.FC<CorporateManagementViewProps> = (
                     <span className="text-[10px] uppercase font-mono text-zinc-400 block">Labour</span>
                     <span className="text-sm font-bold text-zinc-900 font-mono">
                       {data?.open_violations.labour ?? 0}
+                    </span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100">
+                    <span className="text-[10px] uppercase font-mono text-zinc-400 block">Prod</span>
+                    <span className="text-sm font-bold text-zinc-900 font-mono">
+                      {data?.open_violations.production ?? 0}
                     </span>
                   </div>
                 </div>

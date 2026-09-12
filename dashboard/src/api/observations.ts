@@ -5,7 +5,7 @@
 import apiClient from './client';
 
 export type RiskFlag = 'low' | 'medium' | 'high';
-export type ObsCategory = 'safety' | 'environment' | 'labour';
+export type ObsCategory = 'safety' | 'environment' | 'labour' | 'production';
 export type ObsStatus = 'open' | 'in_progress' | 'escalated' | 'closed';
 
 export interface ObservationOut {

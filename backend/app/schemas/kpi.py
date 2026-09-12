@@ -21,6 +21,7 @@ class OpenViolationsDrilldown(BaseModel):
     safety: int
     environment: int
     labour: int
+    production: int = 0
 
 
 class ContractorRiskDrilldown(BaseModel):

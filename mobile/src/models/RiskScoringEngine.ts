@@ -5,7 +5,7 @@
  */
 
 export interface ObservationInput {
-  category: "safety" | "environment" | "labour";
+  category: "safety" | "environment" | "labour" | "production";
   description: string;
   created_at?: string;
   zone_risk_baseline?: number;

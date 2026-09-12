@@ -57,7 +57,7 @@ async def get_kpis(
             open_high_risk_count=0,
             avg_time_to_closure_hours=None,
             sync_rate_pct=100.0,
-            by_category={"safety": 0, "environment": 0, "labour": 0},
+            by_category={"safety": 0, "environment": 0, "labour": 0, "production": 0},
             by_risk={"low": 0, "medium": 0, "high": 0},
         )
 
@@ -69,7 +69,7 @@ async def get_kpis(
     synced_c = 0
     closure_durations = []
 
-    by_cat = {"safety": 0, "environment": 0, "labour": 0}
+    by_cat = {"safety": 0, "environment": 0, "labour": 0, "production": 0}
     by_risk = {"low": 0, "medium": 0, "high": 0}
 
     for obs in observations:
@@ -227,6 +227,7 @@ async def get_cross_mine_summary(
     open_safety = 0
     open_env = 0
     open_labour = 0
+    open_prod = 0
 
     obs_by_site: Dict[UUID, List[Observation]] = {s.id: [] for s in mine_sites}
     for obs in all_observations:
@@ -259,6 +260,8 @@ async def get_cross_mine_summary(
                     open_env += 1
                 elif o.category == ObservationCategory.labour:
                     open_labour += 1
+                elif o.category == ObservationCategory.production:
+                    open_prod += 1
 
                 if eff_flag == RiskFlag.high:
                     open_high += 1
@@ -346,6 +349,7 @@ async def get_cross_mine_summary(
             safety=open_safety,
             environment=open_env,
             labour=open_labour,
+            production=open_prod,
         ),
         contractor_risk=ContractorRiskDrilldown(
             active_contractors=len(active_contractor_ids),

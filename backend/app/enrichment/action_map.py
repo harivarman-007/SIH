@@ -69,6 +69,22 @@ ACTION_TABLE: Dict[Tuple[str, str], str] = {
         "Include in next monthly safety committee meeting agenda. "
         "No immediate enforcement action required."
     ),
+
+    # ── PRODUCTION ────────────────────────────────────────────────────────────
+    ("production", "high"): (
+        "HALT PRODUCTION SECTION: Cease extraction operations immediately along affected face or haul road. "
+        "Inspect heavy earth-moving machinery (HEMM) for mechanical/structural stress. "
+        "File statutory production hazard notice to Agent and Mines Manager under Coal Mines Regulations."
+    ),
+    ("production", "medium"): (
+        "OPERATIONAL REVIEW WITHIN 12 HRS: Adjust extraction rate to statutory safety limits. "
+        "Audit haul road gradients, dust suppression at hopper, and conveyor belt alignment. "
+        "Log in shift handover register."
+    ),
+    ("production", "low"): (
+        "LOG IN SHIFT PRODUCTION LOG: Monitor equipment cycle times and coal bench clearance. "
+        "Review at end-of-shift operational debrief."
+    ),
 }
 
 # Fallback
