@@ -25,6 +25,7 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql+asyncpg://intellifusion:intellifusion_dev@db:5432/intellifusion
+      DATABASE_URL_SYNC: postgresql://intellifusion:intellifusion_dev@db:5432/intellifusion
       # Must always match JWT_SECRET in backend/app/config.py and backend/.env.example
       JWT_SECRET: dev_secret_change_in_prod_sih26024_secure_key_min64chars_abcdef0123456789
       JWT_ALGORITHM: HS256
