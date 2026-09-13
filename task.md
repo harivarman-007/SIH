@@ -285,7 +285,7 @@
 ## Phase 22 — Minimal Real Alert Mechanism & Automated SLA Escalation Scheduler
 
 - [x] Backend: Create `alerts` table and model (id, recipient_role, mine_site_id, observation_id, message, is_read, created_at)
-- [x] Backend: Add background scheduler (`backend/app/scheduler.py`) with APScheduler running automatic escalation on interval
+- [x] Backend: Add background scheduler (`backend/app/scheduler.py`) with APScheduler running automatic escalation on a 5-minute interval (registered in `main.py`)
 - [x] Backend: When observation is auto-escalated, generate real `alert` records for relevant mine officials / corporate management
 - [x] Backend: Add `GET /alerts` and `PATCH /alerts/{id}/read` endpoints with RBAC and role scoping
 - [x] Backend: Added migration `backend/alembic/versions/005_add_alerts_table.py`
