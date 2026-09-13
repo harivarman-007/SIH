@@ -4,6 +4,7 @@ from app.api.sync import router as sync_router
 from app.api.kpi import router as kpi_router
 from app.api.audit import router as audit_router
 from app.api.ocr import router as ocr_router
+from app.api.alerts import router as alerts_router
 
 __all__ = [
     "auth_router",
@@ -12,5 +13,5 @@ __all__ = [
     "kpi_router",
     "audit_router",
     "ocr_router",
+    "alerts_router",
 ]
-

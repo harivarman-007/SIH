@@ -10,6 +10,7 @@ import { useAuthStore } from './store/authStore';
 import { fetchKPIs, KPISummary } from './api/kpi';
 
 import { LoginForm } from './components/LoginForm';
+import { AlertBell } from './components/AlertBell';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
@@ -105,6 +106,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            <AlertBell role={currentRole} />
             <span className="text-xs text-zinc-400">Authenticated as:</span>
             <span className="text-xs uppercase tracking-wider px-2.5 py-1 rounded bg-zinc-100 border border-zinc-300 text-zinc-800 font-medium">
               {currentRole.replace('_', ' ')}
