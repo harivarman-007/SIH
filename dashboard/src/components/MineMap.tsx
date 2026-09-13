@@ -15,7 +15,6 @@ import {
   Compass,
   AlertTriangle,
   Flame,
-  Wind,
   ShieldAlert,
   Radio,
   ChevronDown,
@@ -849,21 +848,45 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
                 </text>
               </svg>
 
-              {/* Underground IoT Sensor Badges */}
+              {/* Real Observation-Derived Underground Gas Badges */}
               {showTelemetrySensors && (
                 <>
-                  <div className="absolute top-[240px] left-[32%] flex items-center gap-1.5 px-2 py-1 bg-white border border-zinc-300 rounded-md shadow-xs text-[10px] font-mono text-black">
-                    <Wifi className="size-3 text-black" />
-                    <span>CH₄: 0.34% (NORM)</span>
-                  </div>
-                  <div className="absolute top-[240px] left-[78%] flex items-center gap-1.5 px-2 py-1 bg-black text-white border border-black rounded-md shadow-xs text-[10px] font-mono">
-                    <Flame className="size-3 text-white" />
-                    <span>CH₄: 2.10% (ALERT)</span>
-                  </div>
-                  <div className="absolute top-[410px] left-[35%] flex items-center gap-1.5 px-2 py-1 bg-white border border-zinc-300 rounded-md shadow-xs text-[10px] font-mono text-black">
-                    <Wind className="size-3 text-black" />
-                    <span>FLOW: 1.42 m/s</span>
-                  </div>
+                  {rawObservations
+                    .filter(
+                      (obs) =>
+                        obs.gas_reading_value !== null && obs.gas_reading_value !== undefined
+                    )
+                    .slice(0, 3)
+                    .map((obs, i) => {
+                      const isAlert = obs.gas_reading_value! > 0.75;
+                      const positions = [
+                        { top: '240px', left: '32%' },
+                        { top: '240px', left: '76%' },
+                        { top: '410px', left: '35%' },
+                      ];
+                      const pos = positions[i] || { top: '300px', left: '50%' };
+                      return (
+                        <div
+                          key={obs.id}
+                          style={pos}
+                          className={`absolute flex items-center gap-1.5 px-2 py-1 rounded-md shadow-xs text-[10px] font-mono ${
+                            isAlert
+                              ? 'bg-black text-white border border-black animate-pulse'
+                              : 'bg-white text-black border border-zinc-300'
+                          }`}
+                        >
+                          {isAlert ? (
+                            <Flame className="size-3 text-white" />
+                          ) : (
+                            <Wifi className="size-3 text-black" />
+                          )}
+                          <span>
+                            CH₄: {obs.gas_reading_value}
+                            {obs.gas_reading_unit || '%'} ({isAlert ? 'ALERT' : 'NORM'})
+                          </span>
+                        </div>
+                      );
+                    })}
                 </>
               )}
 
