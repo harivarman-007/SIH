@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     # Application Environment & Storage
     environment: str = "development"
     photo_storage_path: str = "/app/photos"
+    ocr_upload_path: str = "/app/uploads/ocr"
 
     # CORS Allowlist: Comma-separated list of trusted origins (no wildcard when allow_credentials=True)
     cors_allowed_origins: str = (

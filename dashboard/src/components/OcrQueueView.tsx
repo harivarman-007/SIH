@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText,
@@ -13,49 +13,106 @@ import {
   ShieldCheck,
   Inbox,
   AlertCircle,
+  ImageOff,
+  User,
+  Calendar,
+  BarChart2,
+  AlertTriangle,
 } from 'lucide-react';
 import { fetchOcrQueue, reviewOcrItem, OcrQueueItem } from '@/api/ocr';
+import { API_BASE } from '@/api/client';
 
 // ---------------------------------------------------------------------------
-// Clean, Human-Friendly Document Model
+// Authenticated image loading hook
+// Fetches the OCR document image using the JWT bearer token and creates a
+// temporary blob URL so the <img> tag can display it without CORS issues.
 // ---------------------------------------------------------------------------
-interface ScannedReport {
-  id: string;
-  title: string;
-  mineSite: string;
-  location: string;
-  shift: string;
-  inspector: string;
-  date: string;
-  status: 'pending' | 'approved' | 'rejected';
-  scannedImageUrl: string;
-  extractedText: string;
-  uncertainWords: string[];
-  severity: 'high' | 'medium' | 'low';
-  category: 'Safety' | 'Environment' | 'Machinery';
+function useAuthedImage(relativeUrl: string | null): {
+  blobUrl: string | null;
+  loading: boolean;
+  error: boolean;
+} {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const prevBlobUrl = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!relativeUrl) {
+      setBlobUrl(null);
+      setError(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+
+    const token = localStorage.getItem('intellifusion_token');
+    fetch(`${API_BASE}${relativeUrl}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.blob();
+      })
+      .then((blob) => {
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        // Revoke the old blob URL to avoid memory leaks
+        if (prevBlobUrl.current) URL.revokeObjectURL(prevBlobUrl.current);
+        prevBlobUrl.current = url;
+        setBlobUrl(url);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError(true);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [relativeUrl]);
+
+  // Final cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (prevBlobUrl.current) URL.revokeObjectURL(prevBlobUrl.current);
+    };
+  }, []);
+
+  return { blobUrl, loading, error };
 }
 
-function mapOcrItemToReport(item: OcrQueueItem): ScannedReport {
-  const uncertain = Object.entries(item.confidence_map || {})
-    .filter(([_, score]) => typeof score === 'number' && score < 0.70)
-    .map(([w]) => w);
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-  return {
-    id: item.id,
-    title: item.document_name || `Statutory Shift Sheet #${item.id.slice(0, 6).toUpperCase()}`,
-    mineSite: 'Jharia Coalfield Central • Sector 4',
-    location: 'Gallery 4 Underground Section',
-    shift: 'Daily Statutory Shift',
-    inspector: item.submitted_by_id ? `Inspector ${item.submitted_by_id.slice(0, 8)}` : 'Field Safety Inspector',
-    date: item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent',
-    status: item.status,
-    scannedImageUrl: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1000&auto=format&fit=crop',
-    extractedText: item.raw_text,
-    uncertainWords: uncertain,
-    severity: 'high',
-    category: 'Safety',
-  };
+/** Format an ISO datetime string into a human-readable date. */
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return iso;
+  }
 }
+
+/** Derive a short display name from a submitter UUID. */
+function shortSubmitter(id: string | null): string {
+  if (!id) return 'Field Inspector';
+  return `Inspector ···${id.slice(-6).toUpperCase()}`;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 interface OcrQueueViewProps {
   role?: string;
@@ -63,29 +120,29 @@ interface OcrQueueViewProps {
 }
 
 export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps) {
-  const [reports, setReports] = useState<ScannedReport[]>([]);
+  const [queue, setQueue] = useState<OcrQueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<number>(1);
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [textValue, setTextValue] = useState<string>('');
 
-  const canReview = role === 'mine_official' || role === 'regulator';
+  const canReview = role === 'mine_official' || role === 'regulator' || role === 'super_admin';
 
   const loadQueue = useCallback(async () => {
     if (!canReview) {
-      setReports([]);
+      setQueue([]);
       return;
     }
     setIsLoading(true);
     setError(null);
     try {
       const items = await fetchOcrQueue('pending');
-      const mapped = items.map(mapOcrItemToReport);
-      setReports(mapped);
-      if (mapped.length > 0) {
-        setActiveId(mapped[0].id);
+      setQueue(items);
+      if (items.length > 0) {
+        setActiveId(items[0].id);
       } else {
         setActiveId(null);
       }
@@ -101,43 +158,49 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
     loadQueue();
   }, [loadQueue]);
 
-  const currentReport = reports.find((r) => r.id === activeId) || reports[0] || null;
-  const [textValue, setTextValue] = useState<string>('');
+  const currentItem = queue.find((q) => q.id === activeId) ?? queue[0] ?? null;
 
-  // Sync text when changing document
+  // Sync text editor when the active document changes
   useEffect(() => {
-    if (currentReport) {
-      setTextValue(currentReport.extractedText);
+    if (currentItem) {
+      setTextValue(currentItem.raw_text);
       setZoom(1);
     } else {
       setTextValue('');
     }
-  }, [currentReport?.id]);
+  }, [currentItem?.id]);
+
+  // Load the authenticated image for the current item
+  const { blobUrl: imageBlob, loading: imageLoading, error: imageError } = useAuthedImage(
+    currentItem?.image_url ?? null
+  );
+
+  // -----------------------------------------------------------------------
+  // Count uncertain words from the confidence_map
+  // -----------------------------------------------------------------------
+  const uncertainWords = currentItem
+    ? Object.entries(currentItem.confidence_map || {})
+        .filter(([, score]) => typeof score === 'number' && score < 0.7)
+        .map(([w]) => w)
+    : [];
 
   const handleApprove = async () => {
-    if (!currentReport || isSubmitting) return;
+    if (!currentItem || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await reviewOcrItem(currentReport.id, {
+      await reviewOcrItem(currentItem.id, {
         status: 'approved',
         corrected_text: textValue,
       });
 
-      setSuccessToast(`Report approved & committed to official Hazard Registry`);
+      setSuccessToast('Report approved & committed to official Hazard Registry');
       onRefreshCount?.();
 
-      // Remove from pending list
-      const remaining = reports.filter((r) => r.id !== currentReport.id);
-      setReports(remaining);
-      if (remaining.length > 0) {
-        setActiveId(remaining[0].id);
-      } else {
-        setActiveId(null);
-      }
+      const remaining = queue.filter((q) => q.id !== currentItem.id);
+      setQueue(remaining);
+      setActiveId(remaining.length > 0 ? remaining[0].id : null);
 
-      setTimeout(() => {
-        setSuccessToast(null);
-      }, 2500);
+      setTimeout(() => setSuccessToast(null), 2500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Approval failed';
       alert(`Could not approve OCR document: ${msg}`);
@@ -147,28 +210,19 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
   };
 
   const handleReject = async () => {
-    if (!currentReport || isSubmitting) return;
+    if (!currentItem || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await reviewOcrItem(currentReport.id, {
-        status: 'rejected',
-      });
+      await reviewOcrItem(currentItem.id, { status: 'rejected' });
 
-      setSuccessToast(`Scan rejected. Inspector will be prompted to re-upload.`);
+      setSuccessToast('Scan rejected. Inspector will be prompted to re-upload.');
       onRefreshCount?.();
 
-      // Remove from pending list
-      const remaining = reports.filter((r) => r.id !== currentReport.id);
-      setReports(remaining);
-      if (remaining.length > 0) {
-        setActiveId(remaining[0].id);
-      } else {
-        setActiveId(null);
-      }
+      const remaining = queue.filter((q) => q.id !== currentItem.id);
+      setQueue(remaining);
+      setActiveId(remaining.length > 0 ? remaining[0].id : null);
 
-      setTimeout(() => {
-        setSuccessToast(null);
-      }, 2500);
+      setTimeout(() => setSuccessToast(null), 2500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Rejection failed';
       alert(`Could not reject OCR document: ${msg}`);
@@ -177,6 +231,9 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
     }
   };
 
+  // -----------------------------------------------------------------------
+  // Access gate
+  // -----------------------------------------------------------------------
   if (!canReview) {
     return (
       <div className="w-full bg-white text-zinc-950 font-sans">
@@ -191,13 +248,19 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
             Statutory OCR paper log verification and approval is restricted to Mine Officials and DGMS Regulators per Indian Mining Regulations.
           </p>
           <p className="text-xs font-medium text-zinc-800 pt-2">
-            Tip: Switch your role in the top right to <span className="font-semibold px-2 py-0.5 bg-zinc-200 rounded text-black">Mine Official</span> or <span className="font-semibold px-2 py-0.5 bg-zinc-200 rounded text-black">Regulator</span>.
+            Tip: Switch your role in the top right to{' '}
+            <span className="font-semibold px-2 py-0.5 bg-zinc-200 rounded text-black">Mine Official</span>{' '}
+            or{' '}
+            <span className="font-semibold px-2 py-0.5 bg-zinc-200 rounded text-black">Regulator</span>.
           </p>
         </div>
       </div>
     );
   }
 
+  // -----------------------------------------------------------------------
+  // Main render
+  // -----------------------------------------------------------------------
   return (
     <div className="w-full bg-white text-zinc-950 font-sans">
       {/* ----------------------------------------------------------------- */}
@@ -214,13 +277,13 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
                 Review Scanned Paper Logs
               </h2>
               <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-700 font-medium">
-                {reports.length} pending review
+                {queue.length} pending review
               </span>
               {isLoading && <Loader2 className="w-3.5 h-3.5 text-zinc-400 animate-spin" />}
             </div>
           </div>
 
-          {/* Clean Switcher Tabs */}
+          {/* Document Switcher Tabs */}
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={loadQueue}
@@ -230,13 +293,13 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
               <RefreshCw className={`size-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
 
-            {reports.map((r, i) => {
-              const isSelected = r.id === currentReport?.id;
+            {queue.map((item, i) => {
+              const isSelected = item.id === currentItem?.id;
               return (
                 <button
-                  key={r.id}
+                  key={item.id}
                   type="button"
-                  onClick={() => setActiveId(r.id)}
+                  onClick={() => setActiveId(item.id)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
                     isSelected
                       ? 'bg-black text-white border-black shadow-xs'
@@ -245,7 +308,7 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
                 >
                   <FileText className="size-3.5" />
                   <span>Report #{i + 1}</span>
-                  {r.status === 'approved' && (
+                  {item.status === 'approved' && (
                     <Check className="size-3 text-white" />
                   )}
                 </button>
@@ -280,8 +343,8 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
         </AnimatePresence>
       </div>
 
-      {/* When Queue is Empty */}
-      {!isLoading && reports.length === 0 && !error ? (
+      {/* Empty state */}
+      {!isLoading && queue.length === 0 && !error ? (
         <div className="border border-zinc-200 rounded-2xl p-12 bg-white text-center space-y-3">
           <div className="inline-flex p-3 rounded-2xl bg-zinc-100 border border-zinc-200">
             <Inbox className="size-6 text-zinc-500" />
@@ -299,24 +362,24 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
             <RefreshCw className="size-3" /> Check For New Scans
           </button>
         </div>
-      ) : currentReport ? (
+      ) : currentItem ? (
         /* ----------------------------------------------------------------- */
-        /* Split Workspace: Document on Left & Clean Form on Right           */
+        /* Split Workspace: Document Image on Left & Extracted Text on Right */
         /* ----------------------------------------------------------------- */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* LEFT: Scanned Document Photo Preview */}
+          {/* LEFT: Real Uploaded Document Image */}
           <div className="lg:col-span-6 border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-xs flex flex-col h-[580px]">
             {/* Header with Zoom Controls */}
             <div className="p-3 px-4 border-b border-zinc-200 bg-zinc-50/70 flex items-center justify-between">
               <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
                 <FileText className="size-3.5 text-zinc-500" />
-                <span>Original Scanned Paper Log</span>
+                <span>Original Scanned Document</span>
               </span>
 
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => setZoom((z) => Math.max(z - 0.2, 0.8))}
+                  onClick={() => setZoom((z) => Math.max(z - 0.2, 0.5))}
                   className="p-1 rounded hover:bg-zinc-200 text-zinc-600 transition-colors cursor-pointer"
                   title="Zoom Out"
                 >
@@ -327,7 +390,7 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
                 </span>
                 <button
                   type="button"
-                  onClick={() => setZoom((z) => Math.min(z + 0.2, 1.6))}
+                  onClick={() => setZoom((z) => Math.min(z + 0.2, 2.0))}
                   className="p-1 rounded hover:bg-zinc-200 text-zinc-600 transition-colors cursor-pointer"
                   title="Zoom In"
                 >
@@ -337,107 +400,151 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
                   type="button"
                   onClick={() => setZoom(1)}
                   className="p-1 rounded hover:bg-zinc-200 text-zinc-600 transition-colors ml-1 cursor-pointer"
-                  title="Reset"
+                  title="Reset Zoom"
                 >
                   <RotateCw className="size-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* Clean Document View */}
-            <div className="flex-1 overflow-auto p-6 flex items-center justify-center bg-zinc-100/60 select-none">
-              <div
-                style={{
-                  transform: `scale(${zoom})`,
-                  transformOrigin: 'top center',
-                  transition: 'transform 0.15s ease-out',
-                }}
-                className="bg-white p-6 shadow-sm border border-zinc-300 rounded-lg w-[420px] text-zinc-900"
-              >
-                {/* Official Header */}
-                <div className="border-b-2 border-zinc-900 pb-3 mb-4 text-center">
-                  <div className="text-[10px] font-mono uppercase tracking-widest text-zinc-500">
-                    DIRECTORATE GENERAL OF MINES SAFETY
-                  </div>
-                  <div className="text-xs font-bold text-black uppercase mt-0.5">
-                    Daily Underground Inspection Record
-                  </div>
+            {/* Document Image Viewer */}
+            <div className="flex-1 overflow-auto p-4 flex items-start justify-center bg-zinc-100/60 select-none">
+              {imageLoading ? (
+                <div className="flex flex-col items-center justify-center gap-3 text-zinc-400 h-full">
+                  <Loader2 className="size-6 animate-spin" />
+                  <span className="text-xs">Loading document image…</span>
                 </div>
-
-                {/* Info Table */}
-                <div className="grid grid-cols-2 gap-2 text-[11px] border-b border-zinc-200 pb-3 mb-4 text-zinc-600">
-                  <div>
-                    <span className="text-zinc-400">Mine:</span> {currentReport.mineSite}
-                  </div>
-                  <div>
-                    <span className="text-zinc-400">Date:</span> {currentReport.date}
-                  </div>
-                  <div>
-                    <span className="text-zinc-400">Shift:</span> {currentReport.shift}
-                  </div>
-                  <div>
-                    <span className="text-zinc-400">Location:</span> {currentReport.location}
-                  </div>
+              ) : imageError || !imageBlob ? (
+                <div className="flex flex-col items-center justify-center gap-3 text-zinc-400 h-full">
+                  <ImageOff className="size-8" />
+                  <span className="text-xs font-medium text-zinc-500">
+                    No image on file for this document
+                  </span>
+                  <span className="text-[10px] text-zinc-400 text-center max-w-xs">
+                    The inspector submitted this scan before image persistence was enabled. The extracted text is still available for review on the right.
+                  </span>
                 </div>
-
-                {/* Hand-written/Recorded Field Observation */}
-                <div className="bg-zinc-50 border border-zinc-200 rounded p-4 text-xs leading-relaxed text-zinc-800 font-serif min-h-[140px]">
-                  {currentReport.extractedText}
-                </div>
-
-                {/* Official Stamp */}
-                <div className="mt-6 flex items-center justify-between pt-3 border-t border-dashed border-zinc-300">
-                  <div className="border border-zinc-400 px-2 py-0.5 text-[9px] font-mono uppercase text-zinc-600 rounded">
-                    DGMS FORM IV SEAL
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[11px] font-serif font-bold text-black">
-                      {currentReport.inspector.split(' ')[0]}
-                    </div>
-                    <div className="text-[9px] text-zinc-400">Overman Signature</div>
-                  </div>
-                </div>
-              </div>
+              ) : (
+                <img
+                  src={imageBlob}
+                  alt="Scanned document"
+                  style={{
+                    transform: `scale(${zoom})`,
+                    transformOrigin: 'top center',
+                    transition: 'transform 0.15s ease-out',
+                    maxWidth: '100%',
+                    boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
+                    borderRadius: '4px',
+                  }}
+                />
+              )}
             </div>
           </div>
 
-          {/* RIGHT: Digitized Text & Simple Approval Form */}
+          {/* RIGHT: Real Metadata + Editable Extracted Text */}
           <div className="lg:col-span-6 border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-xs flex flex-col h-[580px]">
             {/* Header */}
             <div className="p-3 px-4 border-b border-zinc-200 bg-zinc-50/70 flex items-center justify-between">
               <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
                 <CheckCircle2 className="size-3.5 text-black" />
-                <span>Digitized Report (Verify &amp; Edit)</span>
+                <span>Digitized Report — Verify &amp; Edit</span>
               </span>
-
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
-                {currentReport.category} Hazard
+              <span className="text-[11px] font-mono text-zinc-500">
+                ID: {currentItem.id.slice(0, 8).toUpperCase()}
               </span>
             </div>
 
             {/* Main Form Fields */}
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
-              {/* Quick Metadata Summary */}
+              {/* Real Metadata Strip */}
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200">
-                  <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-0.5">
-                    Location
+                {/* Document Name */}
+                <div className="col-span-2 p-2.5 rounded-xl bg-zinc-50 border border-zinc-200">
+                  <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-0.5 flex items-center gap-1">
+                    <FileText className="size-3 inline" /> Document Name
                   </span>
                   <span className="font-semibold text-black truncate block">
-                    {currentReport.location}
+                    {currentItem.document_name || `Untitled Scan #${currentItem.id.slice(0, 6).toUpperCase()}`}
                   </span>
                 </div>
+
+                {/* Submitter */}
                 <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200">
-                  <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-0.5">
-                    Reporting Officer
+                  <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-0.5 flex items-center gap-1">
+                    <User className="size-3 inline" /> Submitted By
                   </span>
                   <span className="font-semibold text-black truncate block">
-                    {currentReport.inspector}
+                    {shortSubmitter(currentItem.submitted_by_id)}
+                  </span>
+                </div>
+
+                {/* Upload Date */}
+                <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200">
+                  <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-0.5 flex items-center gap-1">
+                    <Calendar className="size-3 inline" /> Upload Date
+                  </span>
+                  <span className="font-semibold text-black truncate block">
+                    {formatDate(currentItem.created_at)}
+                  </span>
+                </div>
+
+                {/* Overall Confidence */}
+                <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200">
+                  <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-0.5 flex items-center gap-1">
+                    <BarChart2 className="size-3 inline" /> OCR Confidence
+                  </span>
+                  <span
+                    className={`font-semibold truncate block ${
+                      currentItem.overall_confidence >= 0.7
+                        ? 'text-emerald-700'
+                        : currentItem.overall_confidence >= 0.5
+                        ? 'text-amber-700'
+                        : 'text-red-700'
+                    }`}
+                  >
+                    {(currentItem.overall_confidence * 100).toFixed(1)}%
+                  </span>
+                </div>
+
+                {/* Uncertain Word Count */}
+                <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200">
+                  <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-0.5 flex items-center gap-1">
+                    <AlertTriangle className="size-3 inline" /> Uncertain Words
+                  </span>
+                  <span
+                    className={`font-semibold truncate block ${
+                      uncertainWords.length === 0
+                        ? 'text-emerald-700'
+                        : uncertainWords.length <= 3
+                        ? 'text-amber-700'
+                        : 'text-red-700'
+                    }`}
+                  >
+                    {uncertainWords.length} word{uncertainWords.length !== 1 ? 's' : ''} flagged
                   </span>
                 </div>
               </div>
 
-              {/* Clean Editable Text Area */}
+              {/* Uncertain words list (if any) */}
+              {uncertainWords.length > 0 && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 space-y-1.5">
+                  <div className="font-bold uppercase tracking-wider text-[10px] text-amber-600 flex items-center gap-1">
+                    <AlertTriangle className="size-3" /> Words with low confidence
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {uncertainWords.map((w) => (
+                      <span
+                        key={w}
+                        className="px-1.5 py-0.5 bg-amber-100 border border-amber-300 rounded text-[10px] font-mono text-amber-900"
+                      >
+                        {w}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Clean Editable Extracted Text Area */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 flex items-center gap-1">
@@ -445,7 +552,7 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
                     <span>Extracted Observation Notes</span>
                   </label>
                   <span className="text-[11px] text-zinc-400">
-                    Click below to edit any typos
+                    Click below to correct any OCR errors
                   </span>
                 </div>
 
@@ -454,20 +561,20 @@ export default function OcrQueueView({ role, onRefreshCount }: OcrQueueViewProps
                   value={textValue}
                   onChange={(e) => setTextValue(e.target.value)}
                   className="w-full text-xs font-sans p-3.5 bg-zinc-50 hover:bg-zinc-50/80 focus:bg-white border border-zinc-200 focus:border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-black leading-relaxed transition-colors"
-                  placeholder="Observation details..."
+                  placeholder="Observation details extracted by OCR…"
                 />
               </div>
 
-              {/* Simple Helper Notice */}
+              {/* Instruction */}
               <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-600 flex items-start gap-2.5">
                 <div className="size-1.5 rounded-full bg-black mt-1.5 shrink-0" />
                 <p className="leading-relaxed">
-                  The AI automatically converted the handwriting from the paper scan. If everything matches the document on the left, click <strong>Approve</strong> to create the official hazard entry.
+                  Compare the scanned image on the left with the extracted text above. Correct any OCR errors, then click <strong>Approve</strong> to commit this document to the official Hazard Registry.
                 </p>
               </div>
             </div>
 
-            {/* Simple Bottom Action Buttons */}
+            {/* Action Buttons */}
             <div className="p-4 border-t border-zinc-200 bg-white flex items-center justify-between gap-3">
               <button
                 type="button"

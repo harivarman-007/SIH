@@ -9,6 +9,7 @@ export type OcrReviewStatus = 'pending' | 'approved' | 'rejected';
 export interface OcrQueueItem {
   id: string;
   document_name: string | null;
+  image_url: string | null;   // relative URL to stream the original uploaded scan
   raw_text: string;
   overall_confidence: number;
   confidence_map: Record<string, number>; // word -> confidence score

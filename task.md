@@ -264,12 +264,21 @@
 
 ## Phase 21 — Real OCR Document Persistence & Accurate Field Mapping
 
-- [ ] Backend: Update OCR storage to persist uploaded document images and serve them via `/ocr/queue/{id}/image` or static file path
-- [ ] Backend: Update Alembic migration / schema to record image path on `ocr_review_queue`
-- [ ] Backend: Store real metadata (mine_site_id, zone_id, shift, category if available) on OCR queue items or reflect data model honesty
-- [ ] Frontend: Replace Unsplash stock photo in `OcrQueueView.tsx` with actual image URL from backend
-- [ ] Frontend: Remove hardcoded location/shift/severity/category literals; display actual record attributes or indicate unassigned
-- [ ] Verify end-to-end: upload a scanned test document, verify actual uploaded image and real fields render in review queue
+- [x] Backend: Added `image_path` column to `OcrReviewQueue` model (`backend/app/models/__init__.py`) — was already present from prior work
+- [x] Backend: Migration `004_add_ocr_image_path.py` exists and adds `image_path` to `ocr_review_queue` table
+- [x] Backend: `submit_ocr` in `backend/app/api/ocr.py` now saves uploaded image bytes to `settings.ocr_upload_path/{uuid}.ext` before OCR processing; sets `image_path` on the queue record; non-fatal on IO failure (logs warning, continues)
+- [x] Backend: Added `GET /ocr/queue/{id}/image` endpoint that streams the original uploaded document image file as a `FileResponse` (requires mine_official/regulator/inspector role)
+- [x] Backend: `OcrQueueItemOut` schema updated with `model_validator(mode="after")` that derives `image_url = /ocr/queue/{id}/image` from `image_path` automatically during Pydantic serialization
+- [x] Backend: `ocr_upload_path` setting added to `backend/app/config.py` (default: `/app/uploads/ocr`)
+- [x] Frontend: `OcrQueueItem` TypeScript interface in `dashboard/src/api/ocr.ts` updated with `image_url: string | null` field
+- [x] Frontend: `OcrQueueView.tsx` completely rebuilt with real data only (Option B):
+  - Left panel: real uploaded document image loaded via authenticated `fetch` → blob URL (`useAuthedImage` hook); graceful "No image on file" fallback for pre-persistence items
+  - Right panel: document name, submitter ID, upload date, OCR confidence %, uncertain-word count and word list — all from real API fields
+  - Removed: Unsplash stock photo URL, fake `mineSite`, `location`, `shift`, `severity`, `category` hardcodes and the entire fake DGMS form template
+- [x] Verification: `backend/scripts/verify_phase21_ocr_image.py` 21/21 PASSED
+- [x] Dashboard Build: `npm run build` passed with 0 TypeScript errors (3056 modules, 12.72s)
+
+**CHECKPOINT: Phase 21 complete — OCR image persistence backend live, review UI shows real uploaded image and real metadata only. All fabricated fields removed.**
 
 ---
 

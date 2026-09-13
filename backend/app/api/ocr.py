@@ -2,21 +2,27 @@
 ocr.py
 API router for OCR submission and human-in-the-loop review queue.
 Endpoints:
-  POST  /ocr/submit       — Upload image, run OCR, auto-pass if all word conf >= 70, else queue
-  GET   /ocr/queue        — List pending review items (mine_official, regulator)
-  GET   /ocr/queue/{id}   — Get specific review item detail
-  PATCH /ocr/queue/{id}   — Approve, reject, or correct text (mine_official, regulator)
+  POST  /ocr/submit          — Upload image, run OCR, auto-pass if all word conf >= 70, else queue
+  GET   /ocr/queue           — List pending review items (mine_official, regulator)
+  GET   /ocr/queue/{id}      — Get specific review item detail
+  GET   /ocr/queue/{id}/image — Stream the original uploaded document image
+  PATCH /ocr/queue/{id}      — Approve, reject, or correct text (mine_official, regulator)
 """
 
+import logging
+import uuid as _uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import append_audit_entry
+from app.config import settings
 from app.database import get_db
 from app.models import OcrReviewQueue, OcrReviewStatus, User, UserRole
 from app.ocr.engine import process_ocr_image
@@ -27,6 +33,7 @@ from app.schemas.ocr import (
     WordConfidence,
 )
 from app.services.auth import get_current_user, require_roles
+
 
 router = APIRouter(prefix="/ocr", tags=["ocr"])
 
@@ -66,6 +73,27 @@ async def submit_ocr(
 
     doc_name = document_name or file.filename or "uploaded_document"
 
+    # -----------------------------------------------------------------------
+    # Persist the uploaded image to disk so it can be shown in the review UI.
+    # -----------------------------------------------------------------------
+    upload_dir = Path(settings.ocr_upload_path)
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    # Derive a safe extension from the MIME type or original filename
+    ext = ".bin"
+    if file.content_type:
+        _ct = file.content_type.split("/")[-1].split(";")[0].strip()
+        ext = f".{_ct}" if _ct else ext
+    elif file.filename and "." in (file.filename or ""):
+        ext = Path(file.filename).suffix
+    saved_filename = f"{_uuid.uuid4()}{ext}"
+    saved_path = upload_dir / saved_filename
+    try:
+        saved_path.write_bytes(content)
+    except OSError as io_err:
+        # Non-fatal: proceed without image persistence, log the error
+        saved_path = None
+        logging.getLogger(__name__).warning("OCR image save failed: %s", io_err)
+
     try:
         ocr_result = process_ocr_image(content, lang=lang)
     except ValueError as val_err:
@@ -104,6 +132,7 @@ async def submit_ocr(
         overall_confidence=ocr_result["overall_confidence"],
         status=OcrReviewStatus.pending,
         submitted_by_id=current_user.id,
+        image_path=str(saved_path) if saved_path else None,
     )
     db.add(queue_item)
     await db.commit()
@@ -132,6 +161,7 @@ async def submit_ocr(
         low_confidence_words=low_conf_words,
         queue_id=queue_item.id,
         document_name=doc_name,
+        image_url=_ocr_image_url(queue_item.id) if queue_item.image_path else None,
     )
 
 
@@ -157,6 +187,33 @@ async def list_ocr_queue(
 
     result = await db.execute(stmt)
     return result.scalars().all()
+
+
+@router.get(
+    "/queue/{item_id}/image",
+    dependencies=[Depends(require_roles(UserRole.mine_official, UserRole.regulator, UserRole.super_admin, UserRole.inspector))],
+)
+async def get_ocr_queue_item_image(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Streams the original uploaded document image for a given OCR review queue item.
+    """
+    item = await db.get(OcrReviewQueue, item_id)
+    if not item or not item.image_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No image on file for this OCR queue item.",
+        )
+    img_path = Path(item.image_path)
+    if not img_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Image file not found on server.",
+        )
+    return FileResponse(str(img_path))
 
 
 @router.get(

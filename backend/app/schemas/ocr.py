@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.models import OcrReviewStatus
 
@@ -26,11 +26,14 @@ class OcrSubmitResponse(BaseModel):
     low_confidence_words: List[WordConfidence] = Field(default_factory=list)
     queue_id: Optional[UUID] = None
     document_name: Optional[str] = None
+    image_url: Optional[str] = None
 
 
 class OcrQueueItemOut(BaseModel):
     id: UUID
     document_name: Optional[str] = None
+    image_path: Optional[str] = None  # raw filesystem path (internal)
+    image_url: Optional[str] = None   # derived URL for the browser
     raw_text: str
     overall_confidence: float
     confidence_map: Dict[str, Any]
@@ -42,6 +45,13 @@ class OcrQueueItemOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @model_validator(mode="after")
+    def _derive_image_url(self) -> "OcrQueueItemOut":
+        """Populate image_url from image_path if not already set."""
+        if self.image_url is None and self.image_path:
+            self.image_url = f"/ocr/queue/{self.id}/image"
+        return self
 
 
 class OcrReviewActionRequest(BaseModel):
