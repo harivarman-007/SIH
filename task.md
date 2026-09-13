@@ -207,6 +207,79 @@
 
 ---
 
-*Project Status: FULLY OPERATIONAL & VERIFIED (82/82 automated tests passing).*
+## Phase 18 — Repository State & Claims Verification (Fresh Session Orientation)
+
+- [x] Run `git pull origin main` (already up-to-date with origin/main, commit `6f890ed`)
+- [x] Read `plan.md`, `task.md`, and `ROADMAP.md` in full
+- [x] Independently run and verify backend test suites:
+  - Installed missing `bcrypt` dependency in `.venv`
+  - `backend/scripts/verify_phase8_fixes.py`: 5/5 PASSED
+  - `backend/scripts/verify_phase9_roles.py`: 35/35 PASSED
+  - `backend/scripts/verify_phase11_corporate.py`: 24/24 PASSED
+  - `backend/scripts/verify_escalation.py`: 18/18 PASSED
+  - Total: 82/82 test assertions PASSED
+- [x] Spot-check frontend build: `npm run build` in `dashboard/` passed cleanly (0 TypeScript errors, 3055 modules transformed, 25.91s)
+- [x] Re-verify all 4 claims from Section 1 against actual code:
+  - Problem 1 Confirmed: `dashboard/src/store/authStore.ts` contains `DEMO_CREDENTIALS` and auto-logs in as `mine_official` on startup with no login screen.
+  - Problem 2 Confirmed: `dashboard/src/components/MineMap.tsx` lines 48-50, 74-76, and 1042-1068 contain hardcoded `methanePpm`, `ventilationVelocity`, and "28 / 28 Online" telemetry without real backing data.
+  - Problem 3 Confirmed: `dashboard/src/components/OcrQueueView.tsx` line 52 loads an Unsplash stock photo (`photo-1586075010923-2dd4570fb338`) and hardcodes `mineSite`, `location`, `shift`, `severity`, `category`; backend `OcrReviewQueue` table and `/ocr/submit` endpoint discard uploaded image bytes without saving or serving them.
+  - Problem 4 Confirmed: Repo contains zero notification/alert tables, schemas, or background schedulers; `/observations/escalate-overdue` requires manual invocation.
+
+**CHECKPOINT: Phase 18 complete — Section 1 claims 100% verified against real codebase. Awaiting owner design/product decisions for Phases 19 & 20.**
+
+---
+
+## Phase 19 — Real Authentication & Explicit Demo Persona Switcher
+
+- [ ] Present login UI/UX design proposal to owner (Design Checkpoint)
+- [ ] Implement honest `LoginForm` component (Email + Password, real submit against `POST /auth/login`)
+- [ ] Convert persona switcher into an explicitly labeled "Demo Persona Switcher — for evaluation only" tool
+- [ ] Prevent automatic login on initial app load; require explicit authentication
+- [ ] Verify login flow with real seed credentials and invalid credential handling
+
+---
+
+## Phase 20 — Map Sensor Telemetry Remediation
+
+- [ ] Present decision to owner: (a) completely remove fabricated sensor telemetry vs. (b) clearly label as "Illustrative — not live sensor data"
+- [ ] Implement selected option across `MineMap.tsx`
+- [ ] Verify map UI shows zero unlabelled decorative data
+
+---
+
+## Phase 21 — Real OCR Document Persistence & Accurate Field Mapping
+
+- [ ] Backend: Update OCR storage to persist uploaded document images and serve them via `/ocr/queue/{id}/image` or static file path
+- [ ] Backend: Update Alembic migration / schema to record image path on `ocr_review_queue`
+- [ ] Backend: Store real metadata (mine_site_id, zone_id, shift, category if available) on OCR queue items or reflect data model honesty
+- [ ] Frontend: Replace Unsplash stock photo in `OcrQueueView.tsx` with actual image URL from backend
+- [ ] Frontend: Remove hardcoded location/shift/severity/category literals; display actual record attributes or indicate unassigned
+- [ ] Verify end-to-end: upload a scanned test document, verify actual uploaded image and real fields render in review queue
+
+---
+
+## Phase 22 — Minimal Real Alert Mechanism & Automated SLA Escalation Scheduler
+
+- [ ] Backend: Create `alerts` table and model (id, recipient_role, user_id, observation_id, message, is_read, created_at)
+- [ ] Backend: Add background scheduler (APScheduler) running automatic escalation on interval
+- [ ] Backend: When observation is auto-escalated, generate real `alert` records for relevant mine officials / corporate management
+- [ ] Backend: Add `GET /alerts` and `PATCH /alerts/{id}/read` endpoints with RBAC
+- [ ] Frontend: Design checkpoint with owner on alert badge/notification panel UI
+- [ ] Frontend: Implement real alert badge / notification indicator wired to `/alerts`
+- [ ] Verify: Let scheduler escalate an overdue observation and verify real alert is delivered and rendered
+
+---
+
+## Phase 23 — Full Regression Verification
+
+- [ ] Re-run all 4 backend test suites (82/82 tests)
+- [ ] Add and run new test suites for Alert API + Scheduler + OCR image retrieval
+- [ ] Run full dashboard production build (`npm run build`)
+- [ ] Document verified output in `task.md` and `walkthrough.md`
+
+---
+
+*Project Status: Phase 18 Verified. Ready for Owner Checkpoints.*
+
 
 
