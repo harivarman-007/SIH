@@ -9,6 +9,8 @@ export interface NewObservationInput {
   category: ObservationCategory;
   description: string;
   photo_uri?: string | null;
+  gas_reading_value?: number | null;
+  gas_reading_unit?: string | null;
   lat?: number | null;
   lng?: number | null;
   beacon_id?: string | null;
@@ -26,15 +28,18 @@ export class ObservationRepository {
 
     const result = await db.runAsync(
       `INSERT INTO local_observations (
-        category, description, photo_uri, lat, lng, beacon_id,
+        category, description, photo_uri, gas_reading_value, gas_reading_unit,
+        lat, lng, beacon_id,
         mine_site_id, zone_id,
         edge_score, edge_flag, edge_reasons_json,
         created_at, queued_at, sync_status, retry_count
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
       [
         input.category,
         input.description,
         input.photo_uri ?? null,
+        input.gas_reading_value ?? null,
+        input.gas_reading_unit ?? null,
         input.lat ?? null,
         input.lng ?? null,
         input.beacon_id ?? null,

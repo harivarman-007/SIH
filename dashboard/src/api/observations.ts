@@ -19,6 +19,8 @@ export interface ObservationOut {
   description: string;
   photo_url: string | null;
   has_photo: boolean;
+  gas_reading_value?: number | null;
+  gas_reading_unit?: string | null;
   lat: number | null;
   lng: number | null;
   beacon_id: string | null;

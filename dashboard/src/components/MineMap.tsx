@@ -45,8 +45,6 @@ export interface MineSite {
   elevation: string;
   activeHazardsCount: number;
   baselineRisk: number;
-  methanePpm: string;
-  ventilationVelocity: string;
 }
 
 export interface MapObservation extends ObservationData {
@@ -58,7 +56,7 @@ export interface MapObservation extends ObservationData {
 }
 
 // ---------------------------------------------------------------------------
-// Mock Data (Real Indian Coalfields per Phase 1 & Seed Data)
+// Real Indian Coalfields per Phase 1 & Seed Data
 // ---------------------------------------------------------------------------
 const MINE_SITES: MineSite[] = [
   {
@@ -71,8 +69,6 @@ const MINE_SITES: MineSite[] = [
     elevation: '+180m Surface / -240m UG',
     activeHazardsCount: 5,
     baselineRisk: 0.76,
-    methanePpm: '0.34%',
-    ventilationVelocity: '1.42 m/s',
   },
   {
     id: 'raniganj',
@@ -84,8 +80,6 @@ const MINE_SITES: MineSite[] = [
     elevation: '+145m Surface / -190m UG',
     activeHazardsCount: 3,
     baselineRisk: 0.62,
-    methanePpm: '0.21%',
-    ventilationVelocity: '1.28 m/s',
   },
   {
     id: 'korba',
@@ -97,8 +91,6 @@ const MINE_SITES: MineSite[] = [
     elevation: '+290m Surface / -160m UG',
     activeHazardsCount: 4,
     baselineRisk: 0.58,
-    methanePpm: '0.18%',
-    ventilationVelocity: '1.35 m/s',
   },
   {
     id: 'singrauli',
@@ -110,8 +102,6 @@ const MINE_SITES: MineSite[] = [
     elevation: '+320m Surface Pit',
     activeHazardsCount: 4,
     baselineRisk: 0.81,
-    methanePpm: '0.12%',
-    ventilationVelocity: '2.10 m/s',
   },
   {
     id: 'talcher',
@@ -123,8 +113,6 @@ const MINE_SITES: MineSite[] = [
     elevation: '+110m Surface / -280m UG',
     activeHazardsCount: 2,
     baselineRisk: 0.45,
-    methanePpm: '0.15%',
-    ventilationVelocity: '1.50 m/s',
   },
 ];
 
@@ -426,6 +414,7 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
 
   // Live hazards state
   const [hazards, setHazards] = useState<MapObservation[]>(MOCK_MAP_HAZARDS);
+  const [rawObservations, setRawObservations] = useState<ObservationOut[]>([]);
   const [isLoadingHazards, setIsLoadingHazards] = useState<boolean>(false);
 
   // Inspector & Modal State
@@ -439,6 +428,7 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
     try {
       const data = await fetchObservations({ limit: 60 });
       if (data && data.length > 0) {
+        setRawObservations(data);
         const mapped = data.map((obs, idx) =>
           mapObservationToMapHazard(obs, idx, selectedSite.lat, selectedSite.lng)
         );
@@ -453,6 +443,15 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
       setIsLoadingHazards(false);
     }
   }, [selectedSite.lat, selectedSite.lng]);
+
+  // Derive real telemetry from actual submitted observations
+  const latestGasObs = useMemo(() => {
+    return (
+      rawObservations.find(
+        (obs) => obs.gas_reading_value !== null && obs.gas_reading_value !== undefined
+      ) || null
+    );
+  }, [rawObservations]);
 
   useEffect(() => {
     loadMapHazards();
@@ -1041,29 +1040,56 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
         {/* ----------------------------------------------------------------- */}
         <div className="border-t border-zinc-200 bg-white p-3.5 px-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-5 text-xs">
+            {/* Real Gas Reading from Actual Observations */}
             <div className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-black" />
-              <span className="text-zinc-400 font-medium">Methane Level (CH₄):</span>
-              <span className="font-mono font-bold text-black">{selectedSite.methanePpm}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 font-mono text-zinc-700">
-                Limit &lt; 0.75%
+              <span
+                className={`size-2 rounded-full ${
+                  latestGasObs
+                    ? latestGasObs.gas_reading_value! > 0.75
+                      ? 'bg-rose-500 animate-pulse'
+                      : 'bg-emerald-500'
+                    : 'bg-zinc-300'
+                }`}
+              />
+              <span className="text-zinc-500 font-medium">Latest Observed Gas:</span>
+              {latestGasObs ? (
+                <>
+                  <span className="font-mono font-bold text-black">
+                    {latestGasObs.gas_reading_value}
+                    {latestGasObs.gas_reading_unit ? ` ${latestGasObs.gas_reading_unit}` : ' % CH₄'}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 font-mono text-zinc-700">
+                    Limit &lt; 0.75%
+                  </span>
+                  <span className="text-[10px] text-zinc-400 font-mono hidden md:inline">
+                    (Obs #{latestGasObs.id.slice(0, 6).toUpperCase()})
+                  </span>
+                </>
+              ) : (
+                <span className="font-mono text-zinc-400 italic">No gas telemetry logged</span>
+              )}
+            </div>
+
+            <div className="hidden sm:block h-4 w-[1px] bg-zinc-200" />
+
+            {/* Live Observation Counts */}
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="size-3.5 text-black" />
+              <span className="text-zinc-500 font-medium">Site Observations:</span>
+              <span className="font-mono font-bold text-black">
+                {hazards.length} Active ({hazards.filter((h) => h.severity === 'high').length} High Risk)
               </span>
             </div>
 
             <div className="hidden sm:block h-4 w-[1px] bg-zinc-200" />
 
-            <div className="flex items-center gap-2">
-              <Wind className="size-3.5 text-black" />
-              <span className="text-zinc-400 font-medium">Airflow Velocity:</span>
-              <span className="font-mono font-bold text-black">{selectedSite.ventilationVelocity}</span>
-            </div>
-
-            <div className="hidden sm:block h-4 w-[1px] bg-zinc-200" />
-
+            {/* Telemetry Ingestion Mode */}
             <div className="flex items-center gap-2">
               <Radio className="size-3.5 text-black" />
-              <span className="text-zinc-400 font-medium">Telemetry Nodes:</span>
-              <span className="font-mono font-bold text-black">28 / 28 Online</span>
+              <span className="text-zinc-500 font-medium">Telemetry Source:</span>
+              <span className="font-mono font-semibold text-black">
+                Field Inspection Feed (Live)
+              </span>
             </div>
           </div>
 

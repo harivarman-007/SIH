@@ -46,6 +46,7 @@ export default function NewObservationScreen({ navigation }: Props) {
   const [category, setCategory] = useState<Category>("safety");
   const [description, setDescription] = useState("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [gasReading, setGasReading] = useState("");
   const [useGps, setUseGps] = useState(false);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
@@ -136,11 +137,16 @@ export default function NewObservationScreen({ navigation }: Props) {
       };
       const riskResult = engine.scoreObservation(obsInput);
 
+      const numericGas = gasReading.trim() ? parseFloat(gasReading.trim()) : null;
+      const validGas = numericGas !== null && !isNaN(numericGas) ? numericGas : null;
+
       // 2. Persist to SQLite
       const localId = await observationRepository.insert({
         category,
         description: description.trim(),
         photo_uri: photoUri,
+        gas_reading_value: validGas,
+        gas_reading_unit: validGas !== null ? "% CH₄" : null,
         lat,
         lng,
         beacon_id: beaconId.trim() || null,
@@ -209,6 +215,26 @@ export default function NewObservationScreen({ navigation }: Props) {
           testID="description-input"
         />
       </View>
+
+      {/* Gas / Sensor Telemetry Reading (Optional) */}
+      {(category === "safety" || category === "environment") && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>GAS CONCENTRATION / TELEMETRY (OPTIONAL)</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="e.g. 1.25"
+              placeholderTextColor="#4B5563"
+              value={gasReading}
+              onChangeText={setGasReading}
+              keyboardType="decimal-pad"
+            />
+            <View style={{ paddingHorizontal: 12, paddingVertical: 10, backgroundColor: "#1F2937", borderRadius: 8 }}>
+              <Text style={{ color: "#9CA3AF", fontSize: 12, fontFamily: "monospace" }}>% CH₄</Text>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* Photo */}
       <View style={styles.section}>

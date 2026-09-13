@@ -135,6 +135,10 @@ class Observation(Base):
     photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     has_photo: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Quantitative Gas / Sensor Telemetry Reading
+    gas_reading_value: Mapped[float | None] = mapped_column(Float, nullable=True)
+    gas_reading_unit: Mapped[str | None] = mapped_column(String(20), nullable=True)  # e.g. "% CH4", "ppm"
+
     # Location
     lat: Mapped[float | None] = mapped_column(Float, nullable=True)   # null if underground
     lng: Mapped[float | None] = mapped_column(Float, nullable=True)   # null if underground

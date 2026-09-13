@@ -48,7 +48,7 @@ export default function App() {
 
   return (
     <>
-      <StatusBar style="light" backgroundColor="#0F172A" />
+      <StatusBar style="light" />
       <AppNavigator />
     </>
   );

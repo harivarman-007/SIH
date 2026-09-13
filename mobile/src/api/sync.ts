@@ -10,6 +10,8 @@ export interface SyncObservationPayload {
   category: string;
   description: string;
   photo_url?: string | null;
+  gas_reading_value?: number | null;
+  gas_reading_unit?: string | null;
   lat?: number | null;
   lng?: number | null;
   beacon_id?: string | null;
@@ -45,6 +47,8 @@ export function localObsToPayload(obs: LocalObservation): SyncObservationPayload
     category: obs.category,
     description: obs.description,
     photo_url: obs.photo_uri ?? null,
+    gas_reading_value: obs.gas_reading_value ?? null,
+    gas_reading_unit: obs.gas_reading_unit ?? null,
     lat: obs.lat ?? null,
     lng: obs.lng ?? null,
     beacon_id: obs.beacon_id ?? null,

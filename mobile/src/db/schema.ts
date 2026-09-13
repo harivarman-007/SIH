@@ -21,6 +21,8 @@ export interface LocalObservation {
   category: ObservationCategory;
   description: string;
   photo_uri: string | null;
+  gas_reading_value: number | null;
+  gas_reading_unit: string | null;
   lat: number | null;
   lng: number | null;
   beacon_id: string | null;
@@ -61,6 +63,8 @@ export async function initSchema(db: SQLite.SQLiteDatabase): Promise<void> {
       category          TEXT    NOT NULL,
       description       TEXT    NOT NULL,
       photo_uri         TEXT    DEFAULT NULL,
+      gas_reading_value REAL    DEFAULT NULL,
+      gas_reading_unit  TEXT    DEFAULT NULL,
       lat               REAL    DEFAULT NULL,
       lng               REAL    DEFAULT NULL,
       beacon_id         TEXT    DEFAULT NULL,

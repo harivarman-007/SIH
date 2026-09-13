@@ -43,6 +43,8 @@ async def sync_batch(
             description=item.description,
             photo_url=item.photo_url,
             has_photo=bool(item.has_photo or item.photo_url),
+            gas_reading_value=item.gas_reading_value,
+            gas_reading_unit=item.gas_reading_unit,
             lat=item.lat,
             lng=item.lng,
             beacon_id=item.beacon_id,

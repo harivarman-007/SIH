@@ -242,11 +242,23 @@
 
 ---
 
-## Phase 20 — Map Sensor Telemetry Remediation
+## Phase 20 — Real Observation-Derived Gas Telemetry (Replaces Fabricated Map Data)
 
-- [ ] Present decision to owner: (a) completely remove fabricated sensor telemetry vs. (b) clearly label as "Illustrative — not live sensor data"
-- [ ] Implement selected option across `MineMap.tsx`
-- [ ] Verify map UI shows zero unlabelled decorative data
+- [x] Backend DB: Added `gas_reading_value` (Float) and `gas_reading_unit` (String) to `Observation` model in `backend/app/models/__init__.py`
+- [x] Backend Alembic: Created migration `backend/alembic/versions/003_add_observation_gas_reading.py`
+- [x] Backend API: Added `gas_reading_value` and `gas_reading_unit` to schemas (`ObservationCreate`, `ObservationOut`, `RiskCardOut`, `SyncObservationIn`) and observation CRUD/sync routes
+- [x] Backend Seeds: Updated `generate_mock_data.py` to seed realistic gas readings (0.12% - 2.35% CH₄) for hazardous gas/methane observations
+- [x] Mobile: Added `gas_reading_value` and `gas_reading_unit` to SQLite schema (`schema.ts`), `ObservationRepository`, and sync serializer (`localObsToPayload`)
+- [x] Mobile: Added optional numeric gas reading field to `NewObservationScreen.tsx` for safety/environment categories with `% CH₄` badge
+- [x] Dashboard API & Map: Updated `MineMap.tsx` to derive and display latest real observation gas reading dynamically from `rawObservations`
+- [x] Dashboard Map: Purged all hardcoded static constants (`methanePpm`, `ventilationVelocity`, "28 / 28 Online") from `MineSite` interface, `MINE_SITES` array, and bottom HUD ticker
+- [x] Verification:
+  - Mobile TypeScript: `npx tsc --noEmit` passed with 0 errors
+  - Dashboard Build: `npm run build` passed with 0 TypeScript errors (3056 modules, 12.44s)
+  - Backend Telemetry Tests: `backend/scripts/verify_phase20_telemetry.py` 5/5 PASSED
+  - Full Regression Suites: 87/87 tests passed across all 5 verification suites (82 original + 5 Phase 20)
+
+**CHECKPOINT: Phase 20 complete — 100% of fabricated map telemetry replaced with real observation-derived gas telemetry.**
 
 ---
 

@@ -359,6 +359,13 @@ def seed():
                 beacon_id = f"BLC-{rng.randint(100,999)}-{rng.choice(['A','B','C'])}"
 
             obs_id = uid()
+            desc = pick_description(category)
+            gas_val = None
+            gas_unit = None
+            if (category == "safety" and any(k in desc.lower() for k in ["gas", "methane", "ventilation", "leak", "airway", "fume", "sensor"])) or (category == "safety" and rng.random() < 0.3):
+                gas_val = round(rng.uniform(0.12, 2.35), 2)
+                gas_unit = "% CH₄"
+
             obs_records.append({
                 "id": obs_id,
                 "created_at": created,
@@ -367,8 +374,10 @@ def seed():
                 "mine_site_id": site_id,
                 "zone_id": zone_id,
                 "category": category,
-                "description": pick_description(category),
+                "description": desc,
                 "has_photo": has_photo,
+                "gas_reading_value": gas_val,
+                "gas_reading_unit": gas_unit,
                 "lat": lat_val,
                 "lng": lng_val,
                 "beacon_id": beacon_id,
@@ -390,14 +399,16 @@ def seed():
         cur.execute("""
             INSERT INTO observations (
                 id, created_at, synced_at, inspector_id, mine_site_id, zone_id,
-                category, description, has_photo, lat, lng, beacon_id,
+                category, description, has_photo, gas_reading_value, gas_reading_unit,
+                lat, lng, beacon_id,
                 edge_score, edge_flag, edge_reasons,
                 cloud_score, cloud_flag, cloud_reasons, suggested_action,
                 status, closed_at, closed_by_id, closure_note, escalated_at,
                 version, versions_json, enriched_at
             ) VALUES (
                 %(id)s, %(created_at)s, %(synced_at)s, %(inspector_id)s, %(mine_site_id)s, %(zone_id)s,
-                %(category)s, %(description)s, %(has_photo)s, %(lat)s, %(lng)s, %(beacon_id)s,
+                %(category)s, %(description)s, %(has_photo)s, %(gas_reading_value)s, %(gas_reading_unit)s,
+                %(lat)s, %(lng)s, %(beacon_id)s,
                 %(edge_score)s, %(edge_flag)s, %(edge_reasons)s,
                 %(cloud_score)s, %(cloud_flag)s, %(cloud_reasons)s, %(suggested_action)s,
                 %(status)s, %(closed_at)s, %(closed_by_id)s, %(closure_note)s, %(escalated_at)s,

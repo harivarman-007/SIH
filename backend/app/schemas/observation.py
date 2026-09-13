@@ -18,6 +18,8 @@ class ObservationCreate(BaseModel):
     edge_score: Optional[float] = None
     edge_flag: Optional[RiskFlag] = None
     edge_reasons: Optional[Dict[str, Any]] = None
+    gas_reading_value: Optional[float] = None
+    gas_reading_unit: Optional[str] = None
     created_at: Optional[datetime] = None  # Client capture timestamp
 
 
@@ -37,6 +39,8 @@ class ObservationOut(BaseModel):
     description: str
     photo_url: Optional[str] = None
     has_photo: bool
+    gas_reading_value: Optional[float] = None
+    gas_reading_unit: Optional[str] = None
     lat: Optional[float] = None
     lng: Optional[float] = None
     beacon_id: Optional[str] = None
@@ -65,6 +69,8 @@ class RiskCardOut(BaseModel):
     category: ObservationCategory
     description: str
     status: ObservationStatus
+    gas_reading_value: Optional[float] = None
+    gas_reading_unit: Optional[str] = None
     edge_score: Optional[float] = None
     edge_flag: Optional[RiskFlag] = None
     edge_reasons: Optional[Dict[str, Any]] = None
