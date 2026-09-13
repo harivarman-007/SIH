@@ -158,8 +158,8 @@ export const PillNav: React.FC<PillNavProps> = ({
                 transition={{ duration: 0.15 }}
                 className="absolute right-0 mt-2 w-60 rounded-2xl bg-white border border-zinc-200 shadow-xl p-1.5 z-50"
               >
-                <div className="px-3 py-1.5 text-[10px] uppercase font-mono tracking-wider text-zinc-400 border-b border-zinc-100 mb-1">
-                  Switch Persona (Demo)
+                <div className="px-3 py-1.5 text-[10px] uppercase font-mono tracking-wider text-amber-800 bg-amber-50/60 rounded-lg border border-amber-200/50 mb-1.5 font-bold">
+                  Demo Switcher (SIH Evaluation Only)
                 </div>
                 {ROLES.map((r) => {
                   const isSelected = r.id === currentRole;
