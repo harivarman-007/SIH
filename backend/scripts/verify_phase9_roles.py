@@ -165,22 +165,22 @@ def test_apply_role_filter():
 
 
 # ---------------------------------------------------------------------------
-# Test 4: close_observation requires mine_official or super_admin only
+# Test 4: close_observation requires mine_official (D9: super_admin removed)
 # ---------------------------------------------------------------------------
 def test_close_observation_role_restriction():
-    print("\n--- Test 4: close_observation requires mine_official or super_admin ---")
+    print("\n--- Test 4: close_observation requires mine_official (D9: super_admin removed) ---")
     from app.models import UserRole
     from app.services.auth import require_roles
 
-    # Check that the close_observation endpoint uses mine_official and super_admin
+    # Check that the close_observation endpoint uses mine_official and denies regulator / super_admin
     import inspect
     from app.api.observations import close_observation
     source = inspect.getsource(close_observation)
     record("close_observation: requires mine_official", "mine_official" in source)
-    record("close_observation: requires super_admin", "super_admin" in source)
+    record("close_observation: super_admin removed per D9",
+           "require_roles(UserRole.mine_official, UserRole.super_admin)" not in source)
     record("close_observation: does NOT allow regulator to close",
-           "require_roles(UserRole.mine_official, UserRole.super_admin)" in source
-           or "mine_official, UserRole.super_admin" in source)
+           "UserRole.regulator" not in source)
 
 
 # ---------------------------------------------------------------------------

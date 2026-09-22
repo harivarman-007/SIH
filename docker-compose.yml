@@ -31,6 +31,8 @@ services:
       JWT_ALGORITHM: HS256
       JWT_EXPIRE_MINUTES: "60"
       ENVIRONMENT: development
+      # Demo Mode: enable self-registration and demo account features in development (never enable in production)
+      DEMO_MODE: "true"
     ports:
       - "8000:8000"
     volumes:

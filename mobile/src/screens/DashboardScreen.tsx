@@ -21,6 +21,7 @@ import { getSyncStats } from "../sync/SyncWorker";
 import { isOnline } from "../sync/TaskManager";
 import { useAuthStore } from "../store/authStore";
 import { LocalObservation } from "../db/schema";
+import { BottomNavBar } from "../components/BottomNavBar";
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "Dashboard">;
@@ -233,15 +234,8 @@ export default function DashboardScreen({ navigation }: Props) {
         </View>
       </ScrollView>
 
-      {/* FAB */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate("NewObservation")}
-        testID="new-observation-fab"
-        accessibilityLabel="Log new observation"
-      >
-        <Text style={styles.fabIcon}>+</Text>
-      </TouchableOpacity>
+      {/* Persistent Bottom Navigation */}
+      <BottomNavBar currentRoute="Dashboard" navigation={navigation} />
     </View>
   );
 }

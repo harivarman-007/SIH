@@ -313,7 +313,208 @@
 
 ---
 
-*Project Status: Phases 18–23 Fully Implemented & Verified. Ready for Final Commit & Demonstration.*
+## Phase 24 — Authorization Foundation (Backend Only)
 
+- [x] Documentation Preservation: Save verbatim RBAC spec to `docs/RBAC_SPEC.md` and unified flow prompt to `docs/UNIFIED_FLOW_PROMPT.md`
+- [x] Migration `006_authz_and_sessions.py`: FROZEN snapshot, `permissions`, `role_permissions`, `sessions`, `users.last_login_at/department`, `alerts.recipient_user_id/action_id`
+- [x] Auth Package (`backend/app/authz/`): `permissions.py`, `deps.py` (`authenticate`, `require_permission`), `scope.py`, `errors.py` (`{code, message, detail}`)
+- [x] Router Migration: Migrated all routers to `require_permission` and centralized `scope.py` helpers
+- [x] Session Management & Logout: Database-backed sessions with `POST /auth/logout` instant revocation
+- [x] Backward Compatibility: `GET /auth/me` includes `permissions[]` and `scope` without breaking `UserOut` top-level fields
+- [x] Audit Envelope & Deduplication: Standard audit envelope, `ACCESS_DENIED` async session log with 1,000-entry 30s TTL deduplication cache
+- [x] Verification: `backend/scripts/verify_phase24_authz.py` 16/16 PASSED
 
+**CHECKPOINT: Phase 24 complete — Authorization foundation, sessions, fail-closed scoping, and audit deduplication verified.**
+
+---
+
+## Phase 25 — Workflow Engine + Inspections
+
+- [x] Migration `007_workflow_and_inspections.py`: `inspections` table, `workflow_transitions` table, `observations.inspection_id`, `ObservationStatus` enum expansion (`under_review`, `action_required`)
+- [x] State Machine Engine (`backend/app/authz/state_machine.py`): Transition tables for inspections and observations, legal vs illegal transition validation, D12 human-in-the-loop protection, atomic dual-write (`workflow_transitions` + audit)
+- [x] Scoping Extensions (`backend/app/authz/scope.py`): `apply_inspection_scope` and `assert_can_access_inspection`
+- [x] Inspection API (`backend/app/api/inspections.py`): `POST /inspections` (human-readable `INS-xxxx` code, inspector alert), `GET /inspections`, `GET /inspections/{id}`, `POST /start`, `POST /complete`, `POST /submit`, `POST /cancel`
+- [x] Observation Review & Sync: `POST /observations/{id}/review` (`open -> under_review`), optional `inspection_id` support in `/observations` and `/sync/batch`
+- [x] Unresolved Status Set: Updated `UNRESOLVED_STATUSES` to `{open, under_review, action_required, in_progress, escalated}` for SLA scheduler and KPI calculations
+- [x] Verification: `backend/scripts/verify_phase25_inspections.py` 13/13 PASSED
+- [x] Regression Suite: Full 9-phase verification suite PASSED (151 total assertions across Phases 8, 9, 11, escalation, 20, 21, 22, 24, 25)
+
+**CHECKPOINT: Phase 25 complete — Workflow engine, inspection lifecycle, and observation review flow fully implemented and verified.**
+
+---
+
+## Phase 26 — Corrective Actions, Evidence Upload & Verification/Closure Workflow
+
+- [x] Migration `008_corrective_actions.py`: `corrective_actions` table, `action_evidence` table, `ActionStatus` (`REOPEN_IN_PROGRESS`), `ActionPriority`, `EvidenceKind` enums, `alerts.action_id` foreign key
+- [x] ORM Models (`backend/app/models/__init__.py`): `CorrectiveAction` and `ActionEvidence` models, relationships, and property synonyms
+- [x] State Machine Engine (`backend/app/authz/state_machine.py`): `ACTION_TRANSITIONS` rules covering full lifecycle, illegal transitions block, D12 human-in-the-loop verify guard, and atomic D7 parent observation closure
+- [x] Scoping & Authorization (`backend/app/authz/scope.py`): `apply_action_scope` and `assert_can_access_action` enforcing per-role data boundaries
+- [x] Action Schemas (`backend/app/schemas/actions.py`): `ActionCreate`, `ActionOut`, `EvidenceCreate`, `EvidenceOut`, `ActionStatusTransition`, `RejectActionRequest`
+- [x] Action API Router (`backend/app/api/actions.py`): Complete CRUD and lifecycle endpoints (`create`, `list`, `get`, `accept`, `start`, `submit`, `upload-evidence`, `verify`, `reject`)
+- [x] Scheduler & Alerts (`backend/app/scheduler.py`): Overdue action scanner and alert dispatch to contractor & mine official
+- [x] KPI Integration (`backend/app/api/kpi.py`): Added `total_actions`, `open_actions`, `overdue_actions`, and `closed_actions` to summary response
+- [x] Automated Verification: `backend/scripts/verify_phase26_actions.py` 17/17 PASSED
+- [x] Full Regression Suite: 9/9 verification suites PASSED (168 total assertions across Phases 8, 9, 11, 20, 21, 22, 24, 25, 26)
+
+**CHECKPOINT: Phase 26 complete — Corrective actions, evidence upload, rejection loop, and atomic closure verified.**
+
+---
+
+## Phase 27 — Frontend Routing, Guards, Dynamic Sidebar
+
+- [x] Design Checkpoint completed with owner (sidebar shell, 403 screen, account disabled, loading state, session expired banner, stubs)
+- [x] Install `react-router-dom` and testing dependencies (`vitest`) in `dashboard/`
+- [x] Define TypeScript permissions & single `NAV_REGISTRY` (`dashboard/src/config/navRegistry.ts`)
+- [x] Implement Route Guards: `ProtectedRoute`, `RoleGuard`, `PermissionGuard`
+- [x] Implement State Screens: `AccessDeniedPage` (403 inside layout), `AccountDisabledScreen` (full-page), `ComingSoonStub`
+- [x] Implement Dynamic Collapsible Sidebar (`dashboard/src/components/Sidebar.tsx`) with rail/expanded toggle and role filtering
+- [x] Implement Root Layout (`dashboard/src/components/AppLayout.tsx`) with dynamic breadcrumbs, header, AlertBell, and Outlet
+- [x] Update `LoginForm.tsx` with session expiration alert banner and `returnTo` post-login redirect
+- [x] Configure `react-router-dom` route table in `App.tsx` covering all 6 roles with existing views and tracked stubs:
+  - [x] `/manager/dashboard` (AdvancedStats)
+  - [x] `/manager/hazards` (ObservationTable)
+  - [x] `/manager/map` (MineMap)
+  - [x] `/manager/ocr` (OcrQueueView)
+  - [~] `/manager/inspections` stubbed (Phase 28)
+  - [~] `/manager/actions` stubbed (Phase 28)
+  - [x] `/corporate/dashboard` (CorporateManagementView)
+  - [x] `/corporate/mines` (MineMap)
+  - [~] `/corporate/analytics` stubbed (Phase 28)
+  - [~] `/corporate/reports` stubbed (Phase 30)
+  - [x] `/regulator/dashboard` (AdvancedStats)
+  - [x] `/regulator/audit` (AuditTrailView)
+  - [x] `/regulator/hazards` (ObservationTable)
+  - [x] `/regulator/map` (MineMap)
+  - [~] `/regulator/violations` stubbed (Phase 28)
+  - [x] `/inspector/dashboard` (ObservationTable - mobile-first)
+  - [x] `/inspector/observations` (ObservationTable)
+  - [~] `/inspector/inspections` stubbed (Phase 28)
+  - [x] `/contractor/dashboard` (ObservationTable - assigned remediation)
+  - [~] `/contractor/actions` stubbed (Phase 28)
+  - [~] `/contractor/performance` stubbed (Phase 28)
+  - [x] `/admin/dashboard` (AdvancedStats)
+  - [x] `/admin/mines` (MineMap)
+  - [x] `/admin/audit` (AuditTrailView)
+  - [~] `/admin/users` stubbed (Phase 30)
+  - [~] `/admin/system` stubbed (Phase 30)
+- [x] Verify `npm run build` passes with 0 TypeScript errors (3079 modules transformed)
+- [x] Write and run automated guard and routing tests (`npm run test`: 11/11 PASSED)
+- [x] Backend `POST /auth/access-denied` endpoint & audit log verification (`verify_phase27_auth.py`: 6/6 PASSED, rate limit 20/min + control char stripping)
+- [x] Full Regression: all 13 verify suites pass 100% via master `verify_all.py` (206/206 checks across Phases 8, 9, 11, escalation, 20, 21, 22, 24, 25, 26, 27, 27b overdue, 27b KPI)
+- [x] Automated Unit Tests (`npm test`: 15/15 PASSED in Vitest with mounted components and backend registry JSON parity)
+- [x] Production Build (`npm run build`: PASSED, 0 TypeScript errors, 3079 modules transformed)
+- [x] KPI metrics: Closure time, rejection rate %, and contractor on-time % integrated into `/kpi` (per-mine and fleet-wide in `/kpi/cross-mine-summary`) and verified in `verify_phase27b_kpi.py`
+- [x] Overdue action scanner & alert deduplication verified in `verify_phase27b_overdue.py`
+- [x] Spec-compliant rejection flow: REJECTED -> IN_PROGRESS only (via `/start`); direct resubmit from REJECTED blocked (HTTP 400); `REOPEN_IN_PROGRESS` removed from transitions and enum
+- [x] Architecture & Migration Note: Migration 007 downgrade leaves `under_review`/`action_required` in the observation status enum by design (PostgreSQL ENUM types cannot drop individual values without table recreation).
+
+### Owner to Run (Manual Browser Checklist)
+> Note: As specified, manual browser verification is reserved for the owner. Check off once tested.
+- [ ] 1. Log in as `contractor@mine.internal` -> Navigate manually to `/admin/audit` -> Confirm in-layout 403 "Access Denied" page displays with "Go Back" button.
+- [ ] 2. Check network tab on 403 navigation -> Confirm `POST /auth/access-denied` is dispatched with route and timestamp.
+- [ ] 3. Log in as `super_admin@mine.internal` -> Navigate to `/admin/audit` -> Confirm the `ACCESS_DENIED` audit ledger entries from checks 1–2 appear in the audit trail table.
+- [ ] 4. Inspector role boundary check: Log in as `inspector@mine.internal` -> Navigate manually to `/manager/actions` -> Confirm in-layout 403 "Access Denied" page displays with "Go Back" button.
+- [ ] 5. Real Disabled User check: In database or admin panel, set `is_active = false` on a test user (e.g. `contractor@mine.internal`) -> Attempt login or refresh `/auth/me` -> Confirm full-page takeover `AccountDisabledScreen` appears with only "Sign Out" action.
+- [ ] 6. Log in as `mine_official@mine.internal` -> Verify sidebar collapses to 64px rail icon-only mode with tooltips, and expands to 240px.
+- [ ] 7. Viewport responsiveness: Resize browser viewport to <1024px (tablet) -> Verify sidebar auto-collapses to rail mode. Resize to <768px (mobile) -> Verify sidebar becomes slide-out overlay drawer with hamburger toggle.
+- [ ] 8. Session expiration & persona switcher: Trigger session expiration (clear cookie/token or mock 401 `SESSION_EXPIRED`) -> Confirm redirected to `/login` with amber expiration banner. In demo mode, use floating role switcher to change persona -> Confirm previous session logged out, stores reset cleanly, and lands on new role's home page.
+
+**CHECKPOINT: Phase 27 / 27b complete — All 13 verify suites pass (206/206), Vitest 15/15 pass, build passes. Ready for owner "go".**
+
+---
+
+## Phase 28a — Manager & Contractor Screens (Full Jury Flow)
+*Focus: The complete end-to-end operational loop between Mine Official and Contractor.*
+
+- [x] Batched Design Questions for Phase 28a posted and aligned with owner (Q1-Q4 aligned)
+- [x] **Manager Screens:**
+  - [x] Risk Center review -> create action + assign contractor (`CreateActionDrawer.tsx`)
+  - [x] Inspections management screen (`InspectionsManagementView.tsx`: scheduled, in-progress, completed review)
+  - [x] Corrective Actions board (`CorrectiveActionsBoard.tsx`: 6 Kanban columns ASSIGNED, ACCEPTED, IN_PROGRESS, PENDING_VERIFICATION, REJECTED, CLOSED)
+  - [x] Verification & Rejection dialogs (mandatory reason modal min 10 chars, proof of work evidence viewer)
+- [x] **Contractor Screens:**
+  - [x] Assigned Work overview / work orders queue (`ContractorWorkQueue.tsx`)
+  - [x] Action execution page: Accept work order, Start work (/start)
+  - [x] Evidence upload (multi-file, before/after photos, documents, notes with thumbnail preview)
+  - [x] Work submission (/submit with proof of work, min 1 after photo + completion note)
+  - [x] Rejection notice & reason viewer with "Resume Work" re-entry loop (Q4 amber banner)
+  - [x] Contractor Performance & on-time compliance dashboard (`ContractorPerformanceView.tsx`)
+- [x] Integration & End-to-End browser walkthrough of the full jury flow
+
+---
+
+## Phase 28b — Remaining Web Roles & System Overview
+*Focus: Inspector web, Corporate, Regulator, and Super Admin consoles.*
+
+- [x] Inspector Web Screen: observation queue & assigned inspection review (`AssignedFieldInspectionsView.tsx`)
+- [x] Corporate Management Screen: fleet cross-mine analytics, leaderboard & escalation radar (`CorporateAnalyticsView.tsx`)
+- [x] Regulator Screen: statutory compliance, violations ledger, and mandated directives (`StatutoryEnforcementView.tsx` - strictly read-only per RBAC spec)
+- [x] Super Admin Screen: user directory, official role provisioning modal (`UserManagementView.tsx`), and governance policy view (`SystemSettingsView.tsx`)
+- [x] Verification: All 13 verify suites pass 100% via `verify_all.py` (212/212 PASS, 0 FAIL, 0 SKIP), Vitest (14/14 PASS), `npm run build` passes with zero errors.
+
+---
+
+## Phase 29 — Mobile: Inspections, Actions, Two-Way Delta Sync
+*Focus: Mobile offline-first two-way delta sync, inspection execution, action tracking.*
+
+- [x] Batched Design Questions for Phase 29 Mobile Screens aligned with owner
+- [x] Backend Delta Sync Endpoint: `GET /sync/pull?since=<watermark>` (watermark on `updated_at`, caller-scoped inspections, observations & linked actions)
+- [x] Mobile SQLite Storage:
+  - [x] Tables for cached inspections (`cached_inspections`) & corrective actions (`cached_actions`)
+  - [x] Outbox table for offline inspection events (`inspection_outbox` for start, submit)
+  - [x] Watermark metadata tracking (`sync_meta`)
+- [x] Mobile Screens:
+  - [x] Dedicated 5-tab Bottom Navigation (`BottomNavBar.tsx`: Home, Inspections, New Observation, Actions, Sync) with dynamic badge counts
+  - [x] Inspections List & Detail (`InspectionsScreen.tsx`) with offline start -> observe -> submit flow & zero-obs mandatory sign-off notes
+  - [x] Read-only Corrective Actions queue (`ActionsScreen.tsx`) with priority/status badges & web-mirrored amber rejection banner
+  - [x] New Observation linking banner and pre-fill (`NewObservationScreen.tsx`)
+- [x] Mobile Sync Engine Integration:
+  - [x] Outbox synchronization on reconnect / sync button (`SyncWorker.ts`: inspection outbox flush + observation queue flush)
+  - [x] 30-second debounce on network reconnect triggers
+  - [x] Atomic watermark advancement (only advancing after full batch commit to SQLite)
+  - [x] Inbound delta hydration to local SQLite tables
+- [x] Automated Verification: `backend/scripts/verify_phase29_pull_sync.py` (16/16 checks passed: watermark filtering, status mutations, rejection reason persistence, zero-obs validation, scope isolation)
+- [x] Master Verification: `backend/scripts/verify_all.py` (228/228 checks passed across all 14 suites)
+- [x] Frontend Build & Tests: Vitest (14/14 passed), `npm run build` exit 0, Mobile `npx tsc --noEmit` exit 0
+- [x] Manual Offline Walkthrough prepared: offline start → observe → reconnect → sync
+
+---
+
+## Phase 30 — Super Admin Console, Reports, Governance Config
+*Focus: Super Admin governance, role permissions matrix, dynamic SLA settings, compliance rules, statutory reports engine.*
+
+- [x] Backend Governance Models & Migration:
+  - [x] Added `SystemSetting`, `ComplianceRule`, `Report`, `ContractorProfile` ORM models
+  - [x] Alembic Migration 009 (`009_governance_and_reports.py`) with clean downgrade and upgrade verification
+- [x] Admin API Endpoints (`/admin`):
+  - [x] User management: `GET /admin/users`, `POST /admin/users` (administrative provisioning)
+  - [x] Status & lockout protection: `PATCH /admin/users/{id}/status` with self-disable lockout guard (`LOCKOUT_PREVENTED`), session revocation, and audit logging
+  - [x] Role management: `PATCH /admin/users/{id}/role` with self-demote lockout guard
+  - [x] Roles & permissions matrix: `GET /admin/roles-permissions` & `POST /admin/roles-permissions/toggle` with strict `HARD_DENY` enforcement, super_admin lockout guard, and permission cache eviction
+  - [x] Dynamic system settings: `GET /admin/system-settings` & `PUT /admin/system-settings` for SLA and risk thresholds
+  - [x] Compliance rules catalogue: `GET /admin/compliance-rules`, `POST /admin/compliance-rules` (audited: `COMPLIANCE_RULE_CREATED`), `PATCH /admin/compliance-rules/{id}` (audited: `COMPLIANCE_RULE_UPDATED`)
+  - [x] Contractor profiles management: `GET /admin/contractors`, `GET /admin/contractors/{user_id}`, `PATCH /admin/contractors/{user_id}` (audited: `CONTRACTOR_PROFILE_UPDATED`)
+  - [x] System health monitor: `GET /admin/system-health` checking database, scheduler, and cryptographic audit chain head
+- [x] Statutory Reports API Endpoints (`/reports`):
+  - [x] Report generation: `POST /reports` generating immutable snapshots for `compliance_summary`, `violations`, and `closure_performance` scoped to authorized mines
+  - [x] Report archive: `GET /reports` and `GET /reports/{id}`
+  - [x] CSV export: `GET /reports/{id}/export?format=csv` with `REPORT_EXPORTED` audit tracking
+- [x] Background Scheduler Integration:
+  - [x] Dynamic SLA lookup (`_get_sla_thresholds`) reading live `system_settings` table before scanning overdue actions
+- [x] Frontend Governance & Reporting Views:
+  - [x] `RolesPermissionsView.tsx`: Tabbed by role, accordion permission groups, HARD_DENY badges, permission search filter (Option 1A)
+  - [x] `SystemSettingsView.tsx`: Replaced Phase 28 disabled fields and "Coming in Phase 30" placeholder with real wired inputs, live health status, and working Save button
+  - [x] `ComplianceRulesView.tsx`: DGMS statutory regulations catalogue with category filter, active toggle, and add regulation modal
+  - [x] `ComplianceReportsView.tsx`: 3A generator cards + archive table with CSV download and snapshot view modal
+  - [x] Independent subroutes: `/admin/system`, `/admin/roles`, `/admin/rules` independently permission-guarded per Option 2B
+  - [x] Unstubbed `/corporate/reports` in `navRegistry.ts` and `App.tsx`
+- [x] Automated Verification:
+  - [x] `backend/scripts/verify_phase30_admin_reports.py`: 27/27 checks PASSED
+  - [x] `backend/scripts/verify_all.py`: 259/259 checks PASSED across all 15 suites
+  - [x] Vitest tests: 14/14 PASSED
+  - [x] Frontend production build: exit 0 (`index-sa-oBW0a.css` / `index-DHtx6Gzu.js`)
+
+---
+
+*Project Status: Phase 30 Complete. All 15 verify suites pass (259/259), Vitest 14/14 pass, Dashboard build exit 0. Ready for Phase 31 upon owner approval.*
 

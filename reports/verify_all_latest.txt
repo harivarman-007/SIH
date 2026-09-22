@@ -1,0 +1,532 @@
+# Commit: 172009b0ece43ee37f33dd76feaeb3ea0cb3735f | Timestamp: 2026-09-22T07:25:21.582122+00:00
+
+==============================================================================
+INTELLIFUSION MASTER VERIFICATION SUITE (ALL PHASES)
+==============================================================================
+
+
+>>> Running Phase 8 (verify_phase8_fixes.py) ...
+------------------------------------------------------------
+============================================================
+RUNNING PHASE 8 VERIFICATION SUITE
+============================================================
+
+--- Test 1: POST /auth/register Role Restriction ---
+  [PASS] Attempted regulator self-registration rejected: Value error, Public self-registration is restricted to ['inspector', 'contractor'] only. Role 'regulator' requires administrative provisioning.
+  [PASS] Attempted mine_official self-registration rejected: Value error, Public self-registration is restricted to ['inspector', 'contractor'] only. Role 'mine_official' requires administrative provisioning.
+PASS: Public registration strictly limited to inspector/contractor.
+
+--- Test 2: apply_role_filter Fails Closed on Missing Scope ---
+  [PASS] Contractor without mine_site_id fails closed (0 observations exposed).
+  [PASS] Mine official without mine_site_id fails closed (0 observations exposed).
+PASS: apply_role_filter strictly fails closed.
+
+--- Test 3: CORS Configuration & Credentials Allowlist ---
+  Configured allow_origins: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173']
+  Configured allow_credentials: True
+PASS: CORS allowlist restricted to explicit origins, credentials safe.
+
+--- Test 4: Audit Append Concurrency Lock (with_for_update) ---
+  [PASS] append_audit_entry uses with_for_update() row lock.
+PASS: Audit hash chain append serialized against concurrent fork races.
+
+--- Test 5: JWT_SECRET Synchronization Across Environments ---
+  config.py default JWT_SECRET:     dev_secret_chan... (len 73)
+  .env.example JWT_SECRET:           dev_secret_chan... (len 73)
+  docker-compose.yml JWT_SECRET:     dev_secret_chan... (len 73)
+PASS: JWT_SECRET identical and synchronized across config.py, .env.example, and docker-compose.yml.
+
+============================================================
+ALL 5 PHASE 8 AUDIT FIXES VERIFIED SUCCESSFULLY!
+============================================================
+------------------------------------------------------------
+[PASS] Phase 8 (verify_phase8_fixes.py): 5 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 9 (verify_phase9_roles.py) ...
+------------------------------------------------------------
+============================================================
+Phase 9 Role Model Verification
+============================================================
+
+--- Test 1: UserRole enum has all 6 roles ---
+  [PASS] All 6 roles present in UserRole enum
+  [PASS] No unexpected roles
+  [PASS] super_admin present
+  [PASS] corporate_management present
+
+--- Test 2: Public registration rejects elevated roles ---
+  [PASS] Public registration allows inspector
+  [PASS] Public registration allows contractor
+  [PASS] Public registration rejects super_admin
+  [PASS] Public registration rejects corporate_management
+  [PASS] Public registration rejects mine_official
+  [PASS] Public registration rejects regulator
+
+--- Test 3: apply_role_filter branches all 6 roles ---
+  [PASS] super_admin: no additional WHERE filter
+  [PASS] regulator: no additional WHERE filter
+  [PASS] inspector: filters to own inspector_id
+  [PASS] mine_official (with site): filters to mine_site_id
+  [PASS] mine_official (no site): fails closed (id IS NULL)
+  [PASS] contractor: filters via contractor_assignments subquery
+  [PASS] corporate_management: filters via corporate_mine_access subquery
+  [PASS] unknown role: fails closed (id IS NULL)
+
+--- Test 4: close_observation requires mine_official (D9: super_admin removed) ---
+  [PASS] close_observation: requires mine_official
+  [PASS] close_observation: super_admin removed per D9
+  [PASS] close_observation: does NOT allow regulator to close
+
+--- Test 5: Contractor with 0 assignments sees no observations ---
+  [PASS] Contractor filter uses IN subquery on contractor_assignments
+  [PASS] Contractor filter does NOT fall through to inspector or mine_official logic
+
+--- Test 6: Corporate management with 0 mine grants sees no observations ---
+  [PASS] Corporate management filter uses IN subquery on corporate_mine_access
+  [PASS] Corporate management does NOT rely on mine_site_id IS NULL to get all data
+
+--- Test 7: New model classes: CorporateMineAccess and ContractorAssignment ---
+  [PASS] CorporateMineAccess has user_id
+  [PASS] CorporateMineAccess has mine_site_id
+  [PASS] CorporateMineAccess has granted_at
+  [PASS] ContractorAssignment has contractor_id
+  [PASS] ContractorAssignment has observation_id
+  [PASS] ContractorAssignment has notes
+  [PASS] ContractorAssignment has assigned_at
+
+--- Test 8: Admin route exists and public register cannot create elevated roles ---
+  [PASS] AdminUserCreateRequest allows mine_official
+  [PASS] AdminUserCreateRequest allows corporate_management with mine_ids
+  [PASS] admin_create_user: gated to super_admin role
+
+============================================================
+Results: 35/35 tests passed
+============================================================
+
+[ALL PASS] All Phase 9 role boundary tests PASSED!
+------------------------------------------------------------
+[PASS] Phase 9 (verify_phase9_roles.py): 35 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 11 (verify_phase11_corporate.py) ...
+------------------------------------------------------------
+
+============================================================
+Phase 11 Corporate Management API Verification
+============================================================
+  [PASS] Endpoint /kpi/cross-mine-summary is registered on router
+  [PASS] Response is CrossMineSummaryResponse instance
+  [PASS] Total mines matches granted count (2)
+  [PASS] Total observations matches count across granted sites (3)
+  [PASS] Aggregate risk score is computed and > 0
+  [PASS] Aggregate risk level is valid ('low', 'medium', or 'high')
+  [PASS] Open violations total is correct (2 open/in-progress)
+  [PASS] Open high-risk violations count is 1
+  [PASS] Safety open violation count is 1
+  [PASS] Environment open violation count is 1
+  [PASS] Labour open violation count is 0 (closed obs)
+  [PASS] Active contractors count is 1
+  [PASS] Assigned open violations count is 1
+  [PASS] High risk contractor tasks count is 1
+  [PASS] Leaderboard contains exactly 2 rows
+  [PASS] Leaderboard sorted descending (highest risk first)
+  [PASS] Top mine is higher risk (Jharia Coalfield Central: 28.0 >= Raniganj North Block: 8.0)
+  [PASS] Top mine sparkline has exactly 7 data points
+  [PASS] Second mine sparkline has exactly 7 data points
+  [PASS] Sparkline data points are all valid floats
+  [PASS] Sparkline terminal point matches current risk score
+  [PASS] Fail-closed: Corporate user with 0 granted mines returns 0 mines
+  [PASS] Fail-closed: Aggregate risk score is 0.0
+  [PASS] Fail-closed: Leaderboard is empty list
+
+============================================================
+Results: 24/24 passed
+============================================================
+
+All Phase 11 Corporate Management API tests PASSED!
+------------------------------------------------------------
+[PASS] Phase 11 (verify_phase11_corporate.py): 24 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Escalation (verify_escalation.py) ...
+------------------------------------------------------------
+
+============================================================
+Automated Statutory SLA Escalation Engine Verification
+============================================================
+  [PASS] Endpoint /observations/escalate-overdue is registered on router
+  [PASS] Response is an EscalationResponse instance
+  [PASS] Evaluated count matches all unresolved observations (5)
+  [PASS] Escalated count is exactly 3 (2 high-risk + 1 med-risk)
+  [PASS] Obs 1 (High > 24h) status became 'escalated'
+  [PASS] Obs 1 escalated_at timestamp was set
+  [PASS] Obs 1 entity version was incremented to 2
+  [PASS] Obs 2 (High < 24h) remained 'open'
+  [PASS] Obs 2 escalated_at is None
+  [PASS] Obs 3 (Med > 72h) status became 'escalated'
+  [PASS] Obs 4 (Med < 72h) remained 'open'
+  [PASS] Obs 5 (Production High > 24h) was escalated
+  [PASS] Audit entry append called 3 times
+  [PASS] Audit action is 'observation.auto_escalated'
+  [PASS] Audit payload contains SLA reason and age_hours
+  [PASS] Custom SLA threshold (5h) correctly escalates 6h-old observation
+  [PASS] Observation status set to escalated with custom threshold
+  [PASS] Fail-closed: Mine official without site scope raises HTTP 403
+
+============================================================
+Results: 18/18 passed
+============================================================
+
+All Automated SLA Escalation Engine tests PASSED!
+------------------------------------------------------------
+[PASS] Escalation (verify_escalation.py): 18 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 20 (verify_phase20_telemetry.py) ...
+------------------------------------------------------------
+============================================================
+Phase 20 Real Gas Telemetry Verification
+============================================================
+  [PASS] Observation ORM model has gas_reading_value and gas_reading_unit columns
+.  [PASS] ObservationCreate, ObservationOut, RiskCardOut schemas define gas reading fields
+.  [PASS] Pydantic models serialize and deserialize gas reading fields accurately
+.  [PASS] Migration 003 exists, is valid Python, and chains to 002_extend_roles_and_access
+.  [PASS] generate_mock_data.py updated with real gas reading simulation
+.
+----------------------------------------------------------------------
+Ran 5 tests in 0.261s
+
+OK
+============================================================
+Results: 5/5 passed
+============================================================
+[ALL PASS] Phase 20 Gas Telemetry Verification SUCCEEDED!
+------------------------------------------------------------
+[PASS] Phase 20 (verify_phase20_telemetry.py): 5 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 21 (verify_phase21_ocr_image.py) ...
+------------------------------------------------------------
+
+=== Phase 21: OCR Image Persistence Verification ===
+
+  [PASS] OcrReviewQueue model has image_path column
+  [PASS] Migration 004_add_ocr_image_path.py exists
+  [PASS] Migration 004 adds image_path column
+  [PASS] submit_ocr saves image bytes to ocr_upload_path
+  [PASS] submit_ocr sets image_path on queue_item
+  [PASS] GET /queue/{id}/image endpoint defined in ocr.py
+  [PASS] OcrQueueItemOut has image_url field
+  [PASS] OcrQueueItemOut uses model_validator to derive image_url from image_path
+  [PASS] OcrQueueItem TypeScript interface includes image_url field
+  [PASS] OcrQueueView.tsx has no Unsplash URL
+  [PASS] No hardcoded mineSite in OcrQueueView.tsx
+  [PASS] No hardcoded shift in OcrQueueView.tsx
+  [PASS] No hardcoded location in OcrQueueView.tsx
+  [PASS] No hardcoded severity string in OcrQueueView.tsx
+  [PASS] No hardcoded category string in OcrQueueView.tsx
+  [PASS] OcrQueueView.tsx references real field: document_name
+  [PASS] OcrQueueView.tsx references real field: submitted_by_id
+  [PASS] OcrQueueView.tsx references real field: created_at
+  [PASS] OcrQueueView.tsx references real field: overall_confidence
+  [PASS] OcrQueueView.tsx references real field: confidence_map (uncertain words)
+  [PASS] OcrQueueView.tsx references real field: authenticated image blob loading
+
+PASS: 21/21 Phase 21 checks PASSED  [0 SKIPPED]
+------------------------------------------------------------
+[PASS] Phase 21 (verify_phase21_ocr_image.py): 21 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 22 (verify_phase22_alerts.py) ...
+------------------------------------------------------------
+
+=== Phase 22: Real Alert Mechanism & APScheduler Verification ===
+
+  [PASS] Alert model class defined
+  [PASS] Alert.recipient_role column
+  [PASS] Alert.mine_site_id column
+  [PASS] Alert.observation_id column
+  [PASS] Alert.is_read column
+  [PASS] Migration 005_add_alerts_table.py exists
+  [PASS] Migration 005 creates alerts table
+  [PASS] Migration 005 has correct down_revision
+  [PASS] GET /alerts endpoint defined
+  [PASS] PATCH /alerts/{id}/read endpoint defined
+  [PASS] Alerts API uses role-scoped query
+  [PASS] AlertOut schema defined
+  [PASS] AlertOut has is_read field
+  [PASS] alerts.ts API client exists
+  [PASS] Alert TypeScript interface defined
+  [PASS] fetchAlerts function exported
+  [PASS] markAlertRead function exported
+  [PASS] AlertBell.tsx component exists
+  [PASS] AlertBell renders bell icon with unread badge
+  [PASS] AlertBell calls fetchAlerts from real API
+  [PASS] AlertBell calls markAlertRead on click
+  [PASS] AlertBell polls every 60s
+  [PASS] AlertBell has no hardcoded fake alert data
+  [PASS] AppLayout.tsx imports AlertBell
+  [PASS] AppLayout.tsx renders <AlertBell>
+  [PASS] scheduler.py: run_escalation_and_alert function defined
+  [PASS] scheduler.py: creates Alert for mine_official
+  [PASS] scheduler.py: creates Alert for corporate_management
+  [PASS] scheduler.py: uses AsyncSessionLocal (not HTTP session)
+  [PASS] scheduler.py: escalates by SLA thresholds
+  [PASS] main.py includes alerts_router
+  [PASS] main.py uses APScheduler AsyncIOScheduler
+  [PASS] main.py starts scheduler in lifespan
+  [PASS] requirements.txt includes apscheduler
+
+PASS: 34/34 Phase 22 checks PASSED  [0 SKIPPED]
+------------------------------------------------------------
+[PASS] Phase 22 (verify_phase22_alerts.py): 34 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 24 (verify_phase24_authz.py) ...
+------------------------------------------------------------
+[PASS] 1. Permission enum fully in PERMISSIONS_REGISTRY â€” 42 permissions
+[PASS] 2. DEFAULT_ROLE_PERMISSIONS covers all 6 roles â€” 6/6 roles
+[PASS] 3. D9 super_admin operator HARD_DENY rules â€” 5 operator permissions hard-denied for super_admin
+[PASS] 4. authz/deps.py imports and functions callable
+[PASS] 5. authz/scope.py all helpers importable
+[PASS] 6. MUST #3 â€” {code, message, detail} where detail==message â€” detail={'code': 'FORBIDDEN', 'message': 'test message', 'detail': 'test message'}
+[PASS] 7. MUST #2 â€” UserOut has permissions, scope, and original fields â€” permissions=True, scope=True, missing_original=set()
+[PASS] 8a. Migration 006 file exists â€” C:\projects\SIH\backend\scripts\..\alembic\versions\006_authz_and_sessions.py
+[PASS] 8b. Migration 006 valid Python syntax
+[PASS] 9a. docs/RBAC_SPEC.md exists â€” C:\projects\SIH\backend\scripts\..\..\docs\RBAC_SPEC.md
+[PASS] 9b. docs/UNIFIED_FLOW_PROMPT.md exists â€” C:\projects\SIH\backend\scripts\..\..\docs\UNIFIED_FLOW_PROMPT.md
+[PASS] 10. SHOULD #12 â€” mobile logout is best-effort with POST /auth/logout â€” best_effort=True, post_logout=True
+[PASS] 11. D9 â€” super_admin removed from close/assign-contractor â€” close_has_super=False, assign_has_super=False
+[PASS] 12. SHOULD #6 â€” Migration 006 has no app.* imports (frozen) â€” No app.* imports
+[PASS] 13. MUST #4 â€” config.py demo_mode defaults to False â€” demo_mode default=False
+[PASS] 14. MUST #4 â€” docker-compose.yml DEMO_MODE=true
+[PASS] 15. Permissions JSON matches live PERMISSIONS_REGISTRY â€” 42 committed vs 42 live
+
+Phase 24 Verification: 17/17 PASSED, 0 FAILED, 0 SKIPPED
+âœ“ 17/17 Phase 24 checks PASSED  [0 SKIPPED]
+------------------------------------------------------------
+[PASS] Phase 24 (verify_phase24_authz.py): 17 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 25 (verify_phase25_inspections.py) ...
+------------------------------------------------------------
+============================================================
+Phase 25 Workflow Engine + Inspections Verification Suite
+============================================================
+[PASS] 1a. ORM models (Inspection, WorkflowTransition, inspection_id)
+[PASS] 1b. Enum values (under_review, action_required, InspectionStatus)
+[PASS] 1c. UNRESOLVED_STATUSES has all 5 unresolved states â€” len=5
+[PASS] 2a. Legal inspection transitions accepted
+[PASS] 2b. Illegal inspection transition (SCHEDULED -> SUBMITTED) rejected
+[PASS] 2c. Legal observation transitions accepted
+[PASS] 2d. Illegal observation transition (closed -> under_review) rejected
+[PASS] 3. D12 Human-in-the-loop protection blocks system actor from closing
+[PASS] 4a. Inspection code generated in INS-xxxx format â€” INS-0016
+[PASS] 4b. Workflow transition record written to database
+[PASS] 4c. Inspector inspection scope includes assigned inspection
+[PASS] 4d. Observation created with linked inspection_id
+[PASS] 4e. Observation transition (open -> under_review) executed
+
+Phase 25 Verification: 13/13 PASSED, 0 FAILED
+âœ“ All Phase 25 checks PASSED
+------------------------------------------------------------
+[PASS] Phase 25 (verify_phase25_inspections.py): 13 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 26 (verify_phase26_actions.py) ...
+------------------------------------------------------------
+============================================================
+Phase 26 Corrective Actions & Verification Workflow Suite
+============================================================
+[PASS] 1a. ORM models (CorrectiveAction, ActionEvidence)
+[PASS] 1b. Enum definitions (ActionStatus, ActionPriority, EvidenceKind; REOPEN removed)
+[PASS] 1c. Model relationships (Observation.corrective_actions, Alert.action_id)
+[PASS] 2a. Legal state transitions (spec-compliant: assigned->accepted->in_progress->pending_verification->verified->closed + rejected->in_progress re-entry)
+[PASS] 2b. Direct resubmit blocked: REJECTED -> PENDING_VERIFICATION without /start is HTTP 400
+[PASS] 2c. Illegal transition blocked (assigned -> closed -> HTTP 400)
+[PASS] 2d. Decision D12 Human-in-the-loop protection (actor_type='system' blocked for verify -> HTTP 403)
+[PASS] 3a. Create Action (ACT-xxxx code generated)
+[PASS] 3b. Scope filtering (Contractor sees assigned action)
+[PASS] 3c. Accept Action (status -> accepted)
+[PASS] 3d. Start Action (status -> in_progress)
+[PASS] 3e. Submit without evidence blocked (HTTP 400)
+[PASS] 3f. Evidence Upload (proof attached)
+[PASS] 3g. Submit Action with evidence (status -> pending_verification)
+[PASS] 3h. Reject Action (status -> rejected, reason recorded, round incremented)
+[PASS] 3h2. Audit ledger records ACTION_REJECTED event â€” action=ACTION_REJECTED
+[PASS] 3i. Rejection reason is persisted and visible on action (contractor sees it via GET /actions/{id})
+[PASS] 3i1. Direct resubmit after reject is blocked (HTTP 400)
+[PASS] 3i2. After rejection: /start moves status REJECTED -> IN_PROGRESS
+[PASS] 3i3. Resubmit Action IN_PROGRESS -> PENDING_VERIFICATION
+[PASS] 3j. Verify Action (status -> closed)
+[PASS] 3k. Decision D7 Atomic Observation Closure (parent observation closed) â€” obs_status=ObservationStatus.closed
+[PASS] 3l. KPI Metrics (closure time, rejection rate %, contractor on-time %) â€” closure=0.0h, rejection=100.0%, on_time=100.0%
+
+============================================================
+PHASE 26 VERIFICATION SUMMARY
+============================================================
+Total Tests: 23 | Passed: 23 | Failed: 0
+
+ALL PHASE 26 VERIFICATION CHECKS PASSED PERFECTLY!
+------------------------------------------------------------
+[PASS] Phase 26 (verify_phase26_actions.py): 23 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 27 (verify_phase27_auth.py) ...
+------------------------------------------------------------
+============================================================
+Phase 27 Auth Endpoint Verification Suite
+============================================================
+[PASS] 1a. AccessDeniedReportRequest valid path
+[PASS] 1b. AccessDeniedReportRequest rejects >200 chars
+[PASS] 1c. Control characters stripped from path â€” Logged: /admin/evilpath-5113cc
+[PASS] 2. POST /auth/access-denied writes ACCESS_DENIED audit entry â€” Logged path: /admin/super-secret-d1a17653
+[PASS] 3. Deduplication: repeated denial with same path within 30s is dropped â€” Count before: 14, after: 14
+[PASS] 4. Per-user rate limit: 25 varying-path requests capped at exactly 20 audit entries â€” Expected 20, recorded: 20 (excess 5 dropped silently with 204)
+============================================================
+PHASE 27 BACKEND AUTH VERIFICATION SUMMARY
+============================================================
+Total Tests: 6 | Passed: 6 | Failed: 0
+
+ALL PHASE 27 BACKEND CHECKS PASSED!
+------------------------------------------------------------
+[PASS] Phase 27 (verify_phase27_auth.py): 6 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 27b Overdue (verify_phase27b_overdue.py) ...
+------------------------------------------------------------
+============================================================
+Phase 27b: Overdue Actions Scanner & Deduplication Behavioral Test
+============================================================
+[PASS] 1. Seeded action past its deadline
+[PASS] 2a. Scanner generated alerts for overdue action â€” Total alerts: 3
+[PASS] 2b. Alert row exists for mine manager
+[PASS] 2c. Alert row exists for corporate management
+[PASS] 2d. Alert message contains [ACTION_OVERDUE]
+[PASS] 3. Scanner idempotency: Running twice does NOT duplicate alerts â€” Run 1 count=3, Run 2 count=3
+
+============================================================
+Results: 6 PASSED, 0 FAILED
+============================================================
+------------------------------------------------------------
+[PASS] Phase 27b Overdue (verify_phase27b_overdue.py): 6 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 27b KPI (verify_phase27b_kpi.py) ...
+------------------------------------------------------------
+============================================================
+Phase 27b: KPI Test with Known Ground-Truth Values
+============================================================
+[PASS] 1. Per-mine avg closure time exact match (5.0 hours) â€” expected 5.0, got 5.0
+[PASS] 2. Per-mine rejection rate exact match (25.0%) â€” expected 25.0%, got 25.0%
+[PASS] 3. Per-mine contractor on-time % exact match (75.0%) â€” expected 75.0%, got 75.0%
+[PASS] 4. Fleet-wide KPI in /kpi/summary available â€” fleet closure=5.0h, rejection=25.0%, on_time=75.0%
+[PASS] 5. Fleet-wide KPI in /kpi/cross-mine-summary available â€” cross-mine closure=5.0h, rejection=25.0%, on_time=75.0%
+
+============================================================
+Results: 5 PASSED, 0 FAILED
+============================================================
+------------------------------------------------------------
+[PASS] Phase 27b KPI (verify_phase27b_kpi.py): 5 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 29 Pull Sync (verify_phase29_pull_sync.py) ...
+------------------------------------------------------------
+============================================================
+Phase 29 Mobile Two-Way Delta Sync Verification Suite
+============================================================
+[PASS] 1a. Baseline pull returns assigned inspection â€” Found: ['INS-aea37b-01']
+[PASS] 1b. Baseline pull scopes out other inspector
+[PASS] 1c. Baseline pull returns caller's observation
+[PASS] 1d. Baseline pull returns linked action with rejection reason
+[PASS] 1e. Baseline pull returns valid future watermark
+[PASS] 2a. Pull since watermark returns 0 stale inspections â€” Count: 0
+[PASS] 2b. Pull since watermark returns 0 stale observations â€” Count: 0
+[PASS] 2c. Pull since watermark returns 0 stale actions â€” Count: 0
+[PASS] 3a. Status mutation reflected in delta pull
+[PASS] 3b. Watermark advances continuously
+[PASS] 4. Action status change reflected in delta pull
+[PASS] 5. Repeated pull requests return identical entity counts
+[PASS] 6a. Zero-observation submission without sign-off notes blocked (HTTP 400)
+[PASS] 6b. Zero-observation submission with mandatory notes accepted (HTTP 200)
+[PASS] 7a. Inspector 2 receives only own inspection
+[PASS] 7b. Inspector 2 receives 0 inspections from Inspector 1
+[PASS] 7c. Inspector 1 pull never includes Inspector 2 observations
+[PASS] 7d. Inspector 1 pull never includes Inspector 2 actions
+[PASS] 7e. Inspector 2 receives only own observations
+[PASS] 7f. Inspector 2 receives only own actions
+============================================================
+Results: 20 PASSED, 0 FAILED
+============================================================
+------------------------------------------------------------
+[PASS] Phase 29 Pull Sync (verify_phase29_pull_sync.py): 20 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+>>> Running Phase 30 Admin & Reports (verify_phase30_admin_reports.py) ...
+------------------------------------------------------------
+============================================================
+Phase 30 Super Admin Console & Reports Verification Suite
+============================================================
+  [PASS] 1a. Self-disable lockout guard blocks super admin from disabling own account
+  [PASS] 1b. Disabling user marks account inactive
+  [PASS] 1c. Disabling user revokes active sessions
+  [PASS] 1d. Audit ledger records USER_DISABLED event
+  [PASS] 1e. Reactivating user marks account active
+  [PASS] 1f. Self-demote lockout guard blocks super admin from demoting own account
+  [PASS] 2a. Roles & permissions matrix returns all 6 roles
+  [PASS] 2b. HARD_DENY guard strictly blocks illegal permission grant
+  [PASS] 2c. Lockout guard blocks revoking critical governance permission from super_admin
+  [PASS] 2d. Legal permission toggle executes successfully
+  [PASS] 2e. Audit ledger records PERMISSION_CHANGED event
+  [PASS] 3a. Read system settings returns valid SLA thresholds
+  [PASS] 3b. Update system settings persists new SLA values
+  [PASS] 3c. Audit ledger records SETTING_CHANGED event
+  [PASS] 3d. Scheduler reads updated dynamic SLA thresholds from system_settings
+  [PASS] 4a. List compliance rules returns seeded regulations
+  [PASS] 4b. Create statutory compliance rule succeeds
+  [PASS] 4c. Audit ledger records COMPLIANCE_RULE_CREATED event
+  [PASS] 4d. Update compliance rule modifies active status
+  [PASS] 4e. Audit ledger records COMPLIANCE_RULE_UPDATED event
+  [PASS] 4f. Update contractor profile succeeds and is audited
+  [PASS] 5a. Generate compliance summary report snapshot succeeds
+  [PASS] 5b. Generate violations report snapshot captures high-risk hazards
+  [PASS] 5c. Scope guard blocks manager from generating report for foreign mine site
+  [PASS] 5d. CSV export streams valid text/csv content
+  [PASS] 5e. Audit ledger records REPORT_EXPORTED event
+  [PASS] 5f. System health returns database, scheduler and audit chain head
+============================================================
+Results: 27 PASSED, 0 FAILED
+============================================================
+------------------------------------------------------------
+[PASS] Phase 30 Admin & Reports (verify_phase30_admin_reports.py): 27 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
+==============================================================================
+FINAL VERIFICATION RECONCILIATION TABLE
+==============================================================================
+Phase / Script                 | PASS   | FAIL   | SKIP   | Status
+------------------------------------------------------------------------------
+Phase 8 (verify_phase8_fixes.py) | 5      | 0      | 0      | PASS  
+Phase 9 (verify_phase9_roles.py) | 35     | 0      | 0      | PASS  
+Phase 11 (verify_phase11_corporate.py) | 24     | 0      | 0      | PASS  
+Escalation (verify_escalation.py) | 18     | 0      | 0      | PASS  
+Phase 20 (verify_phase20_telemetry.py) | 5      | 0      | 0      | PASS  
+Phase 21 (verify_phase21_ocr_image.py) | 21     | 0      | 0      | PASS  
+Phase 22 (verify_phase22_alerts.py) | 34     | 0      | 0      | PASS  
+Phase 24 (verify_phase24_authz.py) | 17     | 0      | 0      | PASS  
+Phase 25 (verify_phase25_inspections.py) | 13     | 0      | 0      | PASS  
+Phase 26 (verify_phase26_actions.py) | 23     | 0      | 0      | PASS  
+Phase 27 (verify_phase27_auth.py) | 6      | 0      | 0      | PASS  
+Phase 27b Overdue (verify_phase27b_overdue.py) | 6      | 0      | 0      | PASS  
+Phase 27b KPI (verify_phase27b_kpi.py) | 5      | 0      | 0      | PASS  
+Phase 29 Pull Sync (verify_phase29_pull_sync.py) | 20     | 0      | 0      | PASS  
+Phase 30 Admin & Reports (verify_phase30_admin_reports.py) | 27     | 0      | 0      | PASS  
+------------------------------------------------------------------------------
+GRAND TOTAL                    | 259    | 0      | 0      | PASS  
+==============================================================================
+Grand Total Checks Run: 259 (259 Passed, 0 Failed)
+Total Checks Skipped:   0
+==============================================================================
+
+>>> ALL VERIFICATION SUITES PASSED SUCCESSFULLY! <<<

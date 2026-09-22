@@ -1,6 +1,7 @@
 /**
  * sync.ts
- * API calls for syncing observations to the backend /sync/batch endpoint.
+ * API calls for syncing observations to the backend /sync/batch endpoint,
+ * pulling two-way delta sync from /sync/pull, and flushing inspection lifecycle events.
  */
 
 import { getApiClient } from "./client";
@@ -17,6 +18,7 @@ export interface SyncObservationPayload {
   beacon_id?: string | null;
   mine_site_id?: string | null;
   zone_id?: string | null;
+  inspection_id?: string | null;
   edge_score?: number | null;
   edge_flag?: string | null;
   edge_reasons?: Record<string, unknown> | null;
@@ -28,6 +30,13 @@ export interface SyncBatchResponse {
   synced_count: number;
   created_ids: string[];
   synced_at: string;
+}
+
+export interface SyncPullResponse {
+  watermark: string;
+  inspections: any[];
+  observations: any[];
+  actions: any[];
 }
 
 const DEFAULT_MINE_SITE_ID = "5f92941a-dbf7-4697-a3d7-1c101210523c";
@@ -54,6 +63,7 @@ export function localObsToPayload(obs: LocalObservation): SyncObservationPayload
     beacon_id: obs.beacon_id ?? null,
     mine_site_id: obs.mine_site_id || DEFAULT_MINE_SITE_ID,
     zone_id: obs.zone_id || DEFAULT_ZONE_ID,
+    inspection_id: obs.inspection_id || null,
     edge_score: obs.edge_score ?? null,
     edge_flag: obs.edge_flag ?? null,
     edge_reasons: edgeReasons,
@@ -70,5 +80,27 @@ export async function postSyncBatch(
     observations: observations.map(localObsToPayload),
   };
   const response = await client.post<SyncBatchResponse>("/sync/batch", payload);
+  return response.data;
+}
+
+export async function fetchSyncPull(since?: string | null): Promise<SyncPullResponse> {
+  const client = getApiClient();
+  const params: Record<string, string> = {};
+  if (since) {
+    params.since = since;
+  }
+  const response = await client.get<SyncPullResponse>("/sync/pull", { params });
+  return response.data;
+}
+
+export async function postInspectionStart(inspectionId: string): Promise<any> {
+  const client = getApiClient();
+  const response = await client.post(`/inspections/${inspectionId}/start`);
+  return response.data;
+}
+
+export async function postInspectionSubmit(inspectionId: string, notes?: string): Promise<any> {
+  const client = getApiClient();
+  const response = await client.post(`/inspections/${inspectionId}/submit`, { notes });
   return response.data;
 }

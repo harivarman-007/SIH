@@ -32,7 +32,9 @@ from app.schemas.ocr import (
     OcrSubmitResponse,
     WordConfidence,
 )
-from app.services.auth import get_current_user, require_roles
+from app.authz.deps import require_permission
+from app.authz.permissions import Permission
+from app.services.auth import get_current_user
 
 
 router = APIRouter(prefix="/ocr", tags=["ocr"])
@@ -44,7 +46,7 @@ async def submit_ocr(
     document_name: Optional[str] = Form(None),
     lang: str = Form("eng"),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission(Permission.OCR_SUBMIT)),
 ):
     """
     Ingests an image file and processes it via pytesseract.
@@ -168,7 +170,7 @@ async def submit_ocr(
 @router.get(
     "/queue",
     response_model=List[OcrQueueItemOut],
-    dependencies=[Depends(require_roles(UserRole.mine_official, UserRole.regulator, UserRole.super_admin))],
+    dependencies=[Depends(require_permission(Permission.OCR_QUEUE_VIEW))],
 )
 async def list_ocr_queue(
     status_filter: Optional[OcrReviewStatus] = Query(OcrReviewStatus.pending),
@@ -191,7 +193,7 @@ async def list_ocr_queue(
 
 @router.get(
     "/queue/{item_id}/image",
-    dependencies=[Depends(require_roles(UserRole.mine_official, UserRole.regulator, UserRole.super_admin, UserRole.inspector))],
+    dependencies=[Depends(require_permission(Permission.OCR_QUEUE_VIEW))],
 )
 async def get_ocr_queue_item_image(
     item_id: UUID,
@@ -219,7 +221,7 @@ async def get_ocr_queue_item_image(
 @router.get(
     "/queue/{item_id}",
     response_model=OcrQueueItemOut,
-    dependencies=[Depends(require_roles(UserRole.mine_official, UserRole.regulator, UserRole.super_admin))],
+    dependencies=[Depends(require_permission(Permission.OCR_QUEUE_VIEW))],
 )
 async def get_ocr_queue_item(
     item_id: UUID,
@@ -241,7 +243,7 @@ async def get_ocr_queue_item(
 @router.patch(
     "/queue/{item_id}",
     response_model=OcrQueueItemOut,
-    dependencies=[Depends(require_roles(UserRole.mine_official, UserRole.regulator, UserRole.super_admin))],
+    dependencies=[Depends(require_permission(Permission.OCR_REVIEW))],
 )
 async def review_ocr_queue_item(
     item_id: UUID,

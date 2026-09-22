@@ -10,6 +10,7 @@ class ObservationCreate(BaseModel):
     description: str
     mine_site_id: Optional[UUID] = None
     zone_id: Optional[UUID] = None
+    inspection_id: Optional[UUID] = None
     photo_url: Optional[str] = None
     has_photo: bool = False
     lat: Optional[float] = None
@@ -35,6 +36,7 @@ class ObservationOut(BaseModel):
     inspector_id: UUID
     mine_site_id: UUID
     zone_id: UUID
+    inspection_id: Optional[UUID] = None
     category: ObservationCategory
     description: str
     photo_url: Optional[str] = None

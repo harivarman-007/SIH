@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from uuid import UUID
 
@@ -9,8 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.observations import apply_role_filter
 from app.database import get_db
 from app.models import (
+    ActionStatus,
     ContractorAssignment,
     CorporateMineAccess,
+    CorrectiveAction,
     MineSite,
     Observation,
     ObservationCategory,
@@ -112,6 +114,58 @@ async def get_kpis(
 
     sync_pct = round((synced_c / total) * 100, 2)
 
+    # Action metrics
+    now_utc = datetime.now(timezone.utc)
+    act_stmt = select(CorrectiveAction)
+    if mine_site_id:
+        act_stmt = act_stmt.where(CorrectiveAction.mine_site_id == mine_site_id)
+    else:
+        if current_user.role == UserRole.corporate_management:
+            subq = select(CorporateMineAccess.mine_site_id).where(CorporateMineAccess.user_id == current_user.id)
+            act_stmt = act_stmt.where(CorrectiveAction.mine_site_id.in_(subq))
+        elif current_user.role == UserRole.mine_official:
+            act_stmt = act_stmt.where(CorrectiveAction.mine_site_id == current_user.mine_site_id)
+    act_res = await db.execute(act_stmt)
+    actions = act_res.scalars().all()
+
+    act_assigned = 0
+    act_in_prog = 0
+    act_pending_ver = 0
+    act_closed = 0
+    act_overdue = 0
+
+    for act in actions:
+        if act.status == ActionStatus.assigned:
+            act_assigned += 1
+        elif act.status in (ActionStatus.accepted, ActionStatus.in_progress):
+            act_in_prog += 1
+        elif act.status == ActionStatus.pending_verification:
+            act_pending_ver += 1
+        elif act.status in (ActionStatus.verified, ActionStatus.closed):
+            act_closed += 1
+
+        due_dt = act.due_at
+        if due_dt and act.status != ActionStatus.closed:
+            if due_dt.tzinfo is None:
+                due_dt = due_dt.replace(tzinfo=timezone.utc)
+            if due_dt < now_utc:
+                act_overdue += 1
+
+    # Rejection rate: actions that were rejected or resubmitted (submission_round > 1) or have rejection_reason
+    rejection_count = sum(1 for a in actions if (a.submission_round and a.submission_round > 1) or a.rejection_reason or a.status == ActionStatus.rejected)
+    rejection_rate = round((rejection_count / len(actions)) * 100, 2) if actions else 0.0
+
+    # Contractor on-time %: submitted actions where submitted_at <= due_at
+    completed_actions = [a for a in actions if a.submitted_at and a.due_at]
+    if completed_actions:
+        on_time_count = sum(
+            1 for a in completed_actions
+            if a.submitted_at <= (a.due_at if a.due_at.tzinfo else a.due_at.replace(tzinfo=timezone.utc))
+        )
+        contractor_on_time = round((on_time_count / len(completed_actions)) * 100, 2)
+    else:
+        contractor_on_time = 100.0
+
     return KPISummaryResponse(
         total_observations=total,
         open_count=open_c,
@@ -123,6 +177,13 @@ async def get_kpis(
         sync_rate_pct=sync_pct,
         by_category=by_cat,
         by_risk=by_risk,
+        actions_assigned_count=act_assigned,
+        actions_in_progress_count=act_in_prog,
+        actions_pending_verification_count=act_pending_ver,
+        actions_closed_count=act_closed,
+        actions_overdue_count=act_overdue,
+        rejection_rate_pct=rejection_rate,
+        contractor_on_time_pct=contractor_on_time,
     )
 
 
@@ -330,6 +391,40 @@ async def get_cross_mine_summary(
     # Sort leaderboard highest-risk to lowest (descending)
     leaderboard_items.sort(key=lambda x: x.risk_score, reverse=True)
 
+    # Fleet-wide closure time from closed observations
+    fleet_closure_durations = []
+    for obs in all_observations:
+        if obs.status == ObservationStatus.closed and obs.closed_at and obs.created_at:
+            diff_sec = (obs.closed_at - obs.created_at).total_seconds()
+            if diff_sec >= 0:
+                fleet_closure_durations.append(diff_sec / 3600.0)
+    fleet_avg_closure_hours = (
+        round(sum(fleet_closure_durations) / len(fleet_closure_durations), 2)
+        if fleet_closure_durations
+        else None
+    )
+
+    # Fleet-wide action metrics across accessible sites
+    act_stmt = select(CorrectiveAction).where(CorrectiveAction.mine_site_id.in_(site_ids))
+    act_res = await db.execute(act_stmt)
+    all_actions = act_res.scalars().all()
+
+    fleet_rejection_count = sum(
+        1 for a in all_actions
+        if (a.submission_round and a.submission_round > 1) or a.rejection_reason or a.status == ActionStatus.rejected
+    )
+    fleet_rejection_rate = round((fleet_rejection_count / len(all_actions)) * 100, 2) if all_actions else 0.0
+
+    fleet_completed_actions = [a for a in all_actions if a.submitted_at and a.due_at]
+    if fleet_completed_actions:
+        fleet_on_time_count = sum(
+            1 for a in fleet_completed_actions
+            if a.submitted_at <= (a.due_at if a.due_at.tzinfo else a.due_at.replace(tzinfo=timezone.utc))
+        )
+        fleet_contractor_on_time = round((fleet_on_time_count / len(fleet_completed_actions)) * 100, 2)
+    else:
+        fleet_contractor_on_time = 100.0
+
     # 5. Aggregate headline score
     if leaderboard_items:
         avg_risk_score = round(sum(m.risk_score for m in leaderboard_items) / len(leaderboard_items), 1)
@@ -358,4 +453,7 @@ async def get_cross_mine_summary(
             avg_compliance_pct=contractor_compliance_pct,
         ),
         mines_leaderboard=leaderboard_items,
+        avg_time_to_closure_hours=fleet_avg_closure_hours,
+        rejection_rate_pct=fleet_rejection_rate,
+        contractor_on_time_pct=fleet_contractor_on_time,
     )

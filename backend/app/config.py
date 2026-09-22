@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     # Application Environment & Storage
     environment: str = "development"
+    demo_mode: bool = False  # Enabled in development / SIH evaluation via DEMO_MODE=true
     photo_storage_path: str = "/app/photos"
     ocr_upload_path: str = "/app/uploads/ocr"
 

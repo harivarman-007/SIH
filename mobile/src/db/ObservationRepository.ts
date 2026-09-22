@@ -19,6 +19,7 @@ export interface NewObservationInput {
   edge_score?: number | null;
   edge_flag?: RiskFlag | null;
   edge_reasons_json?: string | null;
+  inspection_id?: string | null;
 }
 
 export class ObservationRepository {
@@ -30,10 +31,10 @@ export class ObservationRepository {
       `INSERT INTO local_observations (
         category, description, photo_uri, gas_reading_value, gas_reading_unit,
         lat, lng, beacon_id,
-        mine_site_id, zone_id,
+        mine_site_id, zone_id, inspection_id,
         edge_score, edge_flag, edge_reasons_json,
         created_at, queued_at, sync_status, retry_count
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
       [
         input.category,
         input.description,
@@ -45,6 +46,7 @@ export class ObservationRepository {
         input.beacon_id ?? null,
         input.mine_site_id ?? null,
         input.zone_id ?? null,
+        input.inspection_id ?? null,
         input.edge_score ?? null,
         input.edge_flag ?? null,
         input.edge_reasons_json ?? null,
@@ -52,6 +54,20 @@ export class ObservationRepository {
         now,
       ]
     );
+
+    if (input.inspection_id) {
+      try {
+        await db.runAsync(
+          `UPDATE cached_inspections
+           SET observation_count = observation_count + 1
+           WHERE id = ?;`,
+          [input.inspection_id]
+        );
+      } catch {
+        // non-fatal if table not initialized yet
+      }
+    }
+
     return result.lastInsertRowId as number;
   }
 

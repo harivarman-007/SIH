@@ -1,5 +1,7 @@
-from typing import Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
+from datetime import datetime
+
 from pydantic import BaseModel, Field, field_validator
 from app.models import UserRole
 
@@ -32,12 +34,20 @@ class RegisterRequest(BaseModel):
 
 
 class UserOut(BaseModel):
+    """
+    MUST #2: Backward-compatible response. All original fields at top level.
+    Added: permissions (List[str]) and scope (Dict[str, Any]) — additive, not nested.
+    """
     id: UUID
     email: str
     full_name: str
     role: UserRole
     mine_site_id: Optional[UUID] = None
     is_active: bool
+    created_at: Optional[datetime] = None
+    # Phase 24 additions (additive, non-breaking)
+    permissions: List[str] = Field(default_factory=list)
+    scope: Dict[str, Any] = Field(default_factory=dict)
 
     class Config:
         from_attributes = True
@@ -56,3 +66,7 @@ class AdminUserCreateRequest(BaseModel):
     role: UserRole = Field(..., description="Any of the 6 valid roles")
     mine_site_id: Optional[UUID] = None
     corporate_mine_ids: Optional[list[UUID]] = None
+
+
+class AccessDeniedReportRequest(BaseModel):
+    path: str = Field(..., max_length=200, description="Client route path where access was denied")

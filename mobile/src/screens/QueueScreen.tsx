@@ -24,6 +24,7 @@ import { getSyncStats } from "../sync/SyncWorker";
 import { useConnectivityStore } from "../store/useConnectivity";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
+import { BottomNavBar } from "../components/BottomNavBar";
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "Queue">;
@@ -130,10 +131,17 @@ export default function QueueScreen({ navigation }: Props) {
     try {
       const result = await triggerManualSync();
       await loadData();
-      Alert.alert(
-        "Sync Complete",
-        `✅ Synced ${result.succeeded} observations.\n${result.failed > 0 ? `⚠️ ${result.failed} failed.` : ""}`
-      );
+      let summaryMsg = `✅ Synced ${result.succeeded} observations.`;
+      if (result.outboxSucceeded > 0) {
+        summaryMsg += `\n📋 Synced ${result.outboxSucceeded} inspection events.`;
+      }
+      if (result.deltaInspections > 0 || result.deltaActions > 0) {
+        summaryMsg += `\n🔄 Pulled ${result.deltaInspections} inspections, ${result.deltaActions} actions.`;
+      }
+      if (result.failed > 0 || result.outboxFailed > 0) {
+        summaryMsg += `\n⚠️ Failures: ${result.failed + result.outboxFailed}.`;
+      }
+      Alert.alert("Two-Way Sync Complete", summaryMsg);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Sync failed. Check connection.";
       Alert.alert("Sync Failed", msg);
@@ -262,6 +270,9 @@ export default function QueueScreen({ navigation }: Props) {
           </View>
         }
       />
+
+      {/* Persistent Bottom Navigation */}
+      <BottomNavBar currentRoute="Queue" navigation={navigation} />
     </View>
   );
 }

@@ -7,7 +7,7 @@
 import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
 import * as Network from "expo-network";
-import { syncPending, SyncResult } from "./SyncWorker";
+import { syncAll, SyncResult } from "./SyncWorker";
 import { useConnectivityStore } from "../store/useConnectivity";
 
 export const SYNC_TASK_NAME = "INTELLIFUSION_SYNC_TASK";
@@ -20,8 +20,8 @@ TaskManager.defineTask(SYNC_TASK_NAME, async () => {
       return BackgroundFetch.BackgroundFetchResult.NoData;
     }
 
-    const result = await syncPending();
-    return result.succeeded > 0
+    const result = await syncAll(false);
+    return (result.succeeded > 0 || result.outboxSucceeded > 0 || result.deltaInspections > 0)
       ? BackgroundFetch.BackgroundFetchResult.NewData
       : BackgroundFetch.BackgroundFetchResult.NoData;
   } catch {
@@ -64,7 +64,7 @@ export async function triggerManualSync(): Promise<SyncResult> {
   if (!online) {
     throw new Error("No internet connection. Please check your network and try again.");
   }
-  return syncPending();
+  return syncAll(true);
 }
 
 /**

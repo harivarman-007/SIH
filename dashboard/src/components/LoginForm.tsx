@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Lock,
@@ -16,8 +17,11 @@ import {
   Briefcase,
   Settings,
   BarChart3,
+  Clock,
 } from 'lucide-react';
-import { useAuthStore, DEMO_CREDENTIALS, DemoCredential } from '../store/authStore';
+import { useAuthStore } from '../store/authStore';
+import { isDemoMode, DEMO_CREDENTIALS, DemoCredential } from '../config/demoCredentials';
+import { sanitizeReturnTo } from '../lib/security';
 
 const ROLE_ICONS: Record<string, React.ElementType> = {
   super_admin: Settings,
@@ -29,16 +33,21 @@ const ROLE_ICONS: Record<string, React.ElementType> = {
 };
 
 export const LoginForm: React.FC = () => {
-  const { loginWithCredentials, isLoading, error, clearError } = useAuthStore();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { loginWithCredentials, isLoading, error, clearError, sessionExpired, clearSessionExpired } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
+  const returnToParam = searchParams.get('returnTo');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
     clearError();
+    clearSessionExpired();
 
     if (!email.trim() || !password.trim()) {
       setLocalError('Please enter both email and password.');
@@ -46,9 +55,11 @@ export const LoginForm: React.FC = () => {
     }
 
     try {
-      await loginWithCredentials(email.trim(), password.trim());
+      const user = await loginWithCredentials(email.trim(), password.trim());
+      // MUST #2: Sanitize returnTo URL against user role
+      const target = sanitizeReturnTo(returnToParam, user.role);
+      navigate(target);
     } catch (err: any) {
-      // Error message is stored in authStore, but keep local fallback
       setLocalError(err?.message || 'Authentication failed');
     }
   };
@@ -58,8 +69,12 @@ export const LoginForm: React.FC = () => {
     setPassword(cred.password);
     setLocalError(null);
     clearError();
+    clearSessionExpired();
+
     try {
-      await loginWithCredentials(cred.email, cred.password);
+      const user = await loginWithCredentials(cred.email, cred.password);
+      const target = sanitizeReturnTo(returnToParam, user.role);
+      navigate(target);
     } catch (err: any) {
       setLocalError(err?.message || 'Authentication failed');
     }
@@ -87,6 +102,19 @@ export const LoginForm: React.FC = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-sm border border-zinc-200 rounded-3xl sm:px-8">
           
+          {/* MUST #1: Amber Session Expired Banner */}
+          {sessionExpired && (
+            <div className="mb-5 p-3.5 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-start gap-3 text-amber-900 text-xs">
+              <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-amber-900">Session Expired</p>
+                <p className="text-amber-700 mt-0.5 leading-relaxed">
+                  Your session has expired. Please sign in again to continue.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Main Credential Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -100,18 +128,10 @@ export const LoginForm: React.FC = () => {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (displayError) {
-                      setLocalError(null);
-                      clearError();
-                    }
-                  }}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@mine.in"
-                  disabled={isLoading}
-                  autoComplete="email"
-                  className="block w-full rounded-xl border border-zinc-200 pl-10 pr-3 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all bg-zinc-50/50"
                   required
+                  className="block w-full rounded-xl border border-zinc-300 pl-10 pr-3 py-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                 />
               </div>
             </div>
@@ -127,116 +147,104 @@ export const LoginForm: React.FC = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (displayError) {
-                      setLocalError(null);
-                      clearError();
-                    }
-                  }}
-                  placeholder="••••••••••••"
-                  disabled={isLoading}
-                  autoComplete="current-password"
-                  className="block w-full rounded-xl border border-zinc-200 pl-10 pr-10 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all bg-zinc-50/50"
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
                   required
+                  className="block w-full rounded-xl border border-zinc-300 pl-10 pr-10 py-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-600 transition-colors"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-600"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Error Message Banner */}
             {displayError && (
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-2.5 text-xs"
+                className="rounded-xl bg-red-50 p-3 border border-red-200 flex items-start gap-2.5"
               >
-                <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <span className="font-semibold block">Authentication Error</span>
-                  <span className="text-[11px] text-rose-700 break-words">{displayError}</span>
-                </div>
+                <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                <span className="text-xs text-red-700 font-medium leading-relaxed">
+                  {displayError}
+                </span>
               </motion.div>
             )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-black hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed mt-2 cursor-pointer"
+              className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-xl shadow-xs text-xs font-semibold text-white bg-black hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 transition-colors"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Authenticating…</span>
+                  Verifying Credentials…
                 </>
               ) : (
                 <>
-                  <span>Sign In</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  Sign In
+                  <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Separately Labeled Demo Persona Switcher (For Evaluation Only) */}
-          <div className="mt-8 pt-6 border-t border-zinc-200">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-1.5 text-zinc-800">
-                <Users className="h-3.5 w-3.5 text-zinc-500" />
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-700">
-                  Demo Persona Switcher
+          {/* MUST #4: Demo Persona Switcher (Conditional on isDemoMode()) */}
+          {isDemoMode() && (
+            <div className="mt-8 pt-6 border-t border-zinc-200">
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="w-4 h-4 text-zinc-500" />
+                <span className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+                  Demo Switcher (SIH Evaluation Only)
                 </span>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/60 font-medium">
-                SIH Jury / Evaluation Only
-              </span>
-            </div>
-            <p className="text-[11px] text-zinc-500 leading-relaxed mb-3">
-              Select a seeded evaluation persona below to auto-authenticate with that role's real scope and permissions:
-            </p>
+              <p className="text-[11px] text-zinc-500 mb-4 leading-relaxed">
+                Click any role to test authentication and role-based permissions immediately:
+              </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {Object.entries(DEMO_CREDENTIALS).map(([key, cred]) => {
-                const IconComponent = ROLE_ICONS[cred.role] || KeyRound;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => handleSelectDemoPersona(cred)}
-                    disabled={isLoading}
-                    className="flex items-start gap-2 p-2.5 rounded-xl border border-zinc-200 hover:border-black hover:bg-zinc-50/70 text-left transition-all group disabled:opacity-50"
-                  >
-                    <div className="p-1.5 rounded-lg bg-zinc-100 group-hover:bg-black group-hover:text-white text-zinc-600 transition-colors shrink-0 mt-0.5">
-                      <IconComponent className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-semibold text-zinc-900 group-hover:text-black truncate">
-                        {cred.title}
+              <div className="grid grid-cols-1 gap-2">
+                {Object.entries(DEMO_CREDENTIALS).map(([key, cred]) => {
+                  const RoleIcon = ROLE_ICONS[key] || KeyRound;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleSelectDemoPersona(cred)}
+                      disabled={isLoading}
+                      className="w-full flex items-center justify-between p-2.5 rounded-xl border border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50/60 transition-all text-left group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-1.5 rounded-lg bg-zinc-100 text-zinc-700 group-hover:bg-zinc-900 group-hover:text-white transition-colors">
+                          <RoleIcon className="w-3.5 h-3.5 shrink-0" />
+                        </div>
+                        <div className="truncate">
+                          <div className="text-xs font-semibold text-zinc-900 truncate">
+                            {cred.title}
+                          </div>
+                          <div className="text-[10px] text-zinc-500 truncate">
+                            {cred.subtitle}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-[10px] text-zinc-500 truncate font-mono">
-                        {cred.email}
+                      <div className="text-[10px] text-zinc-400 font-mono tracking-tight shrink-0 pl-2">
+                        {cred.email.split('@')[0]}
                       </div>
-                    </div>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="mt-6 text-center">
-            <p className="text-[10px] text-zinc-400 font-mono">
-              Intellifusion RBAC • Fail-Closed Scope Verification Enabled
-            </p>
-          </div>
         </div>
       </div>
     </div>
   );
 };
+
+export default LoginForm;

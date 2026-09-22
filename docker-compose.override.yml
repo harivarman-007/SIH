@@ -1,0 +1,19 @@
+# docker-compose.override.yml — DEV profile (Phase 27b)
+#
+# Adds a read-only /repo bind-mount of the entire workspace into the backend
+# container so that verify_* scripts can reach docs/, dashboard/, mobile/, and
+# docker-compose.yml without being mounted individually.
+#
+# Usage:
+#   docker compose up          # applies this file automatically (Docker Compose v2)
+#   docker compose up -f docker-compose.yml  # production: skip override
+#
+# The verify scripts detect /repo at startup:
+#   _REPO = Path("/repo")
+#   BACKEND = _REPO / "backend" if _REPO.is_dir() else ...
+services:
+  backend:
+    volumes:
+      # Workspace root mounted read-only at /repo so verify scripts can read
+      # docs/, dashboard/, mobile/, and docker-compose.yml
+      - .:/repo:ro

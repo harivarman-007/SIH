@@ -7,6 +7,9 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import append_audit_entry
+from app.authz.deps import require_permission
+from app.authz.permissions import Permission
+from app.authz.state_machine import execute_transition
 from app.database import get_db
 from app.models import (
     ContractorAssignment,
@@ -82,6 +85,7 @@ async def create_observation(
         inspector_id=current_user.id,
         mine_site_id=req.mine_site_id,
         zone_id=req.zone_id,
+        inspection_id=req.inspection_id,
         category=req.category,
         description=req.description,
         photo_url=req.photo_url,
@@ -108,6 +112,7 @@ async def create_observation(
             "category": new_obs.category.value,
             "mine_site_id": str(new_obs.mine_site_id),
             "zone_id": str(new_obs.zone_id),
+            "inspection_id": str(new_obs.inspection_id) if new_obs.inspection_id else None,
             "edge_flag": new_obs.edge_flag.value if new_obs.edge_flag else None,
             "edge_score": new_obs.edge_score,
         },
@@ -115,6 +120,45 @@ async def create_observation(
     )
 
     return ObservationOut.model_validate(new_obs)
+
+
+@router.post("/{observation_id}/review", response_model=ObservationOut)
+async def review_observation(
+    observation_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.OBSERVATION_REVIEW)),
+):
+    """
+    Mine official reviews observation and advances status to 'under_review'.
+    """
+    stmt = select(Observation).where(Observation.id == observation_id)
+    stmt = apply_role_filter(stmt, current_user)
+    res = await db.execute(stmt)
+    obs = res.scalar_one_or_none()
+    if not obs:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Observation not found or access denied",
+        )
+
+    old_state = obs.status.value
+    await execute_transition(
+        db=db,
+        entity_type="observation",
+        entity_id=obs.id,
+        from_state=old_state,
+        to_state=ObservationStatus.under_review.value,
+        actor=current_user,
+        actor_type="user",
+        audit_action="OBSERVATION_REVIEWED",
+        audit_payload={"observation_id": str(obs.id)},
+    )
+
+    obs.status = ObservationStatus.under_review
+    obs.version += 1
+    await db.commit()
+    await db.refresh(obs)
+    return ObservationOut.model_validate(obs)
 
 
 @router.get("/", response_model=List[ObservationOut])
@@ -174,7 +218,7 @@ async def close_observation(
     observation_id: UUID,
     req: ObservationCloseRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.mine_official, UserRole.super_admin)),
+    current_user: User = Depends(require_roles(UserRole.mine_official)),  # D9: super_admin is not an operator
 ):
     stmt = select(Observation).where(Observation.id == observation_id)
     if current_user.role == UserRole.mine_official:
@@ -276,7 +320,7 @@ async def assign_contractor(
     observation_id: UUID,
     req: ContractorAssignRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.mine_official, UserRole.super_admin)),
+    current_user: User = Depends(require_roles(UserRole.mine_official)),  # D9: super_admin is not an operator
 ):
     stmt = select(Observation).where(Observation.id == observation_id)
     if current_user.role == UserRole.mine_official:

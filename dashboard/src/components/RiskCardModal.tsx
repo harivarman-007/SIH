@@ -25,6 +25,7 @@ export interface RiskCardModalProps {
   isOpen: boolean;
   onClose: () => void;
   onResolve?: (id: string, note: string) => void;
+  onCreateAction?: (observation: ObservationData) => void;
 }
 
 export const RiskCardModal: React.FC<RiskCardModalProps> = ({
@@ -32,6 +33,7 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
   isOpen,
   onClose,
   onResolve,
+  onCreateAction,
 }) => {
   const [closureNote, setClosureNote] = useState('');
   const [isResolved, setIsResolved] = useState(false);
@@ -108,17 +110,32 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
 
             {/* Statutory Action Callout & Closure Sign-off Box */}
             <div className="p-5 rounded-2xl bg-white border border-zinc-200 shadow-sm text-zinc-950 flex flex-col gap-4">
-              {/* DGMS Action directive */}
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-zinc-50 border border-zinc-200 text-xs">
-                <ShieldCheck className="w-4 h-4 text-black shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold text-black uppercase tracking-wider block mb-0.5 text-[10px]">
-                    Mandated DGMS Corrective Directive:
-                  </span>
-                  <p className="text-zinc-700 leading-relaxed">
-                    {observation.suggestedAction}
-                  </p>
+              {/* DGMS Action directive & Dispatch Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs">
+                <div className="flex items-start gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-black shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-black uppercase tracking-wider block mb-0.5 text-[10px]">
+                      Mandated DGMS Corrective Directive:
+                    </span>
+                    <p className="text-zinc-700 leading-relaxed">
+                      {observation.suggestedAction}
+                    </p>
+                  </div>
                 </div>
+
+                {onCreateAction && (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onCreateAction(observation);
+                    }}
+                    className="shrink-0 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <span>⚡</span>
+                    <span>Assign Action</span>
+                  </button>
+                )}
               </div>
 
               {/* Resolution Workflow */}

@@ -13,6 +13,13 @@ class KPISummaryResponse(BaseModel):
     sync_rate_pct: float
     by_category: Dict[str, int]
     by_risk: Dict[str, int]
+    actions_assigned_count: int = 0
+    actions_in_progress_count: int = 0
+    actions_pending_verification_count: int = 0
+    actions_closed_count: int = 0
+    actions_overdue_count: int = 0
+    rejection_rate_pct: Optional[float] = 0.0
+    contractor_on_time_pct: Optional[float] = 100.0
 
 
 class OpenViolationsDrilldown(BaseModel):
@@ -53,3 +60,6 @@ class CrossMineSummaryResponse(BaseModel):
     open_violations: OpenViolationsDrilldown
     contractor_risk: ContractorRiskDrilldown
     mines_leaderboard: List[MineLeaderboardItem]
+    avg_time_to_closure_hours: Optional[float] = None
+    rejection_rate_pct: Optional[float] = 0.0
+    contractor_on_time_pct: Optional[float] = 100.0

@@ -11,12 +11,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
+    actions_router,
+    admin_router,
     alerts_router,
     auth_router,
     audit_router,
+    inspections_router,
     kpi_router,
     observations_router,
     ocr_router,
+    reports_router,
     sync_router,
 )
 from app.config import settings
@@ -79,6 +83,10 @@ app.include_router(kpi_router)
 app.include_router(audit_router)
 app.include_router(ocr_router)
 app.include_router(alerts_router)
+app.include_router(inspections_router)
+app.include_router(actions_router)
+app.include_router(admin_router)
+app.include_router(reports_router)
 
 
 @app.get("/health", tags=["system"])

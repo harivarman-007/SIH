@@ -42,7 +42,7 @@ const CATEGORY_OPTIONS: { key: Category; label: string; icon: string; color: str
   { key: "production", label: "Production", icon: "⚙️", color: "#2563EB" },
 ];
 
-export default function NewObservationScreen({ navigation }: Props) {
+export default function NewObservationScreen({ navigation, route }: Props) {
   const [category, setCategory] = useState<Category>("safety");
   const [description, setDescription] = useState("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -152,6 +152,7 @@ export default function NewObservationScreen({ navigation }: Props) {
         beacon_id: beaconId.trim() || null,
         mine_site_id: null, // will be set from profile in later version
         zone_id: null,
+        inspection_id: route?.params?.inspectionId || null,
         edge_score: riskResult.score,
         edge_flag: riskResult.flag,
         edge_reasons_json: JSON.stringify(riskResult.reasons),
@@ -171,6 +172,14 @@ export default function NewObservationScreen({ navigation }: Props) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.screenTitle}>New Observation</Text>
       <Text style={styles.screenSubtitle}>Field inspection report — works offline</Text>
+
+      {route?.params?.inspectionCode && (
+        <View style={styles.linkedBanner}>
+          <Text style={styles.linkedBannerText}>
+            📋 Linked to Statutory Inspection: {route.params.inspectionCode}
+          </Text>
+        </View>
+      )}
 
       {/* Category Selector */}
       <View style={styles.section}>
@@ -467,5 +476,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: 0.3,
+  },
+  linkedBanner: {
+    backgroundColor: "rgba(245, 158, 11, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(245, 158, 11, 0.4)",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+  },
+  linkedBannerText: {
+    color: "#F59E0B",
+    fontWeight: "800",
+    fontSize: 13,
   },
 });

@@ -31,6 +31,7 @@ import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { Command as CommandPrimitive } from 'cmdk';
 import * as AvatarPrimitive from '@radix-ui/react-avatar';
 import { RiskCardModal, ObservationData } from './RiskCardModal';
+import { CreateActionDrawer } from './CreateActionDrawer';
 import { fetchObservations, closeObservation, ObservationOut } from '@/api/observations';
 
 function cn(...inputs: ClassValue[]) {
@@ -1441,6 +1442,8 @@ interface ObservationTableProps {
 
 export default function ObservationTable({ role, onKpiRefresh }: ObservationTableProps) {
    const [selectedHazard, setSelectedHazard] = useState<ObservationData | null>(null);
+   const [actionDrawerObs, setActionDrawerObs] = useState<ObservationOut | any | null>(null);
+   const [isActionDrawerOpen, setIsActionDrawerOpen] = useState(false);
    const [projects, setProjects] = useState<Project[]>([]);
    const [isLoading, setIsLoading] = useState(true);
    const [error, setError] = useState<string | null>(null);
@@ -1573,6 +1576,35 @@ export default function ObservationTable({ role, onKpiRefresh }: ObservationTabl
             isOpen={!!selectedHazard}
             onClose={() => setSelectedHazard(null)}
             onResolve={handleResolve}
+            onCreateAction={(obsData) => {
+               const obsObj: any = {
+                  id: obsData.id,
+                  title: obsData.name,
+                  description: obsData.description,
+                  risk_level: obsData.severity,
+                  location: obsData.location,
+                  suggested_action: obsData.suggestedAction,
+                  image_url: obsData.photoUrl,
+                  status: obsData.status as any,
+                  created_at: obsData.date,
+               };
+               setActionDrawerObs(obsObj);
+               setIsActionDrawerOpen(true);
+            }}
+         />
+
+         {/* Action Creation Drawer (Q1) */}
+         <CreateActionDrawer
+            isOpen={isActionDrawerOpen}
+            onClose={() => {
+               setIsActionDrawerOpen(false);
+               setActionDrawerObs(null);
+            }}
+            observation={actionDrawerObs}
+            onSuccess={() => {
+               loadObservations();
+               if (onKpiRefresh) onKpiRefresh();
+            }}
          />
       </div>
    );
