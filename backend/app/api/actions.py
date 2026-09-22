@@ -227,12 +227,34 @@ async def get_action(
     assigned_by = await db.get(User, action.assigned_by_user_id)
     verified_by = await db.get(User, action.verified_by_user_id) if action.verified_by_user_id else None
 
-    detail = ActionDetailOut.model_validate(action)
-    detail.evidences = [EvidenceOut.model_validate(ev) for ev in evidences]
-    detail.assigned_to_name = assigned_to.full_name if assigned_to else None
-    detail.assigned_by_name = assigned_by.full_name if assigned_by else None
-    detail.verified_by_name = verified_by.full_name if verified_by else None
-
+    detail = ActionDetailOut(
+        id=action.id,
+        code=action.code,
+        observation_id=action.observation_id,
+        mine_site_id=action.mine_site_id,
+        title=action.title,
+        description=action.description,
+        assigned_to_user_id=action.assigned_to_user_id,
+        assigned_by_user_id=action.assigned_by_user_id,
+        priority=action.priority,
+        status=action.status,
+        due_at=action.due_at,
+        accepted_at=action.accepted_at,
+        started_at=action.started_at,
+        submitted_at=action.submitted_at,
+        verified_at=action.verified_at,
+        verified_by_user_id=action.verified_by_user_id,
+        closed_at=action.closed_at,
+        rejection_reason=action.rejection_reason,
+        submission_round=action.submission_round,
+        safety_standards_referenced=action.safety_standards_referenced or [],
+        created_at=action.created_at,
+        updated_at=action.updated_at,
+        evidences=[EvidenceOut.model_validate(ev) for ev in evidences],
+        assigned_to_name=assigned_to.full_name if assigned_to else None,
+        assigned_by_name=assigned_by.full_name if assigned_by else None,
+        verified_by_name=verified_by.full_name if verified_by else None,
+    )
     return detail
 
 
