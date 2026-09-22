@@ -83,19 +83,19 @@ export const CorrectiveActionsBoard: React.FC = () => {
       if (contractorFilter !== 'all' && act.assigned_to_user_id !== contractorFilter) {
         return false;
       }
-      if (priorityFilter !== 'all' && act.priority !== priorityFilter) {
+      if (priorityFilter !== 'all' && (act.priority || '').toLowerCase() !== priorityFilter.toLowerCase()) {
         return false;
       }
       if (overdueOnly) {
         const dueTime = new Date(act.due_at).getTime();
-        if (dueTime >= now || act.status === 'closed') {
+        if (dueTime >= now || (act.status || '').toLowerCase() === 'closed') {
           return false;
         }
       }
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
-        const matchesCode = act.code.toLowerCase().includes(query);
-        const matchesTitle = act.title.toLowerCase().includes(query);
+        const matchesCode = (act.code || '').toLowerCase().includes(query);
+        const matchesTitle = (act.title || '').toLowerCase().includes(query);
         if (!matchesCode && !matchesTitle) {
           return false;
         }
@@ -117,7 +117,8 @@ export const CorrectiveActionsBoard: React.FC = () => {
     };
     filteredActions.forEach((act) => {
       // Map verified to closed column if present
-      const statusKey = act.status === 'verified' ? 'closed' : act.status;
+      const rawStatus = (act.status || '').toLowerCase();
+      const statusKey = (rawStatus === 'verified' ? 'closed' : rawStatus) as ActionStatus;
       if (groups[statusKey]) {
         groups[statusKey].push(act);
       }
@@ -164,12 +165,13 @@ export const CorrectiveActionsBoard: React.FC = () => {
   };
 
   const isOverdue = (dueAtStr: string, status: string) => {
-    if (status === 'closed' || status === 'verified') return false;
+    const s = (status || '').toLowerCase();
+    if (s === 'closed' || s === 'verified') return false;
     return new Date(dueAtStr).getTime() < new Date().getTime();
   };
 
-  const getPriorityBadge = (p: ActionPriority) => {
-    switch (p) {
+  const getPriorityBadge = (p: ActionPriority | string) => {
+    switch ((p || '').toLowerCase()) {
       case 'critical':
         return 'bg-rose-500/20 text-rose-400 border border-rose-500/40';
       case 'high':
@@ -353,7 +355,7 @@ export const CorrectiveActionsBoard: React.FC = () => {
                           )}
                         </div>
 
-                        {act.status === 'pending_verification' && (
+                        {(act.status || '').toLowerCase() === 'pending_verification' && (
                           <div className="mt-2.5 flex items-center gap-1.5 text-[10px] text-purple-400 bg-purple-500/10 px-2 py-1 rounded border border-purple-500/20 font-medium">
                             <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
                             <span>Verification Required</span>
@@ -411,7 +413,7 @@ export const CorrectiveActionsBoard: React.FC = () => {
               ) : actionDetail ? (
                 <>
                   {/* Rejection Banner if rejected */}
-                  {actionDetail.status === 'rejected' && (
+                  {(actionDetail.status || '').toLowerCase() === 'rejected' && (
                     <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold uppercase text-amber-400">
@@ -538,7 +540,7 @@ export const CorrectiveActionsBoard: React.FC = () => {
                 </button>
 
                 {/* Verify / Reject buttons appear ONLY on PENDING_VERIFICATION and with proper permissions (Q2) */}
-                {actionDetail.status === 'pending_verification' && (
+                {(actionDetail.status || '').toLowerCase() === 'pending_verification' && (
                   <div className="flex items-center gap-2">
                     {can(Permission.ACTION_REJECT) && (
                       <button

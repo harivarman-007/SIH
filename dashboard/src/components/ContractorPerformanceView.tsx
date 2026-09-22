@@ -17,7 +17,10 @@ export const ContractorPerformanceView: React.FC = () => {
 
   const metrics = useMemo(() => {
     const total = actions.length;
-    const closed = actions.filter((a) => a.status === 'closed' || a.status === 'verified');
+    const closed = actions.filter((a) => {
+      const s = (a.status || '').toLowerCase();
+      return s === 'closed' || s === 'verified';
+    });
     const closedCount = closed.length;
 
     // On time calculation
@@ -28,7 +31,7 @@ export const ContractorPerformanceView: React.FC = () => {
     const onTimeRate = closedCount > 0 ? (onTimeCount / closedCount) * 100 : 100;
 
     // Rejection rate calculation
-    const rejectedRounds = actions.filter((a) => a.submission_round > 1 || a.status === 'rejected').length;
+    const rejectedRounds = actions.filter((a) => a.submission_round > 1 || (a.status || '').toLowerCase() === 'rejected').length;
     const rejectionRate = total > 0 ? (rejectedRounds / total) * 100 : 0;
 
     // Avg resolution time (in hours)

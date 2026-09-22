@@ -107,20 +107,21 @@ export const InspectionsManagementView: React.FC = () => {
 
   const filteredInspections = useMemo(() => {
     if (activeTab === 'all') return inspections;
-    return inspections.filter((i) => i.status === activeTab);
+    return inspections.filter((i) => (i.status || '').toLowerCase() === activeTab.toLowerCase());
   }, [inspections, activeTab]);
 
   const stats = useMemo(() => {
     return {
       total: inspections.length,
-      scheduled: inspections.filter((i) => i.status === 'scheduled').length,
-      inProgress: inspections.filter((i) => i.status === 'in_progress').length,
-      completed: inspections.filter((i) => i.status === 'completed' || i.status === 'submitted').length,
+      scheduled: inspections.filter((i) => (i.status || '').toLowerCase() === 'scheduled').length,
+      inProgress: inspections.filter((i) => (i.status || '').toLowerCase() === 'in_progress').length,
+      completed: inspections.filter((i) => ['completed', 'submitted'].includes((i.status || '').toLowerCase())).length,
     };
   }, [inspections]);
 
-  const getStatusBadge = (st: InspectionStatus) => {
-    switch (st) {
+  const getStatusBadge = (st: InspectionStatus | string) => {
+    const s = (st || '').toLowerCase();
+    switch (s) {
       case 'scheduled':
         return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
       case 'in_progress':

@@ -247,17 +247,18 @@ export const ContractorWorkQueue: React.FC = () => {
   }, [actionDetail, stagedFiles]);
 
   const canSubmit = useMemo(() => {
-    if (!actionDetail || actionDetail.status !== 'in_progress') return false;
+    if (!actionDetail || (actionDetail.status || '').toLowerCase() !== 'in_progress') return false;
     return hasAfterPhoto && completionNotes.trim().length > 0;
   }, [actionDetail, hasAfterPhoto, completionNotes]);
 
   const isOverdue = (dueAtStr: string, status: string) => {
-    if (status === 'closed' || status === 'verified') return false;
+    const s = (status || '').toLowerCase();
+    if (s === 'closed' || s === 'verified') return false;
     return new Date(dueAtStr).getTime() < new Date().getTime();
   };
 
-  const getPriorityBadge = (p: ActionPriority) => {
-    switch (p) {
+  const getPriorityBadge = (p: ActionPriority | string) => {
+    switch ((p || '').toLowerCase()) {
       case 'critical':
         return 'bg-rose-500/20 text-rose-400 border border-rose-500/40';
       case 'high':
@@ -321,7 +322,7 @@ export const ContractorWorkQueue: React.FC = () => {
                 className={`p-5 rounded-2xl bg-zinc-900/80 border space-y-3 transition-all cursor-pointer hover:border-amber-500/60 ${
                   overdue
                     ? 'border-rose-500/50 bg-rose-950/10'
-                    : act.status === 'rejected'
+                    : (act.status || '').toLowerCase() === 'rejected'
                     ? 'border-amber-500/50 bg-amber-950/10'
                     : 'border-zinc-800 hover:bg-zinc-900'
                 }`}
@@ -343,7 +344,7 @@ export const ContractorWorkQueue: React.FC = () => {
                 <p className="text-xs text-zinc-400 line-clamp-2">{act.description}</p>
 
                 {/* Rejection notice preview if rejected */}
-                {act.status === 'rejected' && (
+                {(act.status || '').toLowerCase() === 'rejected' && (
                   <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 flex items-center justify-between">
                     <span>⚠️ Rejected by Mine Official</span>
                     <span className="font-bold underline text-amber-200">View Reason →</span>
@@ -423,7 +424,7 @@ export const ContractorWorkQueue: React.FC = () => {
                   )}
 
                   {/* Q4 Rejection Banner: Amber banner at top with reason, round, date, and prominent Resume Work button */}
-                  {actionDetail.status === 'rejected' && (
+                  {(actionDetail.status || '').toLowerCase() === 'rejected' && (
                     <div className="p-5 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 space-y-3 shadow-xl">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-black uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
@@ -459,7 +460,7 @@ export const ContractorWorkQueue: React.FC = () => {
                   )}
 
                   {/* State transition triggers for Assigned / Accepted */}
-                  {actionDetail.status === 'assigned' && (
+                  {(actionDetail.status || '').toLowerCase() === 'assigned' && (
                     <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
                       <div>
                         <h4 className="text-sm font-bold text-white">Work Order Assigned</h4>
@@ -475,7 +476,7 @@ export const ContractorWorkQueue: React.FC = () => {
                     </div>
                   )}
 
-                  {actionDetail.status === 'accepted' && (
+                  {(actionDetail.status || '').toLowerCase() === 'accepted' && (
                     <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
                       <div>
                         <h4 className="text-sm font-bold text-white">Work Order Accepted</h4>
@@ -705,7 +706,7 @@ export const ContractorWorkQueue: React.FC = () => {
                   Close
                 </button>
 
-                {actionDetail.status === 'in_progress' && (
+                {(actionDetail.status || '').toLowerCase() === 'in_progress' && (
                   <div className="flex items-center gap-3">
                     {!hasAfterPhoto && (
                       <span className="text-[11px] text-amber-400">

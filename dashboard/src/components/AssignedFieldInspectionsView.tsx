@@ -66,8 +66,8 @@ export const AssignedFieldInspectionsView: React.FC = () => {
     }
   };
 
-  const getStatusBadge = (st: InspectionStatus) => {
-    switch (st) {
+  const getStatusBadge = (st: InspectionStatus | string) => {
+    switch ((st || '').toLowerCase()) {
       case 'scheduled':
         return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
       case 'in_progress':
@@ -158,7 +158,7 @@ export const AssignedFieldInspectionsView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {insp.status === 'scheduled' && (
+                  {(insp.status || '').toLowerCase() === 'scheduled' && (
                     <button
                       onClick={() => handleStart(insp.id)}
                       disabled={processingId === insp.id}
@@ -169,7 +169,7 @@ export const AssignedFieldInspectionsView: React.FC = () => {
                     </button>
                   )}
 
-                  {insp.status === 'in_progress' && (
+                  {(insp.status || '').toLowerCase() === 'in_progress' && (
                     <button
                       onClick={() => setSubmitModalInspection(insp)}
                       disabled={processingId === insp.id}
@@ -180,7 +180,7 @@ export const AssignedFieldInspectionsView: React.FC = () => {
                     </button>
                   )}
 
-                  {(insp.status === 'submitted' || insp.status === 'completed') && (
+                  {['submitted', 'completed'].includes((insp.status || '').toLowerCase()) && (
                     <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
                       <span>✓</span> Submitted to Manager
                     </span>
