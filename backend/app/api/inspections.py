@@ -61,8 +61,11 @@ async def create_inspection(
     """
     # Manager scope validation
     if current_user.role == UserRole.mine_official:
-        if not current_user.mine_site_id or current_user.mine_site_id != req.mine_site_id:
-            raise forbidden("Cannot schedule inspections outside your assigned mine site.")
+        if not current_user.mine_site_id:
+            raise forbidden("Cannot schedule inspections without an assigned mine site.")
+        req.mine_site_id = current_user.mine_site_id
+    elif not req.mine_site_id and current_user.mine_site_id:
+        req.mine_site_id = current_user.mine_site_id
 
     # Validate target mine site exists
     mine = await db.get(MineSite, req.mine_site_id)

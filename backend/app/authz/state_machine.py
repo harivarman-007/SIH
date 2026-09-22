@@ -43,6 +43,13 @@ class TransitionRule(NamedTuple):
 
 INSPECTION_TRANSITIONS: List[TransitionRule] = [
     TransitionRule(
+        from_state="CREATED",
+        to_state=InspectionStatus.scheduled.value,
+        required_permission=None,
+        allowed_actor_types={"user"},
+        description="Initial creation of scheduled inspection",
+    ),
+    TransitionRule(
         from_state=InspectionStatus.scheduled.value,
         to_state=InspectionStatus.in_progress.value,
         required_permission=Permission.INSPECTION_START,

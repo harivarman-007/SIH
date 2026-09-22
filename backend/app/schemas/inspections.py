@@ -12,7 +12,7 @@ from app.models import InspectionStatus
 
 
 class InspectionCreate(BaseModel):
-    mine_site_id: UUID
+    mine_site_id: Optional[UUID] = None
     zone_id: Optional[UUID] = None
     title: str = Field(..., min_length=3, max_length=255)
     assigned_inspector_id: UUID

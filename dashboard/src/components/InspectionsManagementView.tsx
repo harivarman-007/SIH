@@ -3,10 +3,12 @@ import { fetchInspections, createInspection } from '../api/inspections';
 import { fetchUsers, UserInfo } from '../api/auth';
 import { Inspection, InspectionStatus } from '../types/inspections';
 import { usePermissions } from './providers/PermissionProvider';
+import { useAuthStore } from '../store/authStore';
 import { Permission } from '../types/permissions';
 
 export const InspectionsManagementView: React.FC = () => {
   const { can } = usePermissions();
+  const { user } = useAuthStore();
   const [inspections, setInspections] = useState<Inspection[]>([]);
   const [inspectors, setInspectors] = useState<UserInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +19,6 @@ export const InspectionsManagementView: React.FC = () => {
 
   // Form fields
   const [title, setTitle] = useState('');
-  const [mineSiteId] = useState('11111111-1111-1111-1111-111111111111');
   const [assignedInspectorId, setAssignedInspectorId] = useState('');
   const [scheduledFor, setScheduledFor] = useState('');
   const [dueAt, setDueAt] = useState('');
@@ -78,13 +79,18 @@ export const InspectionsManagementView: React.FC = () => {
 
     setSubmitting(true);
     setFormError(null);
+    const targetMineSiteId = user?.mine_site_id || '57064c56-5d0c-4efe-9854-e58a16032cfb';
+    const computedDueAt = dueAt
+      ? new Date(dueAt).toISOString()
+      : new Date(new Date(scheduledFor).getTime() + 8 * 3600 * 1000).toISOString();
+
     try {
       await createInspection({
-        mine_site_id: mineSiteId,
+        mine_site_id: targetMineSiteId,
         title: title.trim(),
         assigned_inspector_id: assignedInspectorId,
         scheduled_for: new Date(scheduledFor).toISOString(),
-        due_at: dueAt ? new Date(dueAt).toISOString() : undefined,
+        due_at: computedDueAt,
         notes: notes.trim() || undefined,
       });
 
