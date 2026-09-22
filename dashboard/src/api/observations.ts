@@ -50,6 +50,30 @@ export async function fetchObservations(params?: {
   return res.data;
 }
 
+export interface ObservationCreatePayload {
+  category: ObsCategory;
+  description: string;
+  mine_site_id?: string;
+  zone_id?: string;
+  inspection_id?: string;
+  photo_url?: string;
+  has_photo?: boolean;
+  lat?: number;
+  lng?: number;
+  beacon_id?: string;
+  edge_flag?: RiskFlag;
+  edge_score?: number;
+  gas_reading_value?: number;
+  gas_reading_unit?: string;
+}
+
+export async function createObservation(
+  payload: ObservationCreatePayload
+): Promise<ObservationOut> {
+  const res = await apiClient.post<ObservationOut>('/observations/', payload);
+  return res.data;
+}
+
 export async function closeObservation(
   id: string,
   closureNote: string
@@ -60,3 +84,4 @@ export async function closeObservation(
   });
   return res.data;
 }
+

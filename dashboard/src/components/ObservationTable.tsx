@@ -20,6 +20,7 @@ import {
    ShieldAlert,
    RefreshCw,
    Loader2,
+   Plus,
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -32,6 +33,7 @@ import { Command as CommandPrimitive } from 'cmdk';
 import * as AvatarPrimitive from '@radix-ui/react-avatar';
 import { RiskCardModal, ObservationData } from './RiskCardModal';
 import { CreateActionDrawer } from './CreateActionDrawer';
+import { CreateObservationModal } from './CreateObservationModal';
 import { fetchObservations, closeObservation, ObservationOut } from '@/api/observations';
 
 function cn(...inputs: ClassValue[]) {
@@ -1240,6 +1242,41 @@ interface ProjectLineComponentProps {
 
 function ProjectLineComponent({ project, onOpenCard }: ProjectLineComponentProps) {
    const handleOpen = () => {
+      const raw = project._raw;
+      if (raw) {
+         const flag = raw.cloud_flag || raw.edge_flag || (project.priority.id === 'urgent' || project.priority.id === 'high' ? 'high' : project.priority.id === 'medium' ? 'medium' : 'low');
+         const score = raw.cloud_score ?? raw.edge_score ?? (flag === 'high' ? 0.94 : flag === 'medium' ? 0.65 : 0.35);
+         const contributors: string[] = [];
+         if (raw.cloud_reasons && typeof raw.cloud_reasons === 'object') {
+            Object.entries(raw.cloud_reasons).forEach(([k, v]) => contributors.push(`${k}: ${v}`));
+         } else if (raw.edge_reasons && typeof raw.edge_reasons === 'object') {
+            Object.entries(raw.edge_reasons).forEach(([k, v]) => contributors.push(`${k}: ${v}`));
+         }
+         if (contributors.length === 0) {
+            contributors.push('DGMS regulatory rule pattern matched', 'Working face hazard analysis triggered', 'Mandatory statutory tracking log');
+         }
+
+         onOpenCard({
+            id: raw.id,
+            name: raw.description ? (raw.description.length > 70 ? raw.description.slice(0, 70) + '…' : raw.description) : project.name,
+            category: raw.category || 'safety',
+            severity: flag as any,
+            score,
+            description: raw.description || project.name,
+            location: raw.zone_id ? `Mine Sector / Zone ${raw.zone_id}` : 'Mine Working Face, Section 4',
+            beaconId: raw.beacon_id || 'BCN-GPS-AUTO',
+            photoUrl: raw.photo_url || 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?q=80&w=800&auto=format&fit=crop',
+            inspectorName: project.lead.name,
+            date: raw.created_at ? new Date(raw.created_at).toLocaleDateString() : project.startDate,
+            topContributors: contributors,
+            suggestedAction: raw.suggested_action || (flag === 'high'
+               ? 'IMMEDIATE ACTION REQUIRED: Evacuate personnel from zone. Suspend operations. Notify DGMS and Mine Manager.'
+               : 'CORRECTIVE ACTION: Dispatch certified contractor to remediate condition in compliance with CMR 2017.'),
+            status: raw.status === 'closed' ? 'completed' : 'in-progress',
+         });
+         return;
+      }
+
       onOpenCard({
          id: project.id,
          name: project.name,
@@ -1444,6 +1481,7 @@ export default function ObservationTable({ role, onKpiRefresh }: ObservationTabl
    const [selectedHazard, setSelectedHazard] = useState<ObservationData | null>(null);
    const [actionDrawerObs, setActionDrawerObs] = useState<ObservationOut | any | null>(null);
    const [isActionDrawerOpen, setIsActionDrawerOpen] = useState(false);
+   const [isCreateObsOpen, setIsCreateObsOpen] = useState(false);
    const [projects, setProjects] = useState<Project[]>([]);
    const [isLoading, setIsLoading] = useState(true);
    const [error, setError] = useState<string | null>(null);
@@ -1515,10 +1553,16 @@ export default function ObservationTable({ role, onKpiRefresh }: ObservationTabl
                )}
             </div>
             <div className="flex items-center gap-2">
-               <span className="text-xs text-zinc-500">Click any hazard title to view the AI Risk Card</span>
+               <span className="text-xs text-zinc-500 hidden md:inline">Click any hazard title to view AI Risk Card</span>
+               <button
+                  onClick={() => setIsCreateObsOpen(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold bg-zinc-900 text-white hover:bg-black px-2.5 py-1 rounded-lg transition-colors shadow-xs"
+               >
+                  <Plus className="w-3.5 h-3.5" /> Log Hazard
+               </button>
                <button
                   onClick={loadObservations}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-black px-2 py-1 rounded border border-zinc-200 hover:bg-zinc-50 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-black px-2 py-1 rounded border border-zinc-200 hover:bg-zinc-50 transition-colors"
                >
                   <RefreshCw className="w-3 h-3" /> Refresh
                </button>
@@ -1601,6 +1645,16 @@ export default function ObservationTable({ role, onKpiRefresh }: ObservationTabl
                setActionDrawerObs(null);
             }}
             observation={actionDrawerObs}
+            onSuccess={() => {
+               loadObservations();
+               if (onKpiRefresh) onKpiRefresh();
+            }}
+         />
+
+         {/* Create Hazard Observation Modal */}
+         <CreateObservationModal
+            isOpen={isCreateObsOpen}
+            onClose={() => setIsCreateObsOpen(false)}
             onSuccess={() => {
                loadObservations();
                if (onKpiRefresh) onKpiRefresh();

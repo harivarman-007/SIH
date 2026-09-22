@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle2, ShieldCheck, CornerDownRight } from 'lucide-react';
 import { CaseMetricCard } from './CaseMetricCard';
+import { useAuthStore } from '../store/authStore';
 
 export interface ObservationData {
   id: string;
@@ -37,8 +38,19 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
 }) => {
   const [closureNote, setClosureNote] = useState('');
   const [isResolved, setIsResolved] = useState(false);
+  const { user, permissions } = useAuthStore();
 
   if (!observation) return null;
+
+  const isManagerOrAdmin =
+    user?.role === 'mine_official' ||
+    user?.role === 'super_admin' ||
+    permissions.includes('ACTION_CREATE');
+
+  const canClose =
+    user?.role === 'mine_official' ||
+    user?.role === 'super_admin' ||
+    permissions.includes('OBSERVATION_CLOSE');
 
   const scoreFormatted = observation.score.toFixed(2);
   const scorePercent = Math.round(observation.score * 100);
@@ -80,7 +92,7 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
             <div className="flex justify-end">
               <button
                 onClick={onClose}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/95 hover:bg-zinc-100 border border-zinc-200 text-xs font-medium text-zinc-700 shadow-md transition-all"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/95 hover:bg-zinc-100 border border-zinc-200 text-xs font-medium text-zinc-700 shadow-md transition-all cursor-pointer"
               >
                 <span>Close</span>
                 <X className="w-3.5 h-3.5" />
@@ -91,7 +103,7 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
             <CaseMetricCard
               title={observation.name}
               description={observation.description}
-              category={`${observation.category.toUpperCase()} &bull; ${observation.severity.toUpperCase()} RISK`}
+              category={`${observation.category.toUpperCase()} • ${observation.severity.toUpperCase()} RISK`}
               projectImage={observation.photoUrl}
               clientName={`${observation.inspectorName} (${observation.location})`}
               mainMetric={scoreFormatted}
@@ -124,13 +136,13 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
                   </div>
                 </div>
 
-                {onCreateAction && (
+                {onCreateAction && isManagerOrAdmin && (
                   <button
                     onClick={() => {
                       onClose();
                       onCreateAction(observation);
                     }}
-                    className="shrink-0 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                    className="shrink-0 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <span>⚡</span>
                     <span>Assign Action</span>
@@ -144,7 +156,7 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
                   <CheckCircle2 className="w-4 h-4 text-black" />
                   <span>Hazard remediation verified & signed off in statutory register.</span>
                 </div>
-              ) : (
+              ) : canClose && onResolve ? (
                 <div className="flex flex-col sm:flex-row items-center gap-2">
                   <input
                     type="text"
@@ -155,11 +167,15 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
                   />
                   <button
                     onClick={handleResolve}
-                    className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-black hover:bg-zinc-800 text-white text-xs font-semibold shadow-xs transition-colors"
+                    className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-black hover:bg-zinc-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
                   >
                     <span>Sign-off</span>
                     <CornerDownRight className="w-3.5 h-3.5" />
                   </button>
+                </div>
+              ) : (
+                <div className="p-2.5 rounded-xl bg-zinc-100 border border-zinc-200 text-zinc-500 text-xs text-center">
+                  <span>Inspector Read-Only Mode: Remediation assignment & closure sign-off reserved for authorized Mine Officials.</span>
                 </div>
               )}
             </div>

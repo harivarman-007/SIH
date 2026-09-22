@@ -18,5 +18,19 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    proxy: {
+      '/auth': 'http://localhost:8000',
+      '/observations': 'http://localhost:8000',
+      '/actions': 'http://localhost:8000',
+      '/inspections': 'http://localhost:8000',
+      '/kpi': 'http://localhost:8000',
+      '/admin': 'http://localhost:8000',
+      '/reports': 'http://localhost:8000',
+      '/audit': 'http://localhost:8000',
+      '/alerts': 'http://localhost:8000',
+      '/ocr': 'http://localhost:8000',
+      '/sync': 'http://localhost:8000',
+      '/health': 'http://localhost:8000',
+    },
   },
 });

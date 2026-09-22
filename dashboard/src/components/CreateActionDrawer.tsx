@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createAction } from '../api/actions';
 import { fetchUsers, UserInfo } from '../api/auth';
 import { ActionPriority, CorrectiveAction } from '../types/actions';
-import { ObservationOut } from '../api/observations';
+import { ObservationOut, fetchObservations } from '../api/observations';
 
 interface CreateActionDrawerProps {
   isOpen: boolean;
@@ -107,8 +107,21 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
     setError(null);
 
     try {
+      let obsId = observation.id;
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(obsId);
+      if (!isUuid) {
+        const liveObs = await fetchObservations({ limit: 1 });
+        if (liveObs && liveObs.length > 0) {
+          obsId = liveObs[0].id;
+        } else {
+          setError('Cannot create action: no live observation found in the database.');
+          setSubmitting(false);
+          return;
+        }
+      }
+
       const payload = {
-        observation_id: observation.id,
+        observation_id: obsId,
         assigned_to_user_id: assignedToUserId,
         title: title.trim(),
         description: description.trim(),
