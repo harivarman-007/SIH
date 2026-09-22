@@ -3,10 +3,10 @@
 Pydantic v2 schemas for Inspections and Workflow Transitions (Phase 25).
 """
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models import InspectionStatus
 
@@ -22,8 +22,19 @@ class InspectionCreate(BaseModel):
 
 
 class InspectionStatusUpdate(BaseModel):
+    status: Optional[Union[InspectionStatus, str]] = None
     notes: Optional[str] = None
     reason: Optional[str] = None
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def normalize_status(cls, v):
+        if isinstance(v, str):
+            try:
+                return InspectionStatus[v.upper()]
+            except KeyError:
+                return v
+        return v
 
 
 class InspectionOut(BaseModel):

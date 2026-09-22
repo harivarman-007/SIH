@@ -23,13 +23,47 @@ export async function createInspection(payload: InspectionCreatePayload): Promis
   return response.data;
 }
 
+export async function startInspection(id: string): Promise<Inspection> {
+  const response = await apiClient.post<Inspection>(`/inspections/${id}/start`);
+  return response.data;
+}
+
+export async function submitInspection(id: string, notes?: string): Promise<Inspection> {
+  const response = await apiClient.post<Inspection>(`/inspections/${id}/submit`, { notes });
+  return response.data;
+}
+
+export async function completeInspection(id: string, notes?: string): Promise<Inspection> {
+  const response = await apiClient.post<Inspection>(`/inspections/${id}/complete`, { notes });
+  return response.data;
+}
+
+export async function cancelInspection(id: string, reason?: string): Promise<Inspection> {
+  const response = await apiClient.post<Inspection>(`/inspections/${id}/cancel`, { reason });
+  return response.data;
+}
+
 export async function updateInspectionStatus(
   id: string,
   status: InspectionStatus,
   reason?: string
 ): Promise<Inspection> {
+  const s = (status || '').toLowerCase();
+  if (s === 'in_progress') {
+    return startInspection(id);
+  }
+  if (s === 'submitted') {
+    return submitInspection(id, reason);
+  }
+  if (s === 'completed') {
+    return completeInspection(id, reason);
+  }
+  if (s === 'cancelled') {
+    return cancelInspection(id, reason);
+  }
   const response = await apiClient.patch<Inspection>(`/inspections/${id}/status`, {
     status,
+    notes: reason,
     reason,
   });
   return response.data;

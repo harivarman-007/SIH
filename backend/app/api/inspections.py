@@ -404,3 +404,31 @@ async def cancel_inspection(
     await db.commit()
     await db.refresh(inspection)
     return inspection
+
+
+@router.patch("/{inspection_id}/status", response_model=InspectionOut)
+async def update_inspection_status_route(
+    inspection_id: UUID,
+    req: InspectionStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.INSPECTION_VIEW)),
+):
+    """
+    Unified route for advancing inspection status from the dashboard.
+    Routes to start, submit, complete, or cancel based on the requested target status.
+    """
+    target = str(req.status).lower() if req.status else ""
+    if "in_progress" in target:
+        return await start_inspection(inspection_id=inspection_id, db=db, current_user=current_user)
+    elif "submit" in target:
+        return await submit_inspection(inspection_id=inspection_id, req=req, db=db, current_user=current_user)
+    elif "complet" in target:
+        return await complete_inspection(inspection_id=inspection_id, req=req, db=db, current_user=current_user)
+    elif "cancel" in target:
+        return await cancel_inspection(inspection_id=inspection_id, req=req, db=db, current_user=current_user)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported inspection status transition: {req.status}",
+        )
+
