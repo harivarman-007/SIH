@@ -1,4 +1,4 @@
-# Commit: 172009b0ece43ee37f33dd76feaeb3ea0cb3735f | Timestamp: 2026-09-22T07:25:21.582122+00:00
+# Commit: f317acf021ad1158596db45fc1aad967b3f881f8 | Timestamp: 2026-09-22T08:57:33.823741+00:00
 
 ==============================================================================
 INTELLIFUSION MASTER VERIFICATION SUITE (ALL PHASES)
@@ -12,8 +12,8 @@ RUNNING PHASE 8 VERIFICATION SUITE
 ============================================================
 
 --- Test 1: POST /auth/register Role Restriction ---
-  [PASS] Attempted regulator self-registration rejected: Value error, Public self-registration is restricted to ['inspector', 'contractor'] only. Role 'regulator' requires administrative provisioning.
-  [PASS] Attempted mine_official self-registration rejected: Value error, Public self-registration is restricted to ['inspector', 'contractor'] only. Role 'mine_official' requires administrative provisioning.
+  [PASS] Attempted regulator self-registration rejected: Value error, Public self-registration is restricted to ['contractor', 'inspector'] only. Role 'regulator' requires administrative provisioning.
+  [PASS] Attempted mine_official self-registration rejected: Value error, Public self-registration is restricted to ['contractor', 'inspector'] only. Role 'mine_official' requires administrative provisioning.
 PASS: Public registration strictly limited to inspector/contractor.
 
 --- Test 2: apply_role_filter Fails Closed on Missing Scope ---
@@ -195,7 +195,7 @@ Phase 20 Real Gas Telemetry Verification
 .  [PASS] generate_mock_data.py updated with real gas reading simulation
 .
 ----------------------------------------------------------------------
-Ran 5 tests in 0.261s
+Ran 5 tests in 0.294s
 
 OK
 ============================================================
@@ -322,7 +322,7 @@ Phase 25 Workflow Engine + Inspections Verification Suite
 [PASS] 2c. Legal observation transitions accepted
 [PASS] 2d. Illegal observation transition (closed -> under_review) rejected
 [PASS] 3. D12 Human-in-the-loop protection blocks system actor from closing
-[PASS] 4a. Inspection code generated in INS-xxxx format â€” INS-0016
+[PASS] 4a. Inspection code generated in INS-xxxx format â€” INS-0019
 [PASS] 4b. Workflow transition record written to database
 [PASS] 4c. Inspector inspection scope includes assigned inspection
 [PASS] 4d. Observation created with linked inspection_id
@@ -380,9 +380,9 @@ Phase 27 Auth Endpoint Verification Suite
 ============================================================
 [PASS] 1a. AccessDeniedReportRequest valid path
 [PASS] 1b. AccessDeniedReportRequest rejects >200 chars
-[PASS] 1c. Control characters stripped from path â€” Logged: /admin/evilpath-5113cc
-[PASS] 2. POST /auth/access-denied writes ACCESS_DENIED audit entry â€” Logged path: /admin/super-secret-d1a17653
-[PASS] 3. Deduplication: repeated denial with same path within 30s is dropped â€” Count before: 14, after: 14
+[PASS] 1c. Control characters stripped from path â€” Logged: /admin/evilpath-b225d3
+[PASS] 2. POST /auth/access-denied writes ACCESS_DENIED audit entry â€” Logged path: /admin/super-secret-91d30415
+[PASS] 3. Deduplication: repeated denial with same path within 30s is dropped â€” Count before: 16, after: 16
 [PASS] 4. Per-user rate limit: 25 varying-path requests capped at exactly 20 audit entries â€” Expected 20, recorded: 20 (excess 5 dropped silently with 204)
 ============================================================
 PHASE 27 BACKEND AUTH VERIFICATION SUMMARY
@@ -436,7 +436,7 @@ Results: 5 PASSED, 0 FAILED
 ============================================================
 Phase 29 Mobile Two-Way Delta Sync Verification Suite
 ============================================================
-[PASS] 1a. Baseline pull returns assigned inspection â€” Found: ['INS-aea37b-01']
+[PASS] 1a. Baseline pull returns assigned inspection â€” Found: ['INS-a69a1e-01']
 [PASS] 1b. Baseline pull scopes out other inspector
 [PASS] 1c. Baseline pull returns caller's observation
 [PASS] 1d. Baseline pull returns linked action with rejection reason
