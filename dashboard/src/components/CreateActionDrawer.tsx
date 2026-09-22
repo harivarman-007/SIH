@@ -127,7 +127,7 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
         description: description.trim(),
         priority,
         due_at: new Date(dueAt).toISOString(),
-        safety_standards_referenced: safetyStandards.trim() || undefined,
+        safety_standards_referenced: safetyStandards.trim() ? [safetyStandards.trim()] : undefined,
       };
 
       const newAction = await createAction(payload);
@@ -139,7 +139,9 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
         onClose();
       }, 1200);
     } catch (err: any) {
-      setError(err.message || 'Failed to create corrective action.');
+      const msg = err.response?.data?.detail || err.message || 'Failed to create corrective action.';
+      const detailStr = typeof msg === 'object' ? (msg.message || JSON.stringify(msg)) : String(msg);
+      setError(detailStr);
     } finally {
       setSubmitting(false);
     }
@@ -147,7 +149,10 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
 
   const riskLevel = observation.risk_level || observation.severity || observation.cloud_flag || observation.edge_flag || 'medium';
   const obsTitle = observation.title || observation.name || `Observation in ${observation.zone_id || 'Mine'}`;
-  const obsImage = observation.image_url || observation.photo_url || observation.photoUrl;
+  const rawImage = observation.image_url || observation.photo_url || observation.photoUrl;
+  const obsImage = !rawImage || rawImage.includes('1578328819058-b69f3a3b0f6b')
+    ? 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?q=80&w=800&auto=format&fit=crop'
+    : rawImage;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity">

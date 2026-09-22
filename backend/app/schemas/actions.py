@@ -3,10 +3,10 @@
 Pydantic v2 schemas for Corrective Actions and Evidence (Phase 26).
 """
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models import ActionPriority, ActionStatus, EvidenceKind
 
@@ -18,7 +18,15 @@ class ActionCreate(BaseModel):
     assigned_to_user_id: UUID
     priority: ActionPriority = ActionPriority.medium
     due_at: datetime
-    safety_standards_referenced: Optional[List[str]] = None
+    safety_standards_referenced: Optional[Union[List[str], str]] = None
+
+    @field_validator("safety_standards_referenced", mode="before")
+    @classmethod
+    def normalize_safety_standards(cls, v):
+        if isinstance(v, str):
+            trimmed = v.strip()
+            return [trimmed] if trimmed else None
+        return v
 
 
 class ActionRejectRequest(BaseModel):
