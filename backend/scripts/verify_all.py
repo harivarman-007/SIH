@@ -26,6 +26,7 @@ SCRIPTS = [
     ("Phase 27b KPI", "verify_phase27b_kpi.py"),
     ("Phase 29 Pull Sync", "verify_phase29_pull_sync.py"),
     ("Phase 30 Admin & Reports", "verify_phase30_admin_reports.py"),
+    ("Phase 31 Acceptance", "verify_phase31_acceptance.py"),
 ]
 
 

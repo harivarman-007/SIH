@@ -108,6 +108,13 @@ OBSERVATION_TRANSITIONS: List[TransitionRule] = [
         description="Corrective action created and assigned to contractor",
     ),
     TransitionRule(
+        from_state=ObservationStatus.open.value,
+        to_state=ObservationStatus.action_required.value,
+        required_permission=Permission.ACTION_CREATE,
+        allowed_actor_types={"user"},
+        description="Corrective action created directly for open observation",
+    ),
+    TransitionRule(
         from_state=ObservationStatus.under_review.value,
         to_state=ObservationStatus.closed.value,
         required_permission=Permission.OBSERVATION_CLOSE,

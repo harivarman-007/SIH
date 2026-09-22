@@ -516,5 +516,37 @@
 
 ---
 
-*Project Status: Phase 30 Complete. All 15 verify suites pass (259/259), Vitest 14/14 pass, Dashboard build exit 0. Ready for Phase 31 upon owner approval.*
+---
+
+## Phase 31 — Demo Hardening, Canonical Walkthrough & Final Acceptance
+*Focus: End-to-end statutory lifecycle demonstration, reset script, full RBAC acceptance suite, canonical documentation.*
+
+- [x] Demo Database Reset Script (`backend/scripts/reset_demo.py`):
+  - [x] Environment guard enforcing `DEMO_MODE=true` unless `--force` override is supplied
+  - [x] Idempotent dataset reset using natural keys and transactional cleanup of demo walkthrough artifacts
+  - [x] Resets Dhanbad Colliery No. 5, Longwall Face 4-B, all 6 canonical accounts, contractor profile, and seeds pristine `INS-DEMO-001` in `SCHEDULED` status
+- [x] Canonical 14-Step Demonstration Script (`backend/scripts/demo_walkthrough.py`):
+  - [x] Pure ASGI in-memory transport against live FastAPI kernel with UTF-8 safe console logging
+  - [x] Executes full Section 2 lifecycle across all 6 roles (Steps 1–14) with 0 errors
+- [x] Full RBAC & State Machine Acceptance Suite (`backend/scripts/verify_phase31_acceptance.py`):
+  - [x] Tests 1–6: Role route matching & permission payload verification for all 6 roles
+  - [x] Tests 7–13: Negative authorization boundaries, state machine constraints & HITL guards
+  - [x] Test 14: Contractor scope isolation across both work orders AND linked observations (D18)
+  - [x] Test 15: Cryptographic SHA-256 audit chain integrity verification (0 broken links)
+- [x] Master Verification Suite (`backend/scripts/verify_all.py`):
+  - [x] Suite 16 registered: 282/282 checks PASSED across all 16 suites (0 failed, 0 skipped)
+  - [x] Updated `reports/verify_all_latest.txt`
+- [x] Canonical Governance Flow Documentation (`docs/FLOW.md`):
+  - [x] Architectural ASCII life-cycle diagram
+  - [x] Comprehensive 14-step operational matrix with audit actions and governance constraints
+  - [x] Negative boundary rules and security invariants
+- [x] Documentation & Project Finalization:
+  - [x] `README.md`: Added Governance Flow, canonical credentials table, and demo execution instructions
+  - [x] `ROADMAP.md`: Updated marking all 32 core phases 100% complete and specifying post-hackathon horizons
+  - [x] Final stub audit: Confirmed 0 remaining stubs in project
+
+---
+
+*Project Status: 100% Complete (32 of 32 Phases). All 16 verify suites pass (282/282 checks), live demo walkthrough executes cleanly, zero stubs remain. Ready for final evaluation and jury presentation.*
+
 

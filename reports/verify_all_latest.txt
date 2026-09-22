@@ -1,4 +1,4 @@
-# Commit: f317acf021ad1158596db45fc1aad967b3f881f8 | Timestamp: 2026-09-22T08:57:33.823741+00:00
+# Commit: 93ddd27f6808479b9805d79a406ebaf5cc8cbc65 | Timestamp: 2026-09-22T09:33:34.079888+00:00
 
 ==============================================================================
 INTELLIFUSION MASTER VERIFICATION SUITE (ALL PHASES)
@@ -195,7 +195,7 @@ Phase 20 Real Gas Telemetry Verification
 .  [PASS] generate_mock_data.py updated with real gas reading simulation
 .
 ----------------------------------------------------------------------
-Ran 5 tests in 0.294s
+Ran 5 tests in 0.319s
 
 OK
 ============================================================
@@ -322,7 +322,7 @@ Phase 25 Workflow Engine + Inspections Verification Suite
 [PASS] 2c. Legal observation transitions accepted
 [PASS] 2d. Illegal observation transition (closed -> under_review) rejected
 [PASS] 3. D12 Human-in-the-loop protection blocks system actor from closing
-[PASS] 4a. Inspection code generated in INS-xxxx format â€” INS-0019
+[PASS] 4a. Inspection code generated in INS-xxxx format â€” INS-0023
 [PASS] 4b. Workflow transition record written to database
 [PASS] 4c. Inspector inspection scope includes assigned inspection
 [PASS] 4d. Observation created with linked inspection_id
@@ -380,9 +380,9 @@ Phase 27 Auth Endpoint Verification Suite
 ============================================================
 [PASS] 1a. AccessDeniedReportRequest valid path
 [PASS] 1b. AccessDeniedReportRequest rejects >200 chars
-[PASS] 1c. Control characters stripped from path â€” Logged: /admin/evilpath-b225d3
-[PASS] 2. POST /auth/access-denied writes ACCESS_DENIED audit entry â€” Logged path: /admin/super-secret-91d30415
-[PASS] 3. Deduplication: repeated denial with same path within 30s is dropped â€” Count before: 16, after: 16
+[PASS] 1c. Control characters stripped from path â€” Logged: /admin/evilpath-adacb3
+[PASS] 2. POST /auth/access-denied writes ACCESS_DENIED audit entry â€” Logged path: /admin/super-secret-07a9c0a6
+[PASS] 3. Deduplication: repeated denial with same path within 30s is dropped â€” Count before: 18, after: 18
 [PASS] 4. Per-user rate limit: 25 varying-path requests capped at exactly 20 audit entries â€” Expected 20, recorded: 20 (excess 5 dropped silently with 204)
 ============================================================
 PHASE 27 BACKEND AUTH VERIFICATION SUMMARY
@@ -436,7 +436,7 @@ Results: 5 PASSED, 0 FAILED
 ============================================================
 Phase 29 Mobile Two-Way Delta Sync Verification Suite
 ============================================================
-[PASS] 1a. Baseline pull returns assigned inspection â€” Found: ['INS-a69a1e-01']
+[PASS] 1a. Baseline pull returns assigned inspection â€” Found: ['INS-c4edae-01']
 [PASS] 1b. Baseline pull scopes out other inspector
 [PASS] 1c. Baseline pull returns caller's observation
 [PASS] 1d. Baseline pull returns linked action with rejection reason
@@ -502,6 +502,48 @@ Results: 27 PASSED, 0 FAILED
 [PASS] Phase 30 Admin & Reports (verify_phase30_admin_reports.py): 27 PASS, 0 FAIL, 0 SKIP (exit: 0)
 
 
+>>> Running Phase 31 Acceptance (verify_phase31_acceptance.py) ...
+------------------------------------------------------------
+======================================================================
+PHASE 31: COMPREHENSIVE RBAC & FINAL ACCEPTANCE VERIFICATION
+======================================================================
+
+--- Part 1: Canonical Role RBAC & Route Matching (Tests 1-6) ---
+  [PASS] 1a. super_admin authentication succeeds
+  [PASS] 1b. super_admin possesses platform-wide governance permissions
+  [PASS] 1c. super_admin route /admin/users accessible (200 OK)
+  [PASS] 2a. corporate_management receives executive KPI & reporting permissions
+  [PASS] 2b. corporate_management route /kpi/cross-mine-summary accessible (200 OK)
+  [PASS] 3a. mine_official receives action creation & verification permissions
+  [PASS] 3b. mine_official route /actions accessible (200 OK)
+  [PASS] 4a. inspector receives field inspection & observation permissions
+  [PASS] 4b. inspector route /inspections accessible (200 OK)
+  [PASS] 5a. contractor receives work order execution & evidence permissions
+  [PASS] 5b. contractor route /actions accessible (200 OK)
+  [PASS] 6a. regulator receives statutory audit & compliance view permissions
+  [PASS] 6b. regulator route /audit/verify accessible (200 OK)
+
+--- Part 2: Negative Boundaries & State Machine Guards (Tests 7-13) ---
+  [PASS] 7. Contractor cannot verify action (403 Forbidden)
+  [PASS] 8. Inspector cannot verify action or review observation (403 Forbidden)
+  [PASS] 9. Corporate / Regulator cannot verify action (403 Forbidden)
+  [PASS] 10. Super Admin operational separation: operational verification separated from super_admin
+  [PASS] 11. System actor cannot perform HITL verification (Decision D12 enforced)
+  [PASS] 12. Proof of work required: action submission without evidence rejected (400 Bad Request)
+  [PASS] 13. Cross-mine manager isolation: Korba manager cannot verify Dhanbad action (403 Forbidden)
+
+--- Part 3: Scope Isolation & Cryptographic Audit (Tests 14-15) ---
+  [PASS] 14. Contractor scope isolation (D18): Contractor 1 cannot access Contractor 2's Action OR Observation
+  [PASS] 15a. Regulatory audit endpoint returns 200 OK
+  [PASS] 15b. Cryptographic SHA-256 audit chain verified intact with 0 broken links
+
+======================================================================
+Results: 23 PASSED, 0 FAILED
+======================================================================
+------------------------------------------------------------
+[PASS] Phase 31 Acceptance (verify_phase31_acceptance.py): 23 PASS, 0 FAIL, 0 SKIP (exit: 0)
+
+
 ==============================================================================
 FINAL VERIFICATION RECONCILIATION TABLE
 ==============================================================================
@@ -522,10 +564,11 @@ Phase 27b Overdue (verify_phase27b_overdue.py) | 6      | 0      | 0      | PASS
 Phase 27b KPI (verify_phase27b_kpi.py) | 5      | 0      | 0      | PASS  
 Phase 29 Pull Sync (verify_phase29_pull_sync.py) | 20     | 0      | 0      | PASS  
 Phase 30 Admin & Reports (verify_phase30_admin_reports.py) | 27     | 0      | 0      | PASS  
+Phase 31 Acceptance (verify_phase31_acceptance.py) | 23     | 0      | 0      | PASS  
 ------------------------------------------------------------------------------
-GRAND TOTAL                    | 259    | 0      | 0      | PASS  
+GRAND TOTAL                    | 282    | 0      | 0      | PASS  
 ==============================================================================
-Grand Total Checks Run: 259 (259 Passed, 0 Failed)
+Grand Total Checks Run: 282 (282 Passed, 0 Failed)
 Total Checks Skipped:   0
 ==============================================================================
 

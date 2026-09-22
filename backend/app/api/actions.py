@@ -122,7 +122,22 @@ async def create_action(
         )
         db.add(new_assignment)
 
-    # 4. Dispatch Alert (D19)
+    # 4. Transition parent observation to action_required if currently open, under_review, or escalated
+    if observation.status in (ObservationStatus.open, ObservationStatus.under_review, ObservationStatus.escalated):
+        await execute_transition(
+            db=db,
+            entity_type="observation",
+            entity_id=observation.id,
+            from_state=observation.status.value,
+            to_state=ObservationStatus.action_required.value,
+            actor=current_user,
+            actor_type="user",
+            audit_action="observation.action_required",
+            audit_payload={"action_id": str(action.id), "code": code},
+        )
+        observation.status = ObservationStatus.action_required
+
+    # 5. Dispatch Alert (D19)
     alert = Alert(
         recipient_role="contractor",
         recipient_user_id=req.assigned_to_user_id,
@@ -133,7 +148,7 @@ async def create_action(
     )
     db.add(alert)
 
-    # 5. Audit log
+    # 6. Audit log
     await append_audit_entry(
         db=db,
         action="action.create",
@@ -287,6 +302,26 @@ async def start_action(
 
     action.status = ActionStatus.in_progress
     action.started_at = datetime.now(timezone.utc)
+
+    # Transition parent observation to in_progress if currently action_required
+    observation = await db.get(Observation, action.observation_id)
+    if observation and observation.status == ObservationStatus.action_required:
+        try:
+            await execute_transition(
+                db=db,
+                entity_type="observation",
+                entity_id=observation.id,
+                from_state=observation.status.value,
+                to_state=ObservationStatus.in_progress.value,
+                actor=current_user,
+                actor_type="user",
+                audit_action="observation.in_progress",
+                audit_payload={"action_id": str(action.id), "code": action.code},
+            )
+            observation.status = ObservationStatus.in_progress
+        except Exception:
+            pass  # Fail gracefully if already transitioning
+
     await db.commit()
     await db.refresh(action)
     return action

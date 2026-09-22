@@ -254,6 +254,39 @@ The web dashboard provides specialized views based on user roles:
 
 ---
 
+## Canonical Governance Flow & Live Demonstration
+
+Intellifusion enforces a strict 14-step statutory compliance life cycle (DGMS CMR 2017 compliant) connecting all 6 platform roles with human-in-the-loop sign-offs and cryptographic verification.
+
+For complete architectural diagrams, state machine specifications, and negative boundary documentation, see [docs/FLOW.md](docs/FLOW.md).
+
+### Canonical Demo Accounts
+
+All demo accounts share the password: `password123`
+
+| Role | Email | Scope / Purpose | Primary Route |
+|:---|:---|:---|:---|
+| **Super Admin** | `superadmin@intellifusion.gov.in` | Platform-wide governance, SLA thresholds, reports | `/admin/system` |
+| **Corporate Management** | `corporate@coalindia.in` | Multi-mine executive risk KPI command center | `/corporate` |
+| **Mine Official** | `official1@mine.in` | Dhanbad Colliery Manager (HITL verification, actions) | `/manager` |
+| **Field Inspector** | `inspector1@mine.in` | Underground statutory inspector (offline sync) | `/inspections` |
+| **Contractor** | `contractor1@contractor.in` | Remediation specialist (Apex Mining Corp) | `/contractor` |
+| **Regulatory Authority** | `regulator@dgms.gov.in` | DGMS statutory auditor (SHA-256 chain verification) | `/regulator` |
+
+### Running the Live Demonstration
+
+To reset the database to the pristine story starting point and execute the canonical 14-step end-to-end lifecycle walkthrough:
+
+```bash
+# 1. Reset demo story dataset (idempotent, safe)
+cd backend
+DEMO_MODE=true python scripts/reset_demo.py
+# (or with force flag: python scripts/reset_demo.py --force)
+
+# 2. Execute automated 14-step jury demonstration
+python scripts/demo_walkthrough.py
+```
+
 ## API Reference
 
 The FastAPI backend exposes comprehensive RESTful endpoints:

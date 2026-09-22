@@ -270,6 +270,41 @@ async def close_observation(
     return ObservationOut.model_validate(obs)
 
 
+@router.post("/{observation_id}/review", response_model=ObservationOut)
+async def review_observation(
+    observation_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.OBSERVATION_REVIEW)),
+):
+    """
+    Mine Official reviews observation in Risk Center (transitions: open -> under_review).
+    """
+    stmt = select(Observation).where(Observation.id == observation_id)
+    if current_user.role == UserRole.mine_official and current_user.mine_site_id:
+        stmt = stmt.where(Observation.mine_site_id == current_user.mine_site_id)
+    obs = (await db.execute(stmt)).scalar_one_or_none()
+    if not obs:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Observation not found or access denied for your mine site",
+        )
+
+    await execute_transition(
+        db=db,
+        entity_type="observation",
+        entity_id=obs.id,
+        from_state=obs.status.value,
+        to_state=ObservationStatus.under_review.value,
+        actor=current_user,
+        actor_type="user",
+        audit_action="OBSERVATION_REVIEWED",
+    )
+    obs.status = ObservationStatus.under_review
+    await db.commit()
+    await db.refresh(obs)
+    return ObservationOut.model_validate(obs)
+
+
 @router.get("/{observation_id}/risk-card", response_model=RiskCardOut)
 async def get_risk_card(
     observation_id: UUID,

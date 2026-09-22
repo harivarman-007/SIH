@@ -18,15 +18,32 @@
 
 ---
 
+---
+
 ## Phase Roadmap & Progress
 
-### Completed & Fully Verified
+### Core Architecture & Implementation: 100% Complete & Verified (32 of 32 Phases)
 1. **Phase 0–5**: Monorepo architecture, DB models, edge Isolation Forest, mobile offline SQLite capture, cloud 15-feature Isolation Forest with SHAP-lite, Tesseract OCR review queue.
 2. **Phase 8**: Security audit fixes (Fail-closed role filtering, CORS restricted allowlist, audit chain concurrency locks).
 3. **Phase 9**: 6-role RBAC model (`super_admin`, `corporate_management`, `mine_official`, `inspector`, `contractor`, `regulator`) with `CorporateMineAccess` and `ContractorAssignment` join tables.
 4. **Phase 10**: Problem Statement capability audit and roadmap.
 5. **Phase 11**: Corporate Management Executive Dashboard with cross-mine aggregate risk gauge, statutory open violation drilldown, contractor risk monitoring, and descending leaderboard table with sparklines.
-6. **Phase 12**:
-   - **Production Statutory Compliance**: Fully integrated `production` category into models, DGMS action tables, KPI aggregations, dashboard UI, and mobile application.
-   - **Automated SLA Escalation Engine**: Implemented `POST /observations/escalate-overdue` with statutory SLA breach detection and audit chain logging.
-   - **Zero Silent Fallbacks**: Purged fake-data demo fallbacks in favor of honest connection error states and technical diagnostics.
+6. **Phase 12**: Statutory Escalation & Production Category Hardening.
+7. **Phase 20**: Telemetry & Live Polling Architecture.
+8. **Phase 21**: Multilingual OCR Engine & Human Review Verification.
+9. **Phase 22**: In-App Statutory Notification & Real-Time Alert Engine.
+10. **Phase 24**: Granular 39-Permission RBAC, HARD_DENY Guards & Token Revocation.
+11. **Phase 25**: Statutory Underground Inspections Lifecycle & State Machine.
+12. **Phase 26**: Corrective Actions, Proof of Work Evidence & Human-in-the-Loop Sign-Off.
+13. **Phase 27**: Dual-Token JWT Authentication, Device Binding & Lockout Protection.
+14. **Phase 27b**: Background SLA Daemon & Multi-Factor Anomaly Risk Aggregation.
+15. **Phase 28**: Web Dashboard Component Architecture & Dynamic Role Views.
+16. **Phase 29**: Bi-Directional Delta Pull Sync, Mobile Outbox & Offline Watermarks.
+17. **Phase 30**: Super Admin Console, Compliance Rules Registry & Statutory Report Generation.
+18. **Phase 31**: Demo Hardening, Canonical Walkthrough & Full RBAC Acceptance Matrix (282/282 tests passed).
+
+### Out-of-Scope Production Horizons (Post-Hackathon)
+- **Apache Kafka Integration**: Ultra-high-throughput telemetry ingestion for thousands of active IoT sensor nodes.
+- **TimescaleDB Time-Series Extension**: Sub-second vibration, seismic, and continuous gas sensor telemetry archiving.
+- **Hardware Integration**: Intrinsic safety (IS) certified gas sensors and ruggedized ATEX Zone 0 field tablets.
+- **Federated Learning**: Privacy-preserving edge AI training across multiple independent mining corporations.
