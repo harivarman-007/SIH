@@ -114,15 +114,15 @@ export const ComplianceRulesView: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-5xl space-y-5 text-slate-900">
+    <div className="w-full space-y-6 text-slate-900">
       {/* Header */}
-      <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
             DGMS Statutory Compliance / Regulatory Registry
           </div>
-          <h1 className="text-xl font-bold text-slate-900 mt-0.5">Compliance Regulations Catalogue</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-xl font-bold text-slate-900 mt-1">Compliance Regulations Catalogue</h1>
+          <p className="text-xs text-slate-500 mt-1">
             Directorate General of Mines Safety (DGMS) statutory standards and enforcement rules
           </p>
         </div>
@@ -130,9 +130,9 @@ export const ComplianceRulesView: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 rounded-xl bg-blue-800 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+          className="px-4 py-2.5 rounded-xl bg-blue-800 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors flex items-center gap-2 cursor-pointer self-start sm:self-auto shrink-0"
         >
-          <Plus className="size-3.5" />
+          <Plus className="size-4" />
           <span>Add Regulation</span>
         </button>
       </div>
@@ -164,34 +164,34 @@ export const ComplianceRulesView: React.FC = () => {
       )}
 
       {/* Filters & Search */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch">
         <div className="flex-1 relative">
-          <Search className="size-4 text-slate-400 absolute left-3.5 top-3" />
+          <Search className="size-4 text-slate-400 absolute left-4 top-3 pointer-events-none" />
           <input
             type="text"
             placeholder="Search regulations by code, keyword, or CMR reference…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-xl pl-9.5 pr-10 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-700 shadow-2xs"
+            className="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-10 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-700 shadow-2xs transition-colors"
           />
           {searchTerm && (
             <button
               type="button"
               onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
+              className="absolute right-3.5 top-2.5 text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
             >
               Clear
             </button>
           )}
         </div>
 
-        <div className="flex gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl overflow-x-auto text-xs shrink-0">
+        <div className="flex gap-1.5 p-1 bg-slate-100 border border-slate-200 rounded-xl overflow-x-auto text-xs shrink-0 items-center">
           {['all', 'safety', 'environment', 'labour', 'production'].map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1.5 rounded-lg font-semibold capitalize text-xs transition-colors cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-lg font-semibold capitalize text-xs transition-colors cursor-pointer ${
                 categoryFilter === cat
                   ? 'bg-blue-800 text-white shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -206,12 +206,12 @@ export const ComplianceRulesView: React.FC = () => {
       {/* Rules Table */}
       <div className="rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
+          <div className="p-16 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
             <RefreshCw className="size-4 animate-spin text-blue-700" />
             <span>Loading statutory regulations...</span>
           </div>
         ) : filteredRules.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-xs">
+          <div className="p-16 text-center text-slate-400 text-xs">
             No compliance regulations matching filter criteria.
           </div>
         ) : (
@@ -220,9 +220,9 @@ export const ComplianceRulesView: React.FC = () => {
               return (
                 <div
                   key={rule.id}
-                  className="p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
+                  className="p-5 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
                 >
-                  <div className="space-y-1.5 flex-1">
+                  <div className="space-y-2 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-mono text-xs font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
                         {rule.code}
@@ -239,15 +239,15 @@ export const ComplianceRulesView: React.FC = () => {
                           {rule.statutory_ref}
                         </span>
                       )}
-                      <span className="text-[11px] text-slate-400 capitalize">
-                        Severity: <strong className="text-slate-600 font-semibold">{rule.default_severity}</strong>
+                      <span className="text-xs text-slate-400 capitalize">
+                        Severity: <strong className="text-slate-700 font-semibold">{rule.default_severity}</strong>
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-700 leading-relaxed">{rule.description}</p>
+                    <p className="text-xs text-slate-700 leading-relaxed font-normal">{rule.description}</p>
                   </div>
 
-                  <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
+                  <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
                     <span
                       className={`text-xs font-semibold ${
                         rule.is_active ? 'text-emerald-700' : 'text-slate-400'

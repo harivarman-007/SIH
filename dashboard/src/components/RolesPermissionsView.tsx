@@ -137,21 +137,29 @@ export const RolesPermissionsView: React.FC = () => {
   });
   const allPermissions = Array.from(allPermissionsSet).sort();
 
+  const formatRoleLabel = (r: RolePermissionsData) => {
+    if (r.label && !r.label.includes('_')) return r.label;
+    return r.role
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   return (
-    <div className="w-full max-w-5xl space-y-5 text-slate-900">
+    <div className="w-full space-y-6 text-slate-900">
       {/* Header */}
-      <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
             Security & Governance / RBAC
           </div>
-          <h1 className="text-xl font-bold text-slate-900 mt-0.5">Roles & Permissions Matrix</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-xl font-bold text-slate-900 mt-1">Roles & Permissions Matrix</h1>
+          <p className="text-xs text-slate-500 mt-1">
             Role-based access control engine, hard-deny invariants & lockout protection
           </p>
         </div>
 
-        <div className="text-xs font-mono bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-slate-600 font-semibold shadow-2xs">
+        <div className="text-xs font-mono bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-xl text-slate-600 font-semibold shadow-2xs self-start sm:self-auto">
           6 Roles • {allPermissions.length} Defined Permissions
         </div>
       </div>
@@ -182,8 +190,8 @@ export const RolesPermissionsView: React.FC = () => {
         </div>
       )}
 
-      {/* Role Selector Tabs */}
-      <div className="flex flex-wrap gap-1.5 p-1.5 rounded-2xl bg-slate-100 border border-slate-200">
+      {/* Role Selector Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 p-2 bg-slate-100/80 border border-slate-200 rounded-2xl">
         {rolesData.map((r) => {
           const isSelected = r.role === selectedRole;
           return (
@@ -191,16 +199,16 @@ export const RolesPermissionsView: React.FC = () => {
               key={r.role}
               type="button"
               onClick={() => setSelectedRole(r.role)}
-              className={`flex-1 min-w-[140px] px-3.5 py-2 rounded-xl text-xs font-semibold transition-all text-center cursor-pointer ${
+              className={`flex flex-col items-center justify-center p-3 rounded-xl text-xs transition-all cursor-pointer ${
                 isSelected
-                  ? 'bg-blue-800 text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-blue-800 text-white shadow-xs'
+                  : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/70 shadow-2xs'
               }`}
             >
-              <div className="font-bold">{r.label}</div>
-              <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
-                {r.user_count} Active Users
-              </div>
+              <span className="font-bold text-center leading-tight">{formatRoleLabel(r)}</span>
+              <span className={`text-[10px] mt-1 ${isSelected ? 'text-blue-200' : 'text-slate-400'}`}>
+                {r.user_count} Active {r.user_count === 1 ? 'User' : 'Users'}
+              </span>
             </button>
           );
         })}
@@ -208,16 +216,16 @@ export const RolesPermissionsView: React.FC = () => {
 
       {/* Role Overview Card */}
       {currentRoleData && (
-        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="font-bold text-slate-900 text-sm">{currentRoleData.label}</span>
-            <p className="text-slate-500 text-xs mt-0.5">{currentRoleData.scope_description}</p>
+            <span className="font-bold text-slate-900 text-base">{formatRoleLabel(currentRoleData)}</span>
+            <p className="text-slate-500 text-xs mt-1 leading-relaxed">{currentRoleData.scope_description}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               {currentRoleData.permissions.length} Granted
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 font-semibold">
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
               {currentRoleData.hard_deny.length} Hard-Denied
             </span>
           </div>
@@ -226,19 +234,19 @@ export const RolesPermissionsView: React.FC = () => {
 
       {/* Permission Filter Search Bar */}
       <div className="relative">
-        <Search className="size-4 text-slate-400 absolute left-3.5 top-3" />
+        <Search className="size-4 text-slate-400 absolute left-4 top-3.5 pointer-events-none" />
         <input
           type="text"
           placeholder="Filter permissions by keyword (e.g. INSPECTION, ACTION, CLOSE, EXPORT)…"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-white border border-slate-200 rounded-xl pl-9.5 pr-10 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-700 shadow-2xs"
+          className="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-10 py-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-700 shadow-2xs transition-colors"
         />
         {searchTerm && (
           <button
             type="button"
             onClick={() => setSearchTerm('')}
-            className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
+            className="absolute right-3.5 top-3 text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
           >
             Clear
           </button>
@@ -246,7 +254,7 @@ export const RolesPermissionsView: React.FC = () => {
       </div>
 
       {/* Accordion Permission Groups */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {PERMISSION_GROUPS.map((group) => {
           const groupPerms = allPermissions.filter((p) => p.startsWith(group.prefix));
           const filteredPerms = groupPerms.filter((p) =>
@@ -267,16 +275,16 @@ export const RolesPermissionsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => toggleGroupExpand(group.groupName)}
-                className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50/70 transition-colors cursor-pointer"
+                className="w-full p-5 flex items-center justify-between text-left hover:bg-slate-50/70 transition-colors cursor-pointer"
               >
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <span className="text-sm font-bold text-slate-900">{group.groupName}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-mono font-semibold">
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-mono font-semibold">
                       {grantedCount} / {filteredPerms.length} Active
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-0.5">{group.description}</p>
+                  <p className="text-xs text-slate-500 mt-1">{group.description}</p>
                 </div>
                 <div className="text-slate-400 p-1">
                   {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
@@ -297,7 +305,7 @@ export const RolesPermissionsView: React.FC = () => {
                     return (
                       <div
                         key={perm}
-                        className="p-3.5 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-slate-50/50"
+                        className="p-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-slate-50/50 transition-colors"
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
@@ -313,7 +321,7 @@ export const RolesPermissionsView: React.FC = () => {
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-slate-500">
+                          <p className="text-xs text-slate-500">
                             {isHardDenied
                               ? 'Permanently forbidden by statutory separation of duties (spec invariant).'
                               : isProtectedLockout
@@ -323,7 +331,7 @@ export const RolesPermissionsView: React.FC = () => {
                         </div>
 
                         {/* Interactive Toggle */}
-                        <div className="flex items-center gap-3 self-end sm:self-auto">
+                        <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
                           <button
                             type="button"
                             disabled={isHardDenied || isCurrentToggling}
