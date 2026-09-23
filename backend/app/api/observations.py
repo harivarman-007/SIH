@@ -12,6 +12,7 @@ from app.authz.permissions import Permission
 from app.authz.state_machine import execute_transition
 from app.database import get_db
 from app.models import (
+    ComplianceThreshold,
     ContractorAssignment,
     CorporateMineAccess,
     Observation,
@@ -32,6 +33,7 @@ from app.schemas.observation import (
     RiskCardOut,
 )
 from app.services.auth import get_current_user, require_roles
+from app.services.threshold_evaluator import evaluate_observation_compliance
 
 router = APIRouter(prefix="/observations", tags=["observations"])
 
@@ -68,6 +70,36 @@ def apply_role_filter(stmt, user: User):
         return stmt
     # Default fail closed for any unmapped role
     return stmt.where(Observation.id == None)
+
+
+@router.get("/thresholds", response_model=List[dict])
+async def list_compliance_thresholds(
+    category: Optional[str] = Query(None),
+    mine_site_id: Optional[UUID] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List statutory compliance threshold rules (CPCB & DGMS limits)."""
+    stmt = select(ComplianceThreshold)
+    if category:
+        stmt = stmt.where(ComplianceThreshold.category == category)
+    if mine_site_id:
+        stmt = stmt.where((ComplianceThreshold.mine_site_id == mine_site_id) | (ComplianceThreshold.mine_site_id.is_(None)))
+    res = await db.execute(stmt)
+    thresholds = res.scalars().all()
+    return [
+        {
+            "id": str(t.id),
+            "category": t.category,
+            "metric_name": t.metric_name,
+            "max_value": t.max_value,
+            "min_value": t.min_value,
+            "unit": t.unit,
+            "mine_site_id": str(t.mine_site_id) if t.mine_site_id else None,
+            "statutory_ref": t.statutory_ref,
+        }
+        for t in thresholds
+    ]
 
 
 @router.post("/", response_model=ObservationOut, status_code=status.HTTP_201_CREATED)
@@ -123,6 +155,10 @@ async def create_observation(
         edge_reasons=req.edge_reasons,
         status=ObservationStatus.open,
     )
+
+    # Evaluate compliance against statutory environmental & production thresholds
+    await evaluate_observation_compliance(db, new_obs)
+
     db.add(new_obs)
     await db.flush()
 
@@ -138,6 +174,8 @@ async def create_observation(
             "inspection_id": str(new_obs.inspection_id) if new_obs.inspection_id else None,
             "edge_flag": new_obs.edge_flag.value if new_obs.edge_flag else None,
             "edge_score": new_obs.edge_score,
+            "compliance_status": new_obs.compliance_status,
+            "threshold_breach_detail": new_obs.threshold_breach_detail,
         },
         actor_id=current_user.id,
     )

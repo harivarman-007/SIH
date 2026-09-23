@@ -13,6 +13,7 @@ from app.schemas.inspections import InspectionOut
 from app.schemas.observation import ObservationOut
 from app.schemas.actions import ActionOut
 from app.services.auth import get_current_user
+from app.services.threshold_evaluator import evaluate_observation_compliance
 
 router = APIRouter(prefix="/sync", tags=["sync"])
 
@@ -58,6 +59,10 @@ async def sync_batch(
             edge_reasons=item.edge_reasons,
             status=ObservationStatus.open,
         )
+
+        # Evaluate compliance against statutory thresholds
+        await evaluate_observation_compliance(db, obs)
+
         db.add(obs)
         await db.flush()
 

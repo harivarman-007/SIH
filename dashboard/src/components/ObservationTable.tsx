@@ -699,6 +699,8 @@ function ProjectLineComponent({ project, onOpenCard }: ProjectLineComponentProps
                ? 'IMMEDIATE ACTION REQUIRED: Evacuate personnel from zone. Suspend operations. Notify DGMS and Mine Manager.'
                : 'CORRECTIVE ACTION: Dispatch certified contractor to remediate condition in compliance with CMR 2017.'),
             status: raw.status === 'closed' ? 'completed' : 'in-progress',
+            complianceStatus: raw.compliance_status,
+            thresholdBreachDetail: raw.threshold_breach_detail,
          });
          return;
       }
@@ -739,6 +741,18 @@ function ProjectLineComponent({ project, onOpenCard }: ProjectLineComponentProps
             <div className="flex flex-col items-start overflow-hidden min-w-0">
                <span className="font-medium text-slate-900 group-hover:text-blue-700 truncate w-full flex items-center gap-1.5 text-xs">
                   <span className="truncate">{project.name}</span>
+                  {project._raw?.compliance_status && (
+                     <span
+                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                           project._raw.compliance_status === 'violation'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        }`}
+                        title={project._raw.threshold_breach_detail || undefined}
+                     >
+                        {project._raw.compliance_status}
+                     </span>
+                  )}
                   <span className="text-[10px] font-mono text-slate-400 group-hover:text-blue-600 shrink-0">
                      &rarr;
                   </span>

@@ -38,6 +38,8 @@ export interface ObservationOut {
   closure_photo_url: string | null;
   closure_note: string | null;
   escalated_at: string | null;
+  compliance_status?: string | null;
+  threshold_breach_detail?: string | null;
   version: number;
 }
 

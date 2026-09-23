@@ -34,6 +34,8 @@ export interface LocalObservation {
   edge_score: number | null;
   edge_flag: RiskFlag | null;
   edge_reasons_json: string | null; // JSON string
+  compliance_status?: string | null;
+  threshold_breach_detail?: string | null;
   // Timestamps
   created_at: string;
 }
@@ -144,6 +146,8 @@ export async function initSchema(db: SQLite.SQLiteDatabase): Promise<void> {
       edge_score        REAL    DEFAULT NULL,
       edge_flag         TEXT    DEFAULT NULL,
       edge_reasons_json TEXT    DEFAULT NULL,
+      compliance_status TEXT    DEFAULT NULL,
+      threshold_breach_detail TEXT DEFAULT NULL,
 
       created_at        TEXT    NOT NULL
     );
@@ -254,6 +258,8 @@ export async function initSchema(db: SQLite.SQLiteDatabase): Promise<void> {
     "ALTER TABLE local_observations ADD COLUMN edge_reasons_json TEXT DEFAULT NULL;",
     "ALTER TABLE local_observations ADD COLUMN server_uuid TEXT DEFAULT NULL;",
     "ALTER TABLE local_observations ADD COLUMN last_error TEXT DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN compliance_status TEXT DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN threshold_breach_detail TEXT DEFAULT NULL;",
     "ALTER TABLE cached_inspections ADD COLUMN notes TEXT DEFAULT NULL;",
     "ALTER TABLE cached_inspections ADD COLUMN observation_count INTEGER DEFAULT 0;",
   ];

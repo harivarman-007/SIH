@@ -96,21 +96,48 @@ function ObservationCard({ obs }: { obs: LocalObservation }) {
           </Text>
           <Text style={styles.obsCategory}>{obs.category}</Text>
         </View>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: statusCfg.bg, borderColor: statusCfg.border },
-          ]}
-        >
-          <Ionicons
-            name={statusCfg.iconName}
-            size={12}
-            color={statusCfg.color}
-            style={{ marginRight: 4 }}
-          />
-          <Text style={[styles.statusText, { color: statusCfg.color }]}>
-            {obs.sync_status.toUpperCase()}
-          </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          {obs.compliance_status ? (
+            <View
+              style={[
+                styles.statusBadge,
+                obs.compliance_status === "violation"
+                  ? { backgroundColor: colors.dangerLight, borderColor: colors.dangerBorder }
+                  : { backgroundColor: colors.successLight, borderColor: colors.successBorder },
+              ]}
+            >
+              <Ionicons
+                name={obs.compliance_status === "violation" ? "alert-circle" : "shield-checkmark"}
+                size={11}
+                color={obs.compliance_status === "violation" ? colors.dangerText : colors.successText}
+                style={{ marginRight: 3 }}
+              />
+              <Text
+                style={[
+                  styles.statusText,
+                  { color: obs.compliance_status === "violation" ? colors.dangerText : colors.successText },
+                ]}
+              >
+                {obs.compliance_status.toUpperCase()}
+              </Text>
+            </View>
+          ) : null}
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: statusCfg.bg, borderColor: statusCfg.border },
+            ]}
+          >
+            <Ionicons
+              name={statusCfg.iconName}
+              size={12}
+              color={statusCfg.color}
+              style={{ marginRight: 4 }}
+            />
+            <Text style={[styles.statusText, { color: statusCfg.color }]}>
+              {obs.sync_status.toUpperCase()}
+            </Text>
+          </View>
         </View>
       </View>
       <Text style={styles.obsDescription} numberOfLines={2}>

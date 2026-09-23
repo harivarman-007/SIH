@@ -256,6 +256,27 @@ export default function DashboardScreen({ navigation }: Props) {
                           {(obs.edge_flag ?? "low").toUpperCase()}
                         </Text>
                       </View>
+                      {obs.compliance_status ? (
+                        <View
+                          style={[
+                            styles.flagPill,
+                            obs.compliance_status === "violation"
+                              ? { backgroundColor: colors.dangerLight, borderColor: colors.dangerBorder }
+                              : { backgroundColor: colors.successLight, borderColor: colors.successBorder },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.flagPillText,
+                              obs.compliance_status === "violation"
+                                ? { color: colors.dangerText }
+                                : { color: colors.successText },
+                            ]}
+                          >
+                            {obs.compliance_status.toUpperCase()}
+                          </Text>
+                        </View>
+                      ) : null}
                     </View>
                     <Text style={styles.recentDesc} numberOfLines={2}>
                       {obs.description}

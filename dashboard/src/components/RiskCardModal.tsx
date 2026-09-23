@@ -32,6 +32,8 @@ export interface ObservationData {
   topContributors: string[];
   suggestedAction: string;
   status: 'open' | 'in-progress' | 'completed';
+  complianceStatus?: string | null;
+  thresholdBreachDetail?: string | null;
 }
 
 export interface RiskCardModalProps {
@@ -202,6 +204,44 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
                       {observation.description}
                     </p>
                   </div>
+
+                  {/* Statutory Compliance Threshold Badge (Item 2) */}
+                  {observation.complianceStatus && (
+                    <div
+                      className={`mt-3 p-3 rounded-xl border flex items-start gap-2.5 ${
+                        observation.complianceStatus === 'violation'
+                          ? 'bg-rose-50 border-rose-200 text-rose-800'
+                          : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      }`}
+                    >
+                      <ShieldAlert
+                        className={`size-4 shrink-0 mt-0.5 ${
+                          observation.complianceStatus === 'violation'
+                            ? 'text-rose-600'
+                            : 'text-emerald-600'
+                        }`}
+                      />
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                          <span>Statutory Threshold:</span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              observation.complianceStatus === 'violation'
+                                ? 'bg-rose-200 text-rose-900'
+                                : 'bg-emerald-200 text-emerald-900'
+                            }`}
+                          >
+                            {observation.complianceStatus}
+                          </span>
+                        </div>
+                        {observation.thresholdBreachDetail && (
+                          <div className="text-xs mt-1 leading-relaxed font-medium">
+                            {observation.thresholdBreachDetail}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Statutory Field Metadata Cards */}

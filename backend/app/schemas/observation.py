@@ -21,6 +21,8 @@ class ObservationCreate(BaseModel):
     edge_reasons: Optional[Dict[str, Any]] = None
     gas_reading_value: Optional[float] = None
     gas_reading_unit: Optional[str] = None
+    compliance_status: Optional[str] = None
+    threshold_breach_detail: Optional[str] = None
     created_at: Optional[datetime] = None  # Client capture timestamp
 
 
@@ -60,6 +62,8 @@ class ObservationOut(BaseModel):
     closure_photo_url: Optional[str] = None
     closure_note: Optional[str] = None
     escalated_at: Optional[datetime] = None
+    compliance_status: Optional[str] = None
+    threshold_breach_detail: Optional[str] = None
     version: int
 
     class Config:
@@ -73,6 +77,8 @@ class RiskCardOut(BaseModel):
     status: ObservationStatus
     gas_reading_value: Optional[float] = None
     gas_reading_unit: Optional[str] = None
+    compliance_status: Optional[str] = None
+    threshold_breach_detail: Optional[str] = None
     edge_score: Optional[float] = None
     edge_flag: Optional[RiskFlag] = None
     edge_reasons: Optional[Dict[str, Any]] = None
