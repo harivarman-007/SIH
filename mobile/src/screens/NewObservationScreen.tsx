@@ -166,9 +166,12 @@ export default function NewObservationScreen({ navigation, route }: Props) {
       });
 
       navigation.replace("RiskCard", { localId, riskResult });
-    } catch (err) {
-      Alert.alert("Error", "Failed to save observation. Please try again.");
-      console.error(err);
+    } catch (err: any) {
+      console.error("Save observation failed:", err);
+      Alert.alert(
+        "Failed to Save Observation",
+        err?.message || "An unexpected error occurred while saving the observation. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }

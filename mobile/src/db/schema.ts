@@ -194,6 +194,31 @@ export async function initSchema(db: SQLite.SQLiteDatabase): Promise<void> {
       value TEXT NOT NULL
     );
   `);
+
+  // Safe migrations for databases created on earlier versions
+  const safeMigrations = [
+    "ALTER TABLE local_observations ADD COLUMN inspection_id TEXT DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN gas_reading_value REAL DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN gas_reading_unit TEXT DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN beacon_id TEXT DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN mine_site_id TEXT DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN zone_id TEXT DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN edge_score REAL DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN edge_flag TEXT DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN edge_reasons_json TEXT DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN server_uuid TEXT DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN last_error TEXT DEFAULT NULL;",
+    "ALTER TABLE cached_inspections ADD COLUMN notes TEXT DEFAULT NULL;",
+    "ALTER TABLE cached_inspections ADD COLUMN observation_count INTEGER DEFAULT 0;",
+  ];
+
+  for (const sql of safeMigrations) {
+    try {
+      await db.execAsync(sql);
+    } catch {
+      // Column already exists or table doesn't need migration
+    }
+  }
 }
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {

@@ -27,33 +27,61 @@ export class ObservationRepository {
     const db = await getDatabase();
     const now = new Date().toISOString();
 
-    const result = await db.runAsync(
-      `INSERT INTO local_observations (
-        category, description, photo_uri, gas_reading_value, gas_reading_unit,
-        lat, lng, beacon_id,
-        mine_site_id, zone_id, inspection_id,
-        edge_score, edge_flag, edge_reasons_json,
-        created_at, queued_at, sync_status, retry_count
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
-      [
-        input.category,
-        input.description,
-        input.photo_uri ?? null,
-        input.gas_reading_value ?? null,
-        input.gas_reading_unit ?? null,
-        input.lat ?? null,
-        input.lng ?? null,
-        input.beacon_id ?? null,
-        input.mine_site_id ?? null,
-        input.zone_id ?? null,
-        input.inspection_id ?? null,
-        input.edge_score ?? null,
-        input.edge_flag ?? null,
-        input.edge_reasons_json ?? null,
-        now,
-        now,
-      ]
-    );
+    const doInsert = async () => {
+      return await db.runAsync(
+        `INSERT INTO local_observations (
+          category, description, photo_uri, gas_reading_value, gas_reading_unit,
+          lat, lng, beacon_id,
+          mine_site_id, zone_id, inspection_id,
+          edge_score, edge_flag, edge_reasons_json,
+          created_at, queued_at, sync_status, retry_count
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
+        [
+          input.category,
+          input.description,
+          input.photo_uri ?? null,
+          input.gas_reading_value ?? null,
+          input.gas_reading_unit ?? null,
+          input.lat ?? null,
+          input.lng ?? null,
+          input.beacon_id ?? null,
+          input.mine_site_id ?? null,
+          input.zone_id ?? null,
+          input.inspection_id ?? null,
+          input.edge_score ?? null,
+          input.edge_flag ?? null,
+          input.edge_reasons_json ?? null,
+          now,
+          now,
+        ]
+      );
+    };
+
+    let result;
+    try {
+      result = await doInsert();
+    } catch (insertErr: any) {
+      console.warn("Initial insert failed, attempting table migration:", insertErr);
+      const cols = [
+        "ALTER TABLE local_observations ADD COLUMN inspection_id TEXT DEFAULT NULL;",
+        "ALTER TABLE local_observations ADD COLUMN gas_reading_value REAL DEFAULT NULL;",
+        "ALTER TABLE local_observations ADD COLUMN gas_reading_unit TEXT DEFAULT NULL;",
+        "ALTER TABLE local_observations ADD COLUMN beacon_id TEXT DEFAULT NULL;",
+        "ALTER TABLE local_observations ADD COLUMN mine_site_id TEXT DEFAULT NULL;",
+        "ALTER TABLE local_observations ADD COLUMN zone_id TEXT DEFAULT NULL;",
+        "ALTER TABLE local_observations ADD COLUMN edge_score REAL DEFAULT NULL;",
+        "ALTER TABLE local_observations ADD COLUMN edge_flag TEXT DEFAULT NULL;",
+        "ALTER TABLE local_observations ADD COLUMN edge_reasons_json TEXT DEFAULT NULL;",
+      ];
+      for (const sql of cols) {
+        try {
+          await db.execAsync(sql);
+        } catch {
+          // ignore already-exists
+        }
+      }
+      result = await doInsert();
+    }
 
     if (input.inspection_id) {
       try {
