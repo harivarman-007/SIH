@@ -16,6 +16,7 @@ import ActionsScreen from "../screens/ActionsScreen";
 import NewObservationScreen from "../screens/NewObservationScreen";
 import RiskCardScreen from "../screens/RiskCardScreen";
 import QueueScreen from "../screens/QueueScreen";
+import LabourAttendanceScreen from "../screens/LabourAttendanceScreen";
 import { colors } from "../theme";
 
 export type RootStackParamList = {
@@ -26,6 +27,7 @@ export type RootStackParamList = {
   NewObservation: { inspectionId?: string; inspectionCode?: string } | undefined;
   RiskCard: { localId: number; riskResult: RiskScoringResult };
   Queue: undefined;
+  LabourAttendance: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -95,6 +97,13 @@ export default function AppNavigator() {
             title: "Sync & Outbox",
             headerLeft: () => null,
             gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="LabourAttendance"
+          component={LabourAttendanceScreen}
+          options={{
+            headerShown: false,
           }}
         />
       </Stack.Navigator>

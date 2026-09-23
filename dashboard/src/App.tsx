@@ -45,6 +45,7 @@ import { SystemSettingsView } from './components/SystemSettingsView';
 import { RolesPermissionsView } from './components/RolesPermissionsView';
 import { ComplianceRulesView } from './components/ComplianceRulesView';
 import { ComplianceReportsView } from './components/ComplianceReportsView';
+import { LabourRegisterView } from './components/LabourRegisterView';
 
 import { useAuthStore } from './store/authStore';
 import { ROLE_HOME_PATHS, Permission } from './types/permissions';
@@ -83,6 +84,7 @@ export default function App() {
                   <Route path="ocr" element={<OcrQueueView role="mine_official" />} />
                   <Route path="inspections" element={<InspectionsManagementView />} />
                   <Route path="actions" element={<CorrectiveActionsBoard />} />
+                  <Route path="labour" element={<LabourRegisterView />} />
                   <Route path="*" element={<AccessDeniedPage />} />
                 </Route>
 
@@ -100,6 +102,7 @@ export default function App() {
                       </PermissionGuard>
                     }
                   />
+                  <Route path="labour" element={<LabourRegisterView />} />
                   <Route path="*" element={<AccessDeniedPage />} />
                 </Route>
 
@@ -111,6 +114,7 @@ export default function App() {
                   <Route path="hazards" element={<ObservationTable role="regulator" />} />
                   <Route path="map" element={<MineMap role="regulator" />} />
                   <Route path="violations" element={<StatutoryEnforcementView />} />
+                  <Route path="labour" element={<LabourRegisterView />} />
                   <Route path="*" element={<AccessDeniedPage />} />
                 </Route>
 
@@ -199,6 +203,7 @@ export default function App() {
                       </PermissionGuard>
                     }
                   />
+                  <Route path="labour" element={<LabourRegisterView />} />
                   <Route path="*" element={<AccessDeniedPage />} />
                 </Route>
 

@@ -72,6 +72,14 @@ export const NAV_REGISTRY: NavItem[] = [
     roles: ['mine_official'],
     requires: Permission.ACTION_VIEW,
   },
+  {
+    id: 'manager-labour',
+    label: 'Labour Register',
+    path: '/manager/labour',
+    icon: 'Users',
+    roles: ['mine_official'],
+    requires: Permission.OBSERVATION_VIEW,
+  },
 
   // --- CORPORATE MANAGEMENT ---
   {
@@ -105,6 +113,14 @@ export const NAV_REGISTRY: NavItem[] = [
     icon: 'FileCheck',
     roles: ['corporate_management'],
     requires: Permission.REPORT_VIEW,
+  },
+  {
+    id: 'corporate-labour',
+    label: 'Labour Register',
+    path: '/corporate/labour',
+    icon: 'Users',
+    roles: ['corporate_management'],
+    requires: Permission.KPI_VIEW,
   },
 
   // --- REGULATORY AUTHORITY ---
@@ -145,6 +161,14 @@ export const NAV_REGISTRY: NavItem[] = [
     label: 'DGMS Violations',
     path: '/regulator/violations',
     icon: 'FileWarning',
+    roles: ['regulator'],
+    requires: Permission.OBSERVATION_VIEW,
+  },
+  {
+    id: 'regulator-labour',
+    label: 'Labour Register',
+    path: '/regulator/labour',
+    icon: 'Users',
     roles: ['regulator'],
     requires: Permission.OBSERVATION_VIEW,
   },
@@ -255,6 +279,14 @@ export const NAV_REGISTRY: NavItem[] = [
     label: 'Governance Settings',
     path: '/admin/system',
     icon: 'Settings',
+    roles: ['super_admin'],
+    requires: Permission.SETTING_VIEW,
+  },
+  {
+    id: 'admin-labour',
+    label: 'Labour Register',
+    path: '/admin/labour',
+    icon: 'Users',
     roles: ['super_admin'],
     requires: Permission.SETTING_VIEW,
   },

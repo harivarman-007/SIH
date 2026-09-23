@@ -204,6 +204,26 @@ export default function DashboardScreen({ navigation }: Props) {
           />
         </View>
 
+        {/* Labour Register Banner Card */}
+        <TouchableOpacity
+          style={styles.labourCard}
+          onPress={() => navigation.navigate("LabourAttendance")}
+          activeOpacity={0.8}
+        >
+          <View style={styles.labourCardLeft}>
+            <View style={styles.labourIconBox}>
+              <Ionicons name="people-outline" size={20} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.labourCardTitle}>Labour Compliance Register</Text>
+              <Text style={styles.labourCardSubtitle}>
+                Mines Act 1952 statutory attendance & overtime audit
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+        </TouchableOpacity>
+
         {/* Recent Observations */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -498,5 +518,40 @@ const styles = StyleSheet.create({
   recentMeta: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  labourCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    ...shadows.sm,
+  },
+  labourCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  labourIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    backgroundColor: colors.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  labourCardTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  labourCardSubtitle: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 1,
   },
 });

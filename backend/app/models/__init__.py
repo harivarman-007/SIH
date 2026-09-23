@@ -211,6 +211,10 @@ class Observation(Base):
     gas_reading_value: Mapped[float | None] = mapped_column(Float, nullable=True)
     gas_reading_unit: Mapped[str | None] = mapped_column(String(20), nullable=True)  # e.g. "% CH4", "ppm"
 
+    # Environmental & Production Statutory Threshold Compliance
+    compliance_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # "compliant", "violation", "warning"
+    threshold_breach_detail: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
     # Location
     lat: Mapped[float | None] = mapped_column(Float, nullable=True)   # null if underground
     lng: Mapped[float | None] = mapped_column(Float, nullable=True)   # null if underground
@@ -598,3 +602,62 @@ class ContractorProfile(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User", foreign_keys=[user_id])
+
+
+# ---------------------------------------------------------------------------
+# Labour Attendance & Statutory Labour Compliance (Item 1)
+# ---------------------------------------------------------------------------
+
+class LabourAttendance(Base):
+    __tablename__ = "labour_attendance"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    worker_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    worker_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    mine_site_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("mine_sites.id", ondelete="CASCADE"), nullable=False, index=True)
+    contractor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    shift_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    shift_type: Mapped[str] = mapped_column(String(32), nullable=False)  # "day", "night", "morning", "evening"
+    clock_in: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    clock_out: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    hours_worked: Mapped[float] = mapped_column(Float, default=0.0)
+    overtime_hours: Mapped[float] = mapped_column(Float, default=0.0)
+    is_violation: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    violation_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    mine_site = relationship("MineSite")
+    contractor = relationship("User", foreign_keys=[contractor_id])
+
+
+class LabourComplianceRule(Base):
+    __tablename__ = "labour_compliance_rules"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    mine_site_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("mine_sites.id", ondelete="CASCADE"), nullable=True, unique=True)
+    max_shift_hours: Mapped[float] = mapped_column(Float, default=8.0)
+    max_overtime_hours: Mapped[float] = mapped_column(Float, default=2.0)
+    min_rest_hours_between_shifts: Mapped[float] = mapped_column(Float, default=16.0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    mine_site = relationship("MineSite")
+
+
+# ---------------------------------------------------------------------------
+# Environmental & Production Statutory Thresholds (Item 2)
+# ---------------------------------------------------------------------------
+
+class ComplianceThreshold(Base):
+    __tablename__ = "compliance_thresholds"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    category: Mapped[str] = mapped_column(String(32), nullable=False, index=True)  # "environment", "production"
+    metric_name: Mapped[str] = mapped_column(String(64), nullable=False, index=True)  # e.g. "PM10", "blast_seismic_limit"
+    max_value: Mapped[float] = mapped_column(Float, nullable=False)
+    min_value: Mapped[float | None] = mapped_column(Float, nullable=True)
+    unit: Mapped[str] = mapped_column(String(32), nullable=False)
+    mine_site_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("mine_sites.id", ondelete="CASCADE"), nullable=True, index=True)
+    statutory_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    mine_site = relationship("MineSite")

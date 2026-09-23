@@ -84,6 +84,27 @@ export interface InspectionOutboxItem {
   created_at: string;
 }
 
+export interface LocalLabourAttendance {
+  local_id: number;
+  server_uuid: string | null;
+  sync_status: SyncStatus;
+  retry_count: number;
+  last_error: string | null;
+  worker_id: string;
+  worker_name: string;
+  mine_site_id: string;
+  contractor_id: string | null;
+  shift_date: string;
+  shift_type: string;
+  clock_in: string;
+  clock_out: string | null;
+  hours_worked: number;
+  overtime_hours: number;
+  is_violation: boolean;
+  violation_reason: string | null;
+  created_at: string;
+}
+
 export const DB_NAME = "intellifusion.db";
 
 let _db: SQLite.SQLiteDatabase | null = null;
@@ -193,6 +214,31 @@ export async function initSchema(db: SQLite.SQLiteDatabase): Promise<void> {
       key   TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+
+    -- Item 1: Statutory Labour Attendance Outbox
+    CREATE TABLE IF NOT EXISTS local_labour_attendance (
+      local_id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      server_uuid      TEXT    DEFAULT NULL,
+      sync_status      TEXT    NOT NULL DEFAULT 'pending',
+      retry_count      INTEGER NOT NULL DEFAULT 0,
+      last_error       TEXT    DEFAULT NULL,
+      worker_id        TEXT    NOT NULL,
+      worker_name      TEXT    NOT NULL,
+      mine_site_id     TEXT    NOT NULL,
+      contractor_id    TEXT    DEFAULT NULL,
+      shift_date       TEXT    NOT NULL,
+      shift_type       TEXT    NOT NULL,
+      clock_in         TEXT    NOT NULL,
+      clock_out        TEXT    DEFAULT NULL,
+      hours_worked     REAL    DEFAULT 0,
+      overtime_hours   REAL    DEFAULT 0,
+      is_violation     INTEGER DEFAULT 0,
+      violation_reason TEXT    DEFAULT NULL,
+      created_at       TEXT    NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_labour_sync_status
+      ON local_labour_attendance(sync_status);
   `);
 
   // Safe migrations for databases created on earlier versions
