@@ -40,6 +40,10 @@ from app.services.auth import get_current_user
 router = APIRouter(prefix="/ocr", tags=["ocr"])
 
 
+def _ocr_image_url(item_id: _uuid.UUID) -> str:
+    return f"/ocr/queue/{item_id}/image"
+
+
 @router.post("/submit", response_model=OcrSubmitResponse, status_code=status.HTTP_200_OK)
 async def submit_ocr(
     file: UploadFile = File(...),

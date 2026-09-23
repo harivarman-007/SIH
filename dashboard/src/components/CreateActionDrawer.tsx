@@ -3,6 +3,7 @@ import { createAction } from '../api/actions';
 import { fetchUsers, UserInfo } from '../api/auth';
 import { ActionPriority, CorrectiveAction } from '../types/actions';
 import { ObservationOut, fetchObservations } from '../api/observations';
+import { X, Send, Loader2 } from 'lucide-react';
 
 interface CreateActionDrawerProps {
   isOpen: boolean;
@@ -155,42 +156,42 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
     : rawImage;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity">
-      <div className="relative w-full max-w-2xl bg-zinc-900 border-l border-zinc-800 text-zinc-100 h-full shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs transition-opacity">
+      <div className="relative w-full max-w-2xl bg-white border-l border-slate-200 text-slate-900 h-full shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
         
         {/* Header */}
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/40">
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-amber-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-800">
               Statutory Remediation Workflow
             </span>
-            <h2 className="text-xl font-bold text-white mt-0.5">Assign Corrective Action</h2>
+            <h2 className="text-xl font-bold text-slate-900 mt-0.5">Assign Corrective Action</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/50 transition-colors"
             title="Close drawer"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           
-          {/* Observation Context Preview Card (Q1: Keeps risk, photo, explanation visible) */}
-          <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800/80 space-y-3">
+          {/* Observation Context Preview Card */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">
+              <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-200/80 text-slate-700 font-semibold">
                 OBSERVATION #{observation.id.slice(0, 8)}
               </span>
               <span
                 className={`text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wide ${
                   riskLevel === 'high'
-                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                    ? 'bg-rose-50 text-rose-700 border border-rose-200'
                     : riskLevel === 'medium'
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                 }`}
               >
                 Risk: {riskLevel}
@@ -198,25 +199,25 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
             </div>
 
             <div>
-              <h4 className="font-semibold text-white text-base">{obsTitle}</h4>
-              <p className="text-xs text-zinc-400 mt-1">{observation.description}</p>
+              <h4 className="font-semibold text-slate-900 text-base">{obsTitle}</h4>
+              <p className="text-xs text-slate-600 mt-1">{observation.description}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-xs text-zinc-400 pt-2 border-t border-zinc-800/60">
+            <div className="grid grid-cols-2 gap-3 text-xs text-slate-600 pt-2 border-t border-slate-200/60">
               <div>
-                <span className="text-zinc-500 block">Location / Zone:</span>
-                <span className="text-zinc-200 font-medium">{observation.location || observation.zone_id || 'General Mine Area'}</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-semibold">Location / Zone:</span>
+                <span className="text-slate-800 font-medium">{observation.location || observation.zone_id || 'General Mine Area'}</span>
               </div>
               <div>
-                <span className="text-zinc-500 block">Suggested AI Action:</span>
-                <span className="text-amber-300 font-medium">
+                <span className="text-slate-400 block text-[10px] uppercase font-semibold">Suggested AI Action:</span>
+                <span className="text-blue-900 font-semibold">
                   {observation.suggested_action || observation.suggestedAction || 'Inspect and rectify non-compliance'}
                 </span>
               </div>
             </div>
 
             {obsImage && (
-              <div className="mt-2 rounded-lg overflow-hidden border border-zinc-800 max-h-40 bg-zinc-900">
+              <div className="mt-2 rounded-lg overflow-hidden border border-slate-200 max-h-40 bg-slate-100">
                 <img
                   src={obsImage}
                   alt="Observation proof"
@@ -229,19 +230,19 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
           {/* Form */}
           <form id="create-action-form" onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-400 text-xs">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs">
                 {error}
               </div>
             )}
 
             {successMsg && (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-xs">
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs">
                 {successMsg}
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Action Title *
               </label>
               <input
@@ -249,21 +250,21 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-700"
                 placeholder="e.g. Replace damaged ventilation ducting in Sector 4"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                   Assign Contractor *
                 </label>
                 <select
                   value={assignedToUserId}
                   onChange={(e) => setAssignedToUserId(e.target.value)}
                   required
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-700"
                 >
                   {loadingContractors ? (
                     <option value="">Loading contractors...</option>
@@ -280,13 +281,13 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                   Priority Level *
                 </label>
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as ActionPriority)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-700"
                 >
                   <option value="critical">CRITICAL (24h SLA)</option>
                   <option value="high">HIGH (48h SLA)</option>
@@ -298,7 +299,7 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                   Target Deadline *
                 </label>
                 <input
@@ -306,33 +307,33 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
                   value={dueAt}
                   onChange={(e) => setDueAt(e.target.value)}
                   required
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-700"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                   Safety Standards
                 </label>
                 <input
                   type="text"
                   value={safetyStandards}
                   onChange={(e) => setSafetyStandards(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-700"
                   placeholder="e.g. DGMS Regulation 118"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Remediation Instructions & Scope
               </label>
               <textarea
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 font-mono text-xs leading-relaxed"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-700 font-mono leading-relaxed"
                 placeholder="Detailed scope of repair, containment measures, and mandatory proof required..."
               />
             </div>
@@ -340,11 +341,11 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
         </div>
 
         {/* Sticky Footer */}
-        <div className="p-6 border-t border-zinc-800 bg-zinc-950/60 flex items-center justify-between">
+        <div className="p-6 border-t border-slate-200 bg-slate-50/80 flex items-center justify-between">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-zinc-700 text-zinc-300 hover:bg-zinc-800 transition-colors text-sm font-medium"
+            className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-white transition-colors text-xs font-semibold"
           >
             Cancel
           </button>
@@ -352,15 +353,18 @@ export const CreateActionDrawer: React.FC<CreateActionDrawerProps> = ({
             type="submit"
             form="create-action-form"
             disabled={submitting}
-            className="px-5 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-sm shadow-lg shadow-amber-500/20 disabled:opacity-50 flex items-center space-x-2 transition-all"
+            className="px-5 py-2.5 rounded-xl bg-blue-800 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs disabled:opacity-50 flex items-center space-x-2 transition-colors"
           >
             {submitting ? (
               <>
-                <span className="animate-spin">⟳</span>
+                <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Dispatching...</span>
               </>
             ) : (
-              <span>⚡ Assign & Dispatch Action</span>
+              <>
+                <Send className="w-4 h-4" />
+                <span>Assign & Dispatch Action</span>
+              </>
             )}
           </button>
         </div>

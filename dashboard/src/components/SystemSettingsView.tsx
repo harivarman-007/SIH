@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Clock,
+  BarChart3,
+  ShieldCheck,
+  RefreshCw,
+  X,
+  Save,
+  CheckCircle2,
+  AlertCircle,
+  Hash,
+} from 'lucide-react';
+import {
   fetchSystemSettings,
   updateSystemSettings,
   fetchSystemHealth,
@@ -83,29 +94,30 @@ export const SystemSettingsView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12 text-zinc-400 text-sm">
-        <span className="animate-spin mr-2">⟳</span> Loading system governance settings…
+      <div className="flex items-center justify-center p-16 text-slate-400 text-xs">
+        <RefreshCw className="size-4 animate-spin text-blue-700 mr-2" />
+        <span>Loading system governance settings...</span>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-5xl space-y-5 text-slate-900">
       {/* Header */}
-      <div className="p-5 rounded-2xl bg-zinc-900/80 border border-zinc-800 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="text-xs uppercase font-bold tracking-wider text-amber-500">
+          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
             System Administration / Safety Governance
           </div>
-          <h1 className="text-2xl font-black text-white mt-1">Platform Governance Settings</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <h1 className="text-xl font-bold text-slate-900 mt-0.5">Platform Governance Settings</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
             Operational statutory escalation SLA thresholds and AI anomaly calibration
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs font-semibold text-zinc-300">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
             Scheduler: {health?.scheduler || 'Active'}
           </span>
         </div>
@@ -115,36 +127,44 @@ export const SystemSettingsView: React.FC = () => {
         <div
           className={`p-4 rounded-xl text-xs font-medium border flex items-center justify-between ${
             feedback.type === 'success'
-              ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
-              : 'bg-rose-950/40 border-rose-800 text-rose-300'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              : 'bg-rose-50 border-rose-200 text-rose-700'
           }`}
         >
-          <span>{feedback.message}</span>
+          <div className="flex items-center gap-2">
+            {feedback.type === 'success' ? (
+              <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+            ) : (
+              <AlertCircle className="size-4 shrink-0 text-rose-600" />
+            )}
+            <span>{feedback.message}</span>
+          </div>
           <button
+            type="button"
             onClick={() => setFeedback(null)}
-            className="text-zinc-400 hover:text-white ml-3 font-bold"
+            className="text-slate-400 hover:text-slate-700 cursor-pointer ml-3"
           >
-            ✕
+            <X className="size-3.5" />
           </button>
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-6">
+      <form onSubmit={handleSave} className="space-y-5">
         {/* Statutory SLA Thresholds */}
-        <div className="p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-4">
+        <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
           <div className="flex items-center gap-2">
-            <span className="text-base">⏱</span>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+            <Clock className="size-4 text-blue-800" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
               Statutory SLA Escalation Engine Thresholds (Hours)
             </h3>
           </div>
-          <p className="text-xs text-zinc-400">
-            Observations remaining unaddressed beyond these limits automatically transition to <code>escalated</code> status and trigger high-priority alerts to corporate management and DGMS regulators.
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Observations remaining unaddressed beyond these limits automatically transition to <code className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-mono text-[11px] border border-slate-200">escalated</code> status and trigger high-priority alerts to corporate management and DGMS regulators.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
             <div>
-              <label className="block text-xs font-bold text-rose-400 uppercase mb-1">
+              <label className="block text-[11px] font-bold text-rose-700 uppercase tracking-wider mb-1.5">
                 High Severity SLA
               </label>
               <div className="relative">
@@ -155,14 +175,14 @@ export const SystemSettingsView: React.FC = () => {
                   required
                   value={highHours}
                   onChange={(e) => setHighHours(Number(e.target.value))}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 font-mono focus:border-amber-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 font-mono focus:border-blue-700 focus:bg-white focus:outline-none transition-colors"
                 />
-                <span className="absolute right-3 top-2 text-xs text-zinc-500">hours</span>
+                <span className="absolute right-3 top-2 text-xs text-slate-400">hours</span>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-amber-400 uppercase mb-1">
+              <label className="block text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-1.5">
                 Medium Severity SLA
               </label>
               <div className="relative">
@@ -173,14 +193,14 @@ export const SystemSettingsView: React.FC = () => {
                   required
                   value={mediumHours}
                   onChange={(e) => setMediumHours(Number(e.target.value))}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 font-mono focus:border-amber-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 font-mono focus:border-blue-700 focus:bg-white focus:outline-none transition-colors"
                 />
-                <span className="absolute right-3 top-2 text-xs text-zinc-500">hours</span>
+                <span className="absolute right-3 top-2 text-xs text-slate-400">hours</span>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-blue-400 uppercase mb-1">
+              <label className="block text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-1.5">
                 Low Severity SLA
               </label>
               <div className="relative">
@@ -191,29 +211,29 @@ export const SystemSettingsView: React.FC = () => {
                   required
                   value={lowHours}
                   onChange={(e) => setLowHours(Number(e.target.value))}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 font-mono focus:border-amber-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 font-mono focus:border-blue-700 focus:bg-white focus:outline-none transition-colors"
                 />
-                <span className="absolute right-3 top-2 text-xs text-zinc-500">hours</span>
+                <span className="absolute right-3 top-2 text-xs text-slate-400">hours</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* AI & Edge Risk Flag Thresholds */}
-        <div className="p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-4">
+        <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
           <div className="flex items-center gap-2">
-            <span className="text-base">📊</span>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+            <BarChart3 className="size-4 text-blue-800" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
               AI Anomaly Isolation Forest Risk Calibration (0.00 – 1.00)
             </h3>
           </div>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-slate-500 leading-relaxed">
             Normalized anomaly scores from on-device Isolation Forest edge tree traversal and cloud enrichment mapping into DGMS risk buckets.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
             <div>
-              <label className="block text-xs font-bold text-rose-400 uppercase mb-1">
+              <label className="block text-[11px] font-bold text-rose-700 uppercase tracking-wider mb-1.5">
                 High Risk Threshold (&gt;=)
               </label>
               <input
@@ -224,12 +244,12 @@ export const SystemSettingsView: React.FC = () => {
                 required
                 value={highRisk}
                 onChange={(e) => setHighRisk(Number(e.target.value))}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 font-mono focus:border-amber-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 font-mono focus:border-blue-700 focus:bg-white focus:outline-none transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-amber-400 uppercase mb-1">
+              <label className="block text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-1.5">
                 Medium Risk Threshold (&gt;=)
               </label>
               <input
@@ -240,12 +260,12 @@ export const SystemSettingsView: React.FC = () => {
                 required
                 value={mediumRisk}
                 onChange={(e) => setMediumRisk(Number(e.target.value))}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 font-mono focus:border-amber-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 font-mono focus:border-blue-700 focus:bg-white focus:outline-none transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-blue-400 uppercase mb-1">
+              <label className="block text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-1.5">
                 Low Risk Baseline (&gt;=)
               </label>
               <input
@@ -256,7 +276,7 @@ export const SystemSettingsView: React.FC = () => {
                 required
                 value={lowRisk}
                 onChange={(e) => setLowRisk(Number(e.target.value))}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 font-mono focus:border-amber-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 font-mono focus:border-blue-700 focus:bg-white focus:outline-none transition-colors"
               />
             </div>
           </div>
@@ -264,34 +284,40 @@ export const SystemSettingsView: React.FC = () => {
 
         {/* Operational Health & Cryptographic Ledger Head */}
         {health && (
-          <div className="p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-              System Operational Health & Cryptographic State
-            </h3>
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="size-4 text-emerald-700" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                System Operational Health & Cryptographic State
+              </h3>
+            </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800">
-                <div className="text-zinc-500">Database</div>
-                <div className="font-bold text-emerald-400 mt-1 capitalize">{health.database}</div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Database</div>
+                <div className="font-extrabold text-emerald-700 text-lg mt-0.5 capitalize">{health.database}</div>
               </div>
-              <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800">
-                <div className="text-zinc-500">Total Observations</div>
-                <div className="font-bold text-white mt-1">{health.entity_counts.observations}</div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Total Observations</div>
+                <div className="font-extrabold text-slate-900 font-mono text-lg mt-0.5">{health.entity_counts.observations}</div>
               </div>
-              <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800">
-                <div className="text-zinc-500">Corrective Actions</div>
-                <div className="font-bold text-white mt-1">{health.entity_counts.actions}</div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Corrective Actions</div>
+                <div className="font-extrabold text-slate-900 font-mono text-lg mt-0.5">{health.entity_counts.actions}</div>
               </div>
-              <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800">
-                <div className="text-zinc-500">Audit Ledger Blocks</div>
-                <div className="font-bold text-white mt-1">{health.entity_counts.audit_ledger_entries}</div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Audit Ledger Blocks</div>
+                <div className="font-extrabold text-slate-900 font-mono text-lg mt-0.5">{health.entity_counts.audit_ledger_entries}</div>
               </div>
             </div>
 
             {health.audit_head?.entry_hash && (
-              <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-zinc-400 font-medium">Audit Head SHA-256:</span>
-                <span className="font-mono text-[11px] text-amber-400 bg-amber-950/30 px-2 py-1 rounded border border-amber-900/40 truncate max-w-md">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span className="text-slate-600 font-semibold flex items-center gap-1.5">
+                  <Hash className="size-3.5 text-slate-400" />
+                  Audit Head SHA-256:
+                </span>
+                <span className="font-mono text-[11px] text-blue-900 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 truncate max-w-md">
                   {health.audit_head.entry_hash}
                 </span>
               </div>
@@ -300,8 +326,8 @@ export const SystemSettingsView: React.FC = () => {
         )}
 
         {/* Live Wired Save Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60">
-          <span className="text-xs text-zinc-400">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <span className="text-xs text-slate-400">
             {settings?.updated_at
               ? `Last updated: ${new Date(settings.updated_at).toLocaleString()}`
               : 'Initial factory defaults active.'}
@@ -309,9 +335,10 @@ export const SystemSettingsView: React.FC = () => {
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-5 py-2 rounded-xl bg-blue-800 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? 'Saving Changes…' : 'Save Governance Settings'}
+            <Save className="size-3.5" />
+            <span>{saving ? 'Saving Changes…' : 'Save Governance Settings'}</span>
           </button>
         </div>
       </form>

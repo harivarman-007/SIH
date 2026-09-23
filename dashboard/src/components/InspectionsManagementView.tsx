@@ -5,6 +5,7 @@ import { Inspection, InspectionStatus } from '../types/inspections';
 import { usePermissions } from './providers/PermissionProvider';
 import { useAuthStore } from '../store/authStore';
 import { Permission } from '../types/permissions';
+import { CalendarPlus, Clock, User, AlertCircle } from 'lucide-react';
 
 export const InspectionsManagementView: React.FC = () => {
   const { can } = usePermissions();
@@ -123,16 +124,16 @@ export const InspectionsManagementView: React.FC = () => {
     const s = (st || '').toLowerCase();
     switch (s) {
       case 'scheduled':
-        return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+        return 'bg-blue-50 text-blue-800 border border-blue-200';
       case 'in_progress':
-        return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+        return 'bg-amber-50 text-amber-800 border border-amber-200';
       case 'completed':
       case 'submitted':
-        return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        return 'bg-emerald-50 text-emerald-800 border border-emerald-200';
       case 'cancelled':
-        return 'bg-rose-500/20 text-rose-400 border border-rose-500/30';
+        return 'bg-rose-50 text-rose-800 border border-rose-200';
       default:
-        return 'bg-zinc-800 text-zinc-300';
+        return 'bg-slate-100 text-slate-700 border border-slate-200';
     }
   };
 
@@ -140,13 +141,13 @@ export const InspectionsManagementView: React.FC = () => {
     <div className="space-y-6">
       
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-zinc-900/60 p-5 rounded-2xl border border-zinc-800 backdrop-blur-xl">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
         <div>
-          <div className="text-xs uppercase font-bold tracking-wider text-amber-500">
+          <div className="text-xs uppercase font-bold tracking-wider text-blue-800">
             Mine Safety Management / Field Audits
           </div>
-          <h1 className="text-2xl font-black text-white mt-1">Scheduled Mine Inspections</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <h1 className="text-2xl font-bold text-slate-900 mt-1">Scheduled Mine Inspections</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
             Plan, assign, and review statutory underground and opencast safety inspections
           </p>
         </div>
@@ -154,9 +155,9 @@ export const InspectionsManagementView: React.FC = () => {
         {can(Permission.INSPECTION_CREATE) && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-blue-800 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors flex items-center gap-2"
           >
-            <span>📅</span>
+            <CalendarPlus className="w-4 h-4" />
             <span>Schedule New Inspection</span>
           </button>
         )}
@@ -164,34 +165,34 @@ export const InspectionsManagementView: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-zinc-900/80 border border-zinc-800">
-          <span className="text-xs font-semibold text-zinc-400 uppercase">Total Inspections</span>
-          <div className="text-2xl font-black text-white mt-1">{stats.total}</div>
+        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Inspections</span>
+          <div className="text-2xl font-bold text-slate-900 mt-1">{stats.total}</div>
         </div>
-        <div className="p-4 rounded-xl bg-zinc-900/80 border border-zinc-800">
-          <span className="text-xs font-semibold text-blue-400 uppercase">Scheduled</span>
-          <div className="text-2xl font-black text-blue-400 mt-1">{stats.scheduled}</div>
+        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+          <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">Scheduled</span>
+          <div className="text-2xl font-bold text-blue-700 mt-1">{stats.scheduled}</div>
         </div>
-        <div className="p-4 rounded-xl bg-zinc-900/80 border border-zinc-800">
-          <span className="text-xs font-semibold text-amber-400 uppercase">In Progress</span>
-          <div className="text-2xl font-black text-amber-400 mt-1">{stats.inProgress}</div>
+        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+          <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">In Progress</span>
+          <div className="text-2xl font-bold text-amber-800 mt-1">{stats.inProgress}</div>
         </div>
-        <div className="p-4 rounded-xl bg-zinc-900/80 border border-zinc-800">
-          <span className="text-xs font-semibold text-emerald-400 uppercase">Completed</span>
-          <div className="text-2xl font-black text-emerald-400 mt-1">{stats.completed}</div>
+        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+          <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Completed</span>
+          <div className="text-2xl font-bold text-emerald-700 mt-1">{stats.completed}</div>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
         {['all', 'scheduled', 'in_progress', 'submitted', 'cancelled'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${
               activeTab === tab
-                ? 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                ? 'bg-blue-800 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             {tab.replace('_', ' ')}
@@ -200,16 +201,17 @@ export const InspectionsManagementView: React.FC = () => {
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-sm">
-          {error}
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-600" />
+          <span>{error}</span>
         </div>
       )}
 
       {/* Inspections List */}
       {loading ? (
-        <div className="text-center py-20 text-zinc-400 text-sm">Loading inspections...</div>
+        <div className="text-center py-20 text-slate-400 text-sm">Loading inspections...</div>
       ) : filteredInspections.length === 0 ? (
-        <div className="p-12 text-center bg-zinc-900/40 rounded-2xl border border-zinc-800 text-zinc-500 text-sm">
+        <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 text-sm">
           No inspections found for the selected filter.
         </div>
       ) : (
@@ -217,38 +219,44 @@ export const InspectionsManagementView: React.FC = () => {
           {filteredInspections.map((insp) => (
             <div
               key={insp.id}
-              className="p-5 rounded-2xl bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 space-y-3 transition-all"
+              className="p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-slate-300 space-y-3 transition-all shadow-2xs hover:shadow-xs"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold text-amber-400">{insp.code}</span>
+                <span className="text-xs font-mono font-bold text-blue-800">{insp.code}</span>
                 <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${getStatusBadge(insp.status)}`}>
                   {insp.status.replace('_', ' ')}
                 </span>
               </div>
 
-              <h3 className="text-sm font-bold text-white leading-snug">{insp.title}</h3>
+              <h3 className="text-sm font-bold text-slate-900 leading-snug">{insp.title}</h3>
 
               {insp.notes && (
-                <p className="text-xs text-zinc-400 line-clamp-2">{insp.notes}</p>
+                <p className="text-xs text-slate-500 line-clamp-2">{insp.notes}</p>
               )}
 
-              <div className="pt-3 border-t border-zinc-800/80 grid grid-cols-2 gap-2 text-xs text-zinc-400">
-                <div>
-                  <span className="text-zinc-500 block text-[10px] uppercase">Scheduled For:</span>
-                  <span className="text-zinc-200 font-medium">
-                    {new Date(insp.scheduled_for).toLocaleDateString([], {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
+              <div className="pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                <div className="flex items-start gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Scheduled For:</span>
+                    <span className="text-slate-800 font-medium">
+                      {new Date(insp.scheduled_for).toLocaleDateString([], {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-zinc-500 block text-[10px] uppercase">Inspector:</span>
-                  <span className="text-zinc-200 font-medium truncate block">
-                    {insp.assigned_inspector_name || 'Assigned Inspector'}
-                  </span>
+                <div className="flex items-start gap-1.5">
+                  <User className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Inspector:</span>
+                    <span className="text-slate-800 font-medium truncate block">
+                      {insp.assigned_inspector_name || 'Assigned Inspector'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -258,22 +266,31 @@ export const InspectionsManagementView: React.FC = () => {
 
       {/* Schedule Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div>
-              <span className="text-xs font-bold uppercase text-amber-500">DGMS Compliance Protocol</span>
-              <h2 className="text-lg font-bold text-white mt-0.5">Schedule Field Inspection</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg bg-white border border-zinc-200 rounded-2xl p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">DGMS Statutory Protocol</span>
+                <h2 className="text-lg font-bold text-zinc-950 mt-0.5">Schedule Field Inspection</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="text-zinc-400 hover:text-zinc-700 p-1 rounded-lg"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleCreate} className="space-y-4">
               {formError && (
-                <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-400 text-xs">
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs">
                   {formError}
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
                   Inspection Title *
                 </label>
                 <input
@@ -282,20 +299,20 @@ export const InspectionsManagementView: React.FC = () => {
                   onChange={(e) => setTitle(e.target.value)}
                   required
                   placeholder="e.g. Monthly Underground Ventilation & Methane Check"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
                     Assign Inspector *
                   </label>
                   <select
                     value={assignedInspectorId}
                     onChange={(e) => setAssignedInspectorId(e.target.value)}
                     required
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                   >
                     {inspectors.map((i) => (
                       <option key={i.id} value={i.id}>
@@ -306,46 +323,74 @@ export const InspectionsManagementView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
-                    Scheduled Date & Time *
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+                      Date &amp; Time *
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const today = new Date();
+                          today.setHours(9, 0, 0, 0);
+                          const tz = today.getTimezoneOffset() * 60000;
+                          setScheduledFor(new Date(today.getTime() - tz).toISOString().slice(0, 16));
+                        }}
+                        className="text-[10px] text-blue-700 hover:text-blue-900 font-medium px-1.5 py-0.5 rounded bg-blue-50 border border-blue-200"
+                      >
+                        Today
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tmrw = new Date(Date.now() + 24 * 3600 * 1000);
+                          tmrw.setHours(9, 0, 0, 0);
+                          const tz = tmrw.getTimezoneOffset() * 60000;
+                          setScheduledFor(new Date(tmrw.getTime() - tz).toISOString().slice(0, 16));
+                        }}
+                        className="text-[10px] text-zinc-600 hover:text-zinc-900 font-medium px-1.5 py-0.5 rounded bg-zinc-100 border border-zinc-200"
+                      >
+                        Tomorrow
+                      </button>
+                    </div>
+                  </div>
                   <input
                     type="datetime-local"
                     value={scheduledFor}
                     onChange={(e) => setScheduledFor(e.target.value)}
                     required
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-zinc-900 font-mono focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
-                  Notes & Special Instructions
+                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
+                  Notes &amp; Special Instructions
                 </label>
                 <textarea
                   rows={3}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Mandatory check zones, equipment focus, or atmospheric sampling criteria..."
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-zinc-50 border border-zinc-300 rounded-xl p-3 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-lg border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-xs"
+                  className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-600 hover:bg-zinc-50 text-xs font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold shadow-xs disabled:opacity-50"
                 >
-                  {submitting ? 'Scheduling...' : 'Schedule & Assign'}
+                  {submitting ? 'Scheduling...' : 'Schedule Statutory Inspection'}
                 </button>
               </div>
             </form>

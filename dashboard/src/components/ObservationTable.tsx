@@ -1,20 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { useId, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format, differenceInHours } from 'date-fns';
 import {
    Calendar as CalendarIcon,
-   CheckIcon,
-   CircleCheck,
-   CircleX,
    AlertCircle,
-   HelpCircle,
-   Bell,
    LucideIcon,
-   ChevronLeft,
-   ChevronRight,
-   SearchIcon,
    AlertTriangle,
    Wind,
    ShieldAlert,
@@ -24,13 +16,8 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { RemixiconComponentType } from '@remixicon/react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { DayPicker } from 'react-day-picker';
-import * as PopoverPrimitive from '@radix-ui/react-popover';
-import { Command as CommandPrimitive } from 'cmdk';
-import * as AvatarPrimitive from '@radix-ui/react-avatar';
 import { RiskCardModal, ObservationData } from './RiskCardModal';
 import { CreateActionDrawer } from './CreateActionDrawer';
 import { CreateObservationModal } from './CreateObservationModal';
@@ -93,270 +80,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   }
 );
 Button.displayName = 'Button';
-
-function Calendar({
-   className,
-   classNames,
-   showOutsideDays = true,
-   ...props
-}: any) {
-   return (
-      <DayPicker
-         showOutsideDays={showOutsideDays}
-         className={cn('p-3', className)}
-         classNames={{
-            months: 'flex flex-col sm:flex-row gap-2',
-            month: 'flex flex-col gap-4',
-            caption: 'flex justify-center pt-1 relative items-center w-full',
-            caption_label: 'text-sm font-medium',
-            nav: 'flex items-center gap-1',
-            nav_button: cn(
-               buttonVariants({ variant: 'outline' }),
-               'size-7 bg-transparent p-0 opacity-50 hover:opacity-100',
-            ),
-            nav_button_previous: 'absolute left-1',
-            nav_button_next: 'absolute right-1',
-            table: 'w-full border-collapse space-x-1',
-            head_row: 'flex',
-            head_cell:
-               'text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]',
-            row: 'flex w-full mt-2',
-            cell: cn(
-               'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-range-end)]:rounded-r-md',
-               props.mode === 'range'
-                  ? '[&:has(>.day-range-end)]:rounded-r-md [&:has(>.day-range-start)]:rounded-l-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md'
-                  : '[&:has([aria-selected])]:rounded-md',
-            ),
-            day: cn(
-               buttonVariants({ variant: 'ghost' }),
-               'size-8 p-0 font-normal aria-selected:opacity-100',
-            ),
-            day_range_start:
-               'day-range-start aria-selected:bg-primary aria-selected:text-primary-foreground',
-            day_range_end:
-               'day-range-end aria-selected:bg-primary aria-selected:text-primary-foreground',
-            day_selected:
-               'bg-black text-white hover:bg-zinc-800 hover:text-white focus:bg-black focus:text-white',
-            day_today: 'bg-zinc-100 text-zinc-900',
-            day_outside:
-               'day-outside text-zinc-400 aria-selected:text-zinc-500',
-            day_disabled: 'text-zinc-300 opacity-50',
-            day_range_middle:
-               'aria-selected:bg-zinc-100 aria-selected:text-zinc-900',
-            day_hidden: 'invisible',
-            ...classNames,
-         } as any}
-         components={{
-            IconLeft: ({ className: iconClass, ...iconProps }: any) => (
-               <ChevronLeft className={cn('size-4', iconClass)} {...iconProps} />
-            ),
-            IconRight: ({ className: iconClass, ...iconProps }: any) => (
-               <ChevronRight className={cn('size-4', iconClass)} {...iconProps} />
-            ),
-         } as any}
-         {...props}
-      />
-   );
-}
-
-function Popover({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
-   return <PopoverPrimitive.Root data-slot="popover" {...props} />;
-}
-
-function PopoverTrigger({
-   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
-   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
-}
-
-function PopoverContent({
-   className,
-   align = 'center',
-   sideOffset = 4,
-   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
-   return (
-      <PopoverPrimitive.Portal>
-         <PopoverPrimitive.Content
-            data-slot="popover-content"
-            align={align}
-            sideOffset={sideOffset}
-            className={cn(
-               'bg-white text-zinc-900 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-72 rounded-md border border-zinc-200 p-4 shadow-xl outline-hidden',
-               className,
-            )}
-            {...props}
-         />
-      </PopoverPrimitive.Portal>
-   );
-}
-
-
-
-function Command({
-   className,
-   ...props
-}: React.ComponentProps<typeof CommandPrimitive>) {
-   return (
-      <CommandPrimitive
-         data-slot="command"
-         className={cn(
-            'bg-white text-zinc-900 flex h-full w-full flex-col overflow-hidden rounded-md',
-            className,
-         )}
-         {...props}
-      />
-   );
-}
-
-function CommandInput({
-   className,
-   ...props
-}: React.ComponentProps<typeof CommandPrimitive.Input>) {
-   return (
-      <div
-         data-slot="command-input-wrapper"
-         className="flex h-9 items-center gap-2 border-b border-zinc-100 px-3"
-      >
-         <SearchIcon className="size-4 shrink-0 text-zinc-400" />
-         <CommandPrimitive.Input
-            data-slot="command-input"
-            className={cn(
-               'placeholder:text-zinc-400 flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50',
-               className,
-            )}
-            {...props}
-         />
-      </div>
-   );
-}
-
-function CommandList({
-   className,
-   ...props
-}: React.ComponentProps<typeof CommandPrimitive.List>) {
-   return (
-      <CommandPrimitive.List
-         data-slot="command-list"
-         className={cn(
-            'max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto',
-            className,
-         )}
-         {...props}
-      />
-   );
-}
-
-function CommandEmpty({
-   ...props
-}: React.ComponentProps<typeof CommandPrimitive.Empty>) {
-   return (
-      <CommandPrimitive.Empty
-         data-slot="command-empty"
-         className="py-6 text-center text-sm text-zinc-500"
-         {...props}
-      />
-   );
-}
-
-function CommandGroup({
-   className,
-   ...props
-}: React.ComponentProps<typeof CommandPrimitive.Group>) {
-   return (
-      <CommandPrimitive.Group
-         data-slot="command-group"
-         className={cn(
-            'text-zinc-900 [&_[cmdk-group-heading]]:text-zinc-400 overflow-hidden p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium',
-            className,
-         )}
-         {...props}
-      />
-   );
-}
-
-function CommandItem({
-   className,
-   ...props
-}: React.ComponentProps<typeof CommandPrimitive.Item>) {
-   return (
-      <CommandPrimitive.Item
-         data-slot="command-item"
-         className={cn(
-            "data-[selected=true]:bg-zinc-100 data-[selected=true]:text-black [&_svg:not([class*='text-'])]:text-zinc-400 relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-            className,
-         )}
-         {...props}
-      />
-   );
-}
-
-function Avatar({
-   className,
-   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root>) {
-   return (
-      <AvatarPrimitive.Root
-         data-slot="avatar"
-         className={cn(
-            'relative flex size-8 shrink-0 overflow-hidden rounded-full',
-            className,
-         )}
-         {...props}
-      />
-   );
-}
-
-function AvatarImage({
-   className,
-   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Image>) {
-   return (
-      <AvatarPrimitive.Image
-         data-slot="avatar-image"
-         className={cn('aspect-square size-full', className)}
-         {...props}
-      />
-   );
-}
-
-function AvatarFallback({
-   className,
-   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
-   return (
-      <AvatarPrimitive.Fallback
-         data-slot="avatar-fallback"
-         className={cn(
-            'bg-zinc-100 text-zinc-800 flex size-full items-center justify-center rounded-full text-xs font-semibold',
-            className,
-         )}
-         {...props}
-      />
-   );
-}
-
-const MOBILE_BREAKPOINT = 1024;
-
-function useIsMobile() {
-   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(
-      undefined,
-   );
-
-   React.useEffect(() => {
-      const mql = window.matchMedia(
-         `(max-width: ${MOBILE_BREAKPOINT - 1}px)`,
-      );
-      const onChange = () => {
-         setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-      };
-      mql.addEventListener('change', onChange);
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-      return () => mql.removeEventListener('change', onChange);
-   }, []);
-
-   return !!isMobile;
-}
 
 interface Status {
    id: string;
@@ -680,7 +403,7 @@ interface User {
 const avatarUrl = (seed: string) =>
    `https://api.dicebear.com/9.x/initials/svg?seed=${seed}&backgroundColor=000000&textColor=ffffff`;
 
-const usersData: User[] = [
+export const usersData: User[] = [
    {
       id: 'rajesh',
       name: 'Rajesh Kumar (Safety Lead)',
@@ -727,7 +450,7 @@ interface Project {
    id: string;
    name: string;
    status: Status;
-   icon: LucideIcon | RemixiconComponentType;
+   icon: LucideIcon | any;
    percentComplete: number;
    startDate: string;
    lead: User;
@@ -838,400 +561,97 @@ function mapObservationToProject(obs: ObservationOut): Project {
    };
 }
 
-interface DatePickerComponentProps {
-   date: Date | undefined;
-   onDateChange?: (date: Date | undefined) => void;
-}
+// ---------------------------------------------------------------------------
+// Clean Statutory Display Badges (Read-Only, Stable, Royal Palette)
+// ---------------------------------------------------------------------------
 
-function DatePickerComponent({ date, onDateChange }: DatePickerComponentProps) {
-   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
-      date,
-   );
-   const [open, setOpen] = React.useState<boolean>(false);
-
-   const handleDateSelect = (date: Date | undefined) => {
-      setSelectedDate(date);
-      if (onDateChange) {
-         onDateChange(date);
-      }
-      setOpen(false);
-   };
+function HealthDisplayComponent({ project }: { project: Project }) {
+   const isCompliant = project.health.id === 'on-track';
+   const isAtRisk = project.health.id === 'at-risk';
 
    return (
-      <Popover open={open} onOpenChange={setOpen}>
-         <PopoverTrigger asChild>
-            <Button
-               variant="ghost"
-               className="h-7 px-2 justify-start text-left font-normal"
-               size="sm"
-            >
-               <CalendarIcon className="h-4 w-4 md:mr-0.5" />
-               {selectedDate ? (
-                  <span className="text-xs hidden xl:inline mt-[1px]">
-                     {format(selectedDate, 'MMM dd, yyyy')}
-                  </span>
-               ) : (
-                  <span className="text-xs text-muted-foreground hidden xl:inline mt-[1px]">
-                     No date
-                  </span>
-               )}
-            </Button>
-         </PopoverTrigger>
-         <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-               mode="single"
-               selected={selectedDate}
-               onSelect={handleDateSelect}
-            />
-         </PopoverContent>
-      </Popover>
+      <div className="flex items-center gap-1.5 py-1">
+         <span
+            className={`size-2 rounded-full shrink-0 ${
+               isCompliant
+                  ? 'bg-emerald-600'
+                  : isAtRisk
+                  ? 'bg-amber-600'
+                  : 'bg-rose-600'
+            }`}
+         />
+         <span
+            className={`text-xs font-medium truncate ${
+               isCompliant
+                  ? 'text-emerald-800'
+                  : isAtRisk
+                  ? 'text-amber-800'
+                  : 'text-rose-800'
+            }`}
+         >
+            {isCompliant ? 'Compliant' : isAtRisk ? 'Under Advisory' : 'Critical Issue'}
+         </span>
+      </div>
    );
 }
 
-interface StatusWithPercentComponentProps {
-   status: Status;
-   percentComplete: number;
-   onStatusChange?: (statusId: string) => void;
+function PriorityDisplayComponent({ priority }: { priority: Priority }) {
+   const Icon = priority.icon || NoPriorityIcon;
+   const isUrgent = priority.id === 'urgent';
+   const isHigh = priority.id === 'high';
+
+   return (
+      <div className="flex items-center gap-2 py-1 text-slate-700" title={priority.name}>
+         <Icon className={`size-4 shrink-0 ${isUrgent ? 'text-rose-600' : isHigh ? 'text-amber-600' : 'text-slate-600'}`} />
+         <span className="text-xs font-medium text-slate-700 truncate">{priority.name}</span>
+      </div>
+   );
 }
 
-function StatusWithPercentComponent({
+function LeadDisplayComponent({ lead }: { lead: User }) {
+   const initials = (lead.name.replace(/[^a-zA-Z]/g, '').slice(0, 2) || 'IN').toUpperCase();
+   return (
+      <div className="flex items-center gap-2 overflow-hidden py-1">
+         <div className="size-5 rounded-full bg-blue-50 border border-blue-200 text-blue-800 font-bold text-[10px] flex items-center justify-center shrink-0">
+            {initials}
+         </div>
+         <span className="text-xs text-slate-700 truncate font-medium">
+            {lead.name}
+         </span>
+      </div>
+   );
+}
+
+function DateDisplayComponent({ date }: { date?: string | Date }) {
+   const dateObj = date ? new Date(date) : null;
+   const formatted = dateObj && !isNaN(dateObj.getTime())
+      ? format(dateObj, 'MMM dd, yyyy')
+      : 'No Date';
+
+   return (
+      <div className="flex items-center gap-1.5 text-xs text-slate-600 font-mono py-1">
+         <CalendarIcon className="size-3.5 text-slate-400 shrink-0" />
+         <span>{formatted}</span>
+      </div>
+   );
+}
+
+function StatusDisplayComponent({
    status,
    percentComplete,
-   onStatusChange,
-}: StatusWithPercentComponentProps) {
-   const id = useId();
-   const [open, setOpen] = useState<boolean>(false);
-   const [value, setValue] = useState<string>(status.id);
-
-   const handleStatusChange = (statusId: string) => {
-      setValue(statusId);
-      setOpen(false);
-
-      if (onStatusChange) {
-         onStatusChange(statusId);
-      }
-   };
+}: {
+   status: Status;
+   percentComplete: number;
+}) {
+   const Icon = status.icon || ToDoIcon;
 
    return (
-      <Popover open={open} onOpenChange={setOpen}>
-         <PopoverTrigger asChild>
-            <Button
-               id={id}
-               className="flex items-center justify-center gap-1.5"
-               size="sm"
-               variant="ghost"
-               role="combobox"
-               aria-expanded={open}
-            >
-               {(() => {
-                  const selectedItem = statusData.find((item) => item.id === value);
-                  if (selectedItem) {
-                     const Icon = selectedItem.icon;
-                     return <Icon />;
-                  }
-                  return null;
-               })()}
-               <span className="text-xs font-medium mt-[1px]">
-                  {percentComplete}%
-               </span>
-            </Button>
-         </PopoverTrigger>
-         <PopoverContent className="border-zinc-200 w-48 p-0" align="start">
-            <Command>
-               <CommandInput placeholder="Set status..." />
-               <CommandList>
-                  <CommandEmpty>No status found.</CommandEmpty>
-                  <CommandGroup>
-                     {statusData.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                           <CommandItem
-                              key={item.id}
-                              value={item.id}
-                              onSelect={handleStatusChange}
-                              className="flex items-center justify-between"
-                           >
-                              <div className="flex items-center gap-2">
-                                 <Icon />
-                                 <span className="text-xs">{item.name}</span>
-                              </div>
-                              {value === item.id && (
-                                 <CheckIcon size={14} className="ml-auto" />
-                              )}
-                           </CommandItem>
-                        );
-                     })}
-                  </CommandGroup>
-               </CommandList>
-            </Command>
-         </PopoverContent>
-      </Popover>
-   );
-}
-
-interface LeadSelectorComponentProps {
-   lead: User;
-   onLeadChange?: (userId: string) => void;
-}
-
-function LeadSelectorComponent({
-   lead,
-   onLeadChange,
-}: LeadSelectorComponentProps) {
-   const id = useId();
-   const [open, setOpen] = useState<boolean>(false);
-   const [value, setValue] = useState<string>(lead.id);
-
-   const handleLeadChange = (userId: string) => {
-      setValue(userId);
-      setOpen(false);
-
-      if (onLeadChange) {
-         onLeadChange(userId);
-      }
-   };
-
-   return (
-      <div>
-         <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-               <Button
-                  id={id}
-                  className="flex items-center justify-center gap-1 h-7 px-2"
-                  size="sm"
-                  variant="ghost"
-                  role="combobox"
-                  aria-expanded={open}
-               >
-                  {(() => {
-                     const selectedUser = usersData.find(
-                        (user) => user.id === value,
-                     );
-                     if (selectedUser) {
-                        return (
-                           <>
-                              <Avatar className="size-5 mr-1">
-                                 <AvatarImage
-                                    src={selectedUser.avatarUrl}
-                                    alt={selectedUser.name}
-                                 />
-                                 <AvatarFallback>
-                                    {selectedUser.name.charAt(0)}
-                                 </AvatarFallback>
-                              </Avatar>
-                              <span className="text-xs hidden md:inline truncate max-w-[90px]">
-                                 {selectedUser.name.split(' ')[0]}
-                              </span>
-                           </>
-                        );
-                     }
-                     return null;
-                  })()}
-               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="border-zinc-200 w-52 p-0" align="start">
-               <Command>
-                  <CommandInput placeholder="Assign official..." />
-                  <CommandList>
-                     <CommandEmpty>No official found.</CommandEmpty>
-                     <CommandGroup>
-                        {usersData.map((user) => (
-                           <CommandItem
-                              key={user.id}
-                              value={user.id}
-                              onSelect={handleLeadChange}
-                              className="flex items-center justify-between"
-                           >
-                              <div className="flex items-center gap-2">
-                                 <Avatar className="size-5">
-                                    <AvatarImage
-                                       src={user.avatarUrl}
-                                       alt={user.name}
-                                    />
-                                    <AvatarFallback>
-                                       {user.name.charAt(0)}
-                                    </AvatarFallback>
-                                 </Avatar>
-                                 <span className="text-xs">{user.name}</span>
-                              </div>
-                              {value === user.id && (
-                                 <CheckIcon size={14} className="ml-auto" />
-                              )}
-                           </CommandItem>
-                        ))}
-                     </CommandGroup>
-                  </CommandList>
-               </Command>
-            </PopoverContent>
-         </Popover>
+      <div className="flex items-center gap-2 py-1 text-slate-700">
+         <Icon />
+         <span className="text-xs font-semibold text-slate-700">
+            {percentComplete}%
+         </span>
       </div>
-   );
-}
-
-interface PrioritySelectorComponentProps {
-   priority: Priority;
-   onPriorityChange?: (priorityId: string) => void;
-}
-
-function PrioritySelectorComponent({
-   priority,
-   onPriorityChange,
-}: PrioritySelectorComponentProps) {
-   const id = useId();
-   const [open, setOpen] = useState<boolean>(false);
-   const [value, setValue] = useState<string>(priority.id);
-
-   const handlePriorityChange = (priorityId: string) => {
-      setValue(priorityId);
-      setOpen(false);
-
-      if (onPriorityChange) {
-         onPriorityChange(priorityId);
-      }
-   };
-
-   return (
-      <div>
-         <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-               <Button
-                  id={id}
-                  className="flex items-center justify-center"
-                  size="icon"
-                  variant="ghost"
-                  role="combobox"
-                  aria-expanded={open}
-               >
-                  {(() => {
-                     const selectedItem = prioritiesData.find(
-                        (item) => item.id === value,
-                     );
-                     if (selectedItem) {
-                        const Icon = selectedItem.icon;
-                        return <Icon className="text-zinc-700 size-4" />;
-                     }
-                     return null;
-                  })()}
-               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="border-zinc-200 w-48 p-0" align="start">
-               <Command>
-                  <CommandInput placeholder="Set risk priority..." />
-                  <CommandList>
-                     <CommandEmpty>No priority found.</CommandEmpty>
-                     <CommandGroup>
-                        {prioritiesData.map((item) => (
-                           <CommandItem
-                              key={item.id}
-                              value={item.id}
-                              onSelect={handlePriorityChange}
-                              className="flex items-center justify-between"
-                           >
-                              <div className="flex items-center gap-2">
-                                 <item.icon className="text-zinc-700 size-4" />
-                                 <span className="text-xs">{item.name}</span>
-                              </div>
-                              {value === item.id && (
-                                 <CheckIcon size={14} className="ml-auto" />
-                              )}
-                           </CommandItem>
-                        ))}
-                     </CommandGroup>
-                  </CommandList>
-               </Command>
-            </PopoverContent>
-         </Popover>
-      </div>
-   );
-}
-
-interface HealthPopoverComponentProps {
-   project: Project;
-}
-
-function HealthPopoverComponent({ project }: HealthPopoverComponentProps) {
-   const getHealthIcon = (healthId: string) => {
-      switch (healthId) {
-         case 'at-risk':
-            return <AlertCircle className="size-4 text-black font-bold" />;
-         case 'off-track':
-            return <CircleX className="size-4 text-zinc-600" />;
-         case 'on-track':
-            return <CircleCheck className="size-4 text-black" />;
-         case 'no-update':
-         default:
-            return <HelpCircle className="size-4 text-zinc-400" />;
-      }
-   };
-
-   const isMobile = useIsMobile();
-
-   return (
-      <Popover>
-         <PopoverTrigger asChild>
-            <Button
-               className="flex items-center justify-center gap-1 h-7 px-2 text-zinc-900"
-               size="sm"
-               variant="ghost"
-            >
-               {getHealthIcon(project.health.id)}
-               <span className="text-xs mt-[1px] ml-0.5 hidden xl:inline font-medium">
-                  {project.health.name}
-               </span>
-            </Button>
-         </PopoverTrigger>
-         <PopoverContent
-            side={isMobile ? 'bottom' : 'left'}
-            className={cn('p-0 w-[420px] bg-white border border-zinc-200 shadow-xl', isMobile ? 'w-full' : '')}
-         >
-            <div className="flex items-center justify-between border-b border-zinc-100 p-3">
-               <div className="flex items-center gap-2">
-                  {project.icon && (
-                     <project.icon className="size-4 shrink-0 text-zinc-700" />
-                  )}
-                  <h4 className="font-semibold text-sm text-black">{project.name}</h4>
-               </div>
-               <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="h-7 px-2 text-xs flex items-center gap-1">
-                     <Bell className="size-3" />
-                     Alert DGMS
-                  </Button>
-               </div>
-            </div>
-            <div className="p-3 space-y-3">
-               <div className="flex items-center justify-start gap-3">
-                  <div className="flex items-center gap-2">
-                     {getHealthIcon(project.health.id)}
-                     <span className="text-xs font-semibold text-black">{project.health.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                     <Avatar className="size-5">
-                        <AvatarImage
-                           src={project.lead.avatarUrl}
-                           alt={project.lead.name}
-                        />
-                        <AvatarFallback>
-                           {project.lead.name.charAt(0)}
-                        </AvatarFallback>
-                     </Avatar>
-                     <span className="text-xs text-zinc-500">
-                        {project.lead.name}
-                     </span>
-                     <span className="text-xs text-zinc-400">&bull;</span>
-                     <span className="text-xs text-zinc-500">
-                        {new Date(project.startDate).toLocaleDateString()}
-                     </span>
-                  </div>
-               </div>
-
-               <div>
-                  <p className="text-xs text-zinc-600 leading-relaxed">
-                     {project.health.description}
-                  </p>
-               </div>
-            </div>
-         </PopoverContent>
-      </Popover>
    );
 }
 
@@ -1256,6 +676,12 @@ function ProjectLineComponent({ project, onOpenCard }: ProjectLineComponentProps
             contributors.push('DGMS regulatory rule pattern matched', 'Working face hazard analysis triggered', 'Mandatory statutory tracking log');
          }
 
+         const formattedLoc = raw.zone_id
+            ? (/[0-9a-f]{8}-[0-9a-f]{4}/i.test(raw.zone_id)
+               ? `Sector 4 · Zone #${raw.zone_id.slice(-6).toUpperCase()}`
+               : `Mine Sector · ${raw.zone_id}`)
+            : 'Mine Working Face, Section 4';
+
          onOpenCard({
             id: raw.id,
             name: raw.description ? (raw.description.length > 70 ? raw.description.slice(0, 70) + '…' : raw.description) : project.name,
@@ -1263,9 +689,9 @@ function ProjectLineComponent({ project, onOpenCard }: ProjectLineComponentProps
             severity: flag as any,
             score,
             description: raw.description || project.name,
-            location: raw.zone_id ? `Mine Sector / Zone ${raw.zone_id}` : 'Mine Working Face, Section 4',
+            location: formattedLoc,
             beaconId: raw.beacon_id || 'BCN-GPS-AUTO',
-            photoUrl: raw.photo_url || 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?q=80&w=800&auto=format&fit=crop',
+            photoUrl: raw.photo_url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop',
             inspectorName: project.lead.name,
             date: raw.created_at ? new Date(raw.created_at).toLocaleDateString() : project.startDate,
             topContributors: contributors,
@@ -1286,7 +712,7 @@ function ProjectLineComponent({ project, onOpenCard }: ProjectLineComponentProps
          description: `Field inspection in working face detected critical condition: ${project.name}. Immediate mitigation mandated under DGMS standard compliance circulars.`,
          location: 'Mine Sector 4, Gallery 4 East Dip',
          beaconId: 'BCN-JHR-402',
-         photoUrl: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?q=80&w=800&auto=format&fit=crop',
+         photoUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop',
          inspectorName: project.lead.name,
          date: project.startDate,
          topContributors: [
@@ -1302,45 +728,42 @@ function ProjectLineComponent({ project, onOpenCard }: ProjectLineComponentProps
    };
 
    return (
-      <div className="flex items-center py-3 px-6 border-b hover:bg-zinc-50 border-zinc-200 text-sm transition-colors duration-200">
+      <div className="grid grid-cols-[minmax(260px,3fr)_minmax(130px,1.4fr)_minmax(130px,1.3fr)_minmax(160px,1.8fr)_minmax(130px,1.3fr)_minmax(90px,1fr)] items-center px-6 py-3 border-b hover:bg-slate-50/80 border-slate-100 text-sm transition-colors duration-150 gap-4">
          <div
             onClick={handleOpen}
-            className="flex-grow flex items-center gap-2 overflow-hidden min-w-[220px] cursor-pointer group"
+            className="flex items-center gap-2.5 overflow-hidden min-w-0 cursor-pointer group"
          >
-            <div className="relative">
-               <div className="inline-flex size-6 bg-zinc-100 group-hover:bg-black group-hover:text-white items-center justify-center rounded shrink-0 text-black transition-colors">
-                  <project.icon className="size-4" />
-               </div>
+            <div className="inline-flex size-6 bg-slate-100 group-hover:bg-blue-50 group-hover:text-blue-700 items-center justify-center rounded shrink-0 text-slate-600 transition-colors">
+               <project.icon className="size-3.5" />
             </div>
-            <div className="flex flex-col items-start overflow-hidden">
-               <span className="font-medium text-black group-hover:underline truncate w-full flex items-center gap-1.5">
-                  <span>{project.name}</span>
-                  <span className="text-[10px] font-mono font-bold text-zinc-400 group-hover:text-black">
+            <div className="flex flex-col items-start overflow-hidden min-w-0">
+               <span className="font-medium text-slate-900 group-hover:text-blue-700 truncate w-full flex items-center gap-1.5 text-xs">
+                  <span className="truncate">{project.name}</span>
+                  <span className="text-[10px] font-mono text-slate-400 group-hover:text-blue-600 shrink-0">
                      &rarr;
                   </span>
                </span>
             </div>
          </div>
 
-         <div className="w-[140px] shrink-0">
-            <HealthPopoverComponent project={project} />
+         <div className="min-w-0">
+            <HealthDisplayComponent project={project} />
          </div>
 
-         <div className="w-[80px] shrink-0">
-            <PrioritySelectorComponent priority={project.priority} />
-         </div>
-         <div className="w-[150px] shrink-0">
-            <LeadSelectorComponent lead={project.lead} />
+         <div className="min-w-0">
+            <PriorityDisplayComponent priority={project.priority} />
          </div>
 
-         <div className="w-[150px] shrink-0">
-            <DatePickerComponent
-               date={project.startDate ? new Date(project.startDate) : undefined}
-            />
+         <div className="min-w-0">
+            <LeadDisplayComponent lead={project.lead} />
          </div>
 
-         <div className="w-[100px] shrink-0">
-            <StatusWithPercentComponent
+         <div className="min-w-0">
+            <DateDisplayComponent date={project.startDate} />
+         </div>
+
+         <div className="min-w-0">
+            <StatusDisplayComponent
                status={project.status}
                percentComplete={project.percentComplete}
             />
@@ -1359,7 +782,7 @@ const FALLBACK_OBSERVATIONS: ObservationOut[] = [
       zone_id: '4-east',
       category: 'safety',
       description: 'Gallery 4: Roof Strata Delamination & Support Prop #14 Buckled under load',
-      photo_url: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?q=80&w=800&auto=format&fit=crop',
+      photo_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop',
       has_photo: true,
       lat: 23.7972,
       lng: 86.4285,
@@ -1540,29 +963,29 @@ export default function ObservationTable({ role, onKpiRefresh }: ObservationTabl
    return (
       <div className="w-full bg-white text-zinc-950 border border-zinc-200 rounded-2xl overflow-hidden shadow-xs">
          {/* Table Top Controls Bar */}
-         <div className="p-4 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-50/60">
+         <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
             <div className="flex items-center gap-2">
-               <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-                  Statutory Mine Hazards & Inspections
+               <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Statutory Mine Hazards & Observations
                </span>
-               <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-black text-white">
+               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                   {projects.length} Records
                </span>
                {(isLoading || !!closingId) && (
-                  <Loader2 className="w-3.5 h-3.5 text-zinc-400 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 text-blue-700 animate-spin" />
                )}
             </div>
             <div className="flex items-center gap-2">
-               <span className="text-xs text-zinc-500 hidden md:inline">Click any hazard title to view AI Risk Card</span>
+               <span className="text-xs text-slate-500 hidden md:inline">Click any hazard row to inspect AI Risk Assessment</span>
                <button
                   onClick={() => setIsCreateObsOpen(true)}
-                  className="flex items-center gap-1.5 text-xs font-semibold bg-zinc-900 text-white hover:bg-black px-2.5 py-1 rounded-lg transition-colors shadow-xs"
+                  className="flex items-center gap-1.5 text-xs font-semibold bg-blue-800 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl transition-colors shadow-xs"
                >
                   <Plus className="w-3.5 h-3.5" /> Log Hazard
                </button>
                <button
                   onClick={loadObservations}
-                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-black px-2 py-1 rounded border border-zinc-200 hover:bg-zinc-50 transition-colors"
+                  className="flex items-center gap-1 text-xs text-slate-600 hover:text-slate-900 px-2.5 py-1.5 rounded-xl border border-slate-200 hover:bg-white transition-colors"
                >
                   <RefreshCw className="w-3 h-3" /> Refresh
                </button>
@@ -1571,20 +994,21 @@ export default function ObservationTable({ role, onKpiRefresh }: ObservationTabl
 
          {/* Error state */}
          {error && (
-            <div className="px-6 py-4 bg-zinc-50 border-b border-zinc-200 text-xs text-zinc-600">
-               ⚠ Could not load observations from backend: {error}
+            <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 text-xs text-rose-700 flex items-center gap-2">
+               <AlertCircle className="w-4 h-4 text-rose-600" />
+               <span>Could not load observations from backend: {error}</span>
             </div>
          )}
 
          <div className="overflow-x-auto">
             <div className="min-w-[880px]">
-               <div className="bg-zinc-50 px-6 py-2 text-xs font-semibold uppercase tracking-wider flex items-center text-zinc-500 border-b border-zinc-200 sticky top-0 z-10">
-                  <div className="flex-grow">Hazard / Observation (Click to open)</div>
-                  <div className="w-[140px] shrink-0 pl-2.5">Severity Status</div>
-                  <div className="w-[80px] shrink-0 pl-2">Risk Level</div>
-                  <div className="w-[150px] shrink-0 pl-2">Assigned Lead</div>
-                  <div className="w-[150px] shrink-0 pl-2.5">Target Date</div>
-                  <div className="w-[100px] shrink-0 pl-2">Resolution</div>
+               <div className="bg-slate-50/90 px-6 py-3 text-[11px] font-bold uppercase tracking-wider grid grid-cols-[minmax(260px,3fr)_minmax(130px,1.4fr)_minmax(130px,1.3fr)_minmax(160px,1.8fr)_minmax(130px,1.3fr)_minmax(90px,1fr)] items-center text-slate-500 border-b border-slate-200 sticky top-0 z-10 gap-4">
+                  <div>Hazard / Statutory Observation</div>
+                  <div>Statutory Status</div>
+                  <div>Risk Level</div>
+                  <div>Assigned Official</div>
+                  <div>Logged Date</div>
+                  <div>Resolution</div>
                </div>
 
                <div className="divide-y divide-zinc-100">

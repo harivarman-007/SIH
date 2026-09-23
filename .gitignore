@@ -73,6 +73,9 @@ htmlcov/
 # Photo uploads and media storage (retain folder structure)
 backend/photos/*
 !backend/photos/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
+scratch_*
 
 # System & OS files
 .DS_Store

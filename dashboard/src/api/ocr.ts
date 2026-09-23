@@ -40,3 +40,25 @@ export async function reviewOcrItem(
   const res = await apiClient.patch<OcrQueueItem>(`/ocr/queue/${id}`, action);
   return res.data;
 }
+
+export interface OcrSubmitResponse {
+  status: string;
+  extracted_text?: string;
+  queue_item_id?: string;
+  overall_confidence?: number;
+  word_count?: number;
+}
+
+export async function submitOcrDocument(
+  file: File | Blob,
+  documentName?: string,
+  lang: string = 'eng'
+): Promise<OcrSubmitResponse> {
+  const formData = new FormData();
+  formData.append('file', file, documentName || 'statutory_document.png');
+  if (documentName) formData.append('document_name', documentName);
+  formData.append('lang', lang);
+
+  const res = await apiClient.post<OcrSubmitResponse>('/ocr/submit', formData);
+  return res.data;
+}

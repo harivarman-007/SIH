@@ -1,4 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import {
+  RefreshCw,
+  Calendar,
+  MapPin,
+  CheckCircle2,
+  Play,
+  ClipboardCheck,
+  AlertCircle,
+  X,
+} from 'lucide-react';
 import { fetchInspections, updateInspectionStatus } from '../api/inspections';
 import { Inspection, InspectionStatus } from '../types/inspections';
 
@@ -69,120 +79,142 @@ export const AssignedFieldInspectionsView: React.FC = () => {
   const getStatusBadge = (st: InspectionStatus | string) => {
     switch ((st || '').toLowerCase()) {
       case 'scheduled':
-        return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+        return 'bg-blue-50 text-blue-700 border border-blue-200';
       case 'in_progress':
-        return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+        return 'bg-amber-50 text-amber-700 border border-amber-200';
       case 'completed':
       case 'submitted':
-        return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
       case 'cancelled':
-        return 'bg-rose-500/20 text-rose-400 border border-rose-500/30';
+        return 'bg-rose-50 text-rose-700 border border-rose-200';
       default:
-        return 'bg-zinc-800 text-zinc-300';
+        return 'bg-slate-100 text-slate-700 border border-slate-200';
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      
-      {/* Header */}
-      <div className="p-5 rounded-2xl bg-zinc-900/80 border border-zinc-800 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="w-full space-y-5 text-slate-900">
+      {/* Header Bar */}
+      <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="text-xs font-bold uppercase tracking-wider text-amber-500">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Field Safety Inspector Console
           </div>
-          <h1 className="text-2xl font-black text-white mt-1">Assigned Field Inspections</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Execute scheduled underground and surface safety audits with statutory checklists
+          <h1 className="text-xl font-bold text-slate-900 mt-0.5">
+            Assigned Field Inspections
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Execute scheduled underground and surface safety audits with statutory checklists per DGMS CMR 2017
           </p>
         </div>
 
         <button
+          type="button"
           onClick={loadInspections}
           disabled={loading}
-          className="px-4 py-2 rounded-xl bg-zinc-950 border border-zinc-700 text-zinc-300 text-xs font-semibold hover:bg-zinc-800 transition-colors flex items-center gap-1.5 self-start sm:self-auto"
+          className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 hover:text-slate-900 shadow-2xs transition-colors flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
         >
-          <span className={loading ? 'animate-spin' : ''}>⟳</span>
+          <RefreshCw className={`size-3.5 ${loading ? 'animate-spin text-blue-700' : ''}`} />
           <span>Refresh</span>
         </button>
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs">
-          {error}
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+          <AlertCircle className="size-4 shrink-0 text-rose-600" />
+          <span>{error}</span>
         </div>
       )}
 
       {actionSuccess && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs">
-          {actionSuccess}
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs flex items-center gap-2">
+          <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+          <span>{actionSuccess}</span>
         </div>
       )}
 
       {/* Inspections List */}
       {loading ? (
-        <div className="text-center py-20 text-zinc-400 text-sm">Loading field inspections...</div>
+        <div className="text-center py-20 text-slate-400 text-sm flex flex-col items-center justify-center gap-2">
+          <RefreshCw className="size-5 animate-spin text-blue-700" />
+          <span>Loading field inspections...</span>
+        </div>
       ) : inspections.length === 0 ? (
-        <div className="p-12 text-center bg-zinc-900/40 rounded-2xl border border-zinc-800 text-zinc-500 text-sm">
-          No inspections assigned to you at this time.
+        <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 text-sm shadow-xs">
+          <ClipboardCheck className="size-8 mx-auto text-slate-400 mb-2" />
+          <p className="font-semibold text-slate-700">No inspections assigned at this time.</p>
+          <p className="text-xs text-slate-400 mt-0.5">New audits scheduled by Mine Manager will appear here.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {inspections.map((insp) => (
             <div
               key={insp.id}
-              className="p-5 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-4 transition-all hover:border-zinc-700"
+              className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3.5 transition-all hover:border-slate-300"
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-amber-400">{insp.code}</span>
+                  <span className="text-xs font-mono font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                    {insp.code}
+                  </span>
                   <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${getStatusBadge(insp.status)}`}>
                     {insp.status.replace('_', ' ')}
                   </span>
                 </div>
-                <div className="text-xs text-zinc-400">
-                  Scheduled: {new Date(insp.scheduled_for).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                <div className="text-xs text-slate-500 font-mono flex items-center gap-1.5">
+                  <Calendar className="size-3 text-slate-400" />
+                  <span>
+                    Scheduled: {new Date(insp.scheduled_for).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                  </span>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-base font-bold text-white">{insp.title}</h3>
-                {insp.notes && <p className="text-xs text-zinc-400 mt-1">{insp.notes}</p>}
+                <h3 className="text-base font-bold text-slate-900">{insp.title}</h3>
+                {insp.notes && (
+                  <p className="text-xs text-slate-600 mt-1.5 bg-slate-50 border border-slate-100 rounded-xl p-3 leading-relaxed">
+                    {insp.notes}
+                  </p>
+                )}
               </div>
 
               {/* Action Controls */}
-              <div className="pt-3 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
-                <div className="text-xs text-zinc-400">
+              <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div className="text-xs text-slate-600 flex items-center gap-1.5 font-medium">
+                  <MapPin className="size-3.5 text-slate-400" />
                   <span>Zone: </span>
-                  <span className="text-zinc-200 font-medium">{insp.zone_id || 'Sector 4 / Main Haulage'}</span>
+                  <span className="text-slate-800 font-semibold">{insp.zone_id || 'Sector 4 / Main Haulage'}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   {(insp.status || '').toLowerCase() === 'scheduled' && (
                     <button
+                      type="button"
                       onClick={() => handleStart(insp.id)}
                       disabled={processingId === insp.id}
-                      className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                      className="px-3.5 py-2 rounded-xl bg-blue-800 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
-                      <span>⚡</span>
+                      <Play className="size-3.5" />
                       <span>{processingId === insp.id ? 'Starting...' : 'Begin Inspection'}</span>
                     </button>
                   )}
 
                   {(insp.status || '').toLowerCase() === 'in_progress' && (
                     <button
+                      type="button"
                       onClick={() => setSubmitModalInspection(insp)}
                       disabled={processingId === insp.id}
-                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                      className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
-                      <span>✓</span>
+                      <CheckCircle2 className="size-3.5" />
                       <span>Complete & Submit</span>
                     </button>
                   )}
 
                   {['submitted', 'completed'].includes((insp.status || '').toLowerCase()) && (
-                    <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
-                      <span>✓</span> Submitted to Manager
+                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
+                      <CheckCircle2 className="size-3.5 text-emerald-600" />
+                      <span>Submitted to Manager</span>
                     </span>
                   )}
                 </div>
@@ -194,22 +226,33 @@ export const AssignedFieldInspectionsView: React.FC = () => {
 
       {/* Completion Modal */}
       {submitModalInspection && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <div>
-              <span className="text-xs font-bold uppercase text-emerald-400">Inspection Sign-off</span>
-              <h2 className="text-lg font-bold text-white mt-0.5">
-                Submit Inspection {submitModalInspection.code}
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xl text-slate-900">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                  Inspection Sign-off
+                </span>
+                <h2 className="text-lg font-bold text-slate-900 mt-0.5">
+                  Submit Inspection {submitModalInspection.code}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSubmitModalInspection(null)}
+                className="p-1.5 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
             </div>
 
-            <p className="text-xs text-zinc-300">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Certify that all mandatory check zones have been audited and all identified hazards have
-              been logged into the statutory ledger.
+              been logged into the statutory ledger per CMR 2017 standards.
             </p>
 
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                 Field Summary Notes
               </label>
               <textarea
@@ -217,15 +260,15 @@ export const AssignedFieldInspectionsView: React.FC = () => {
                 value={completionNotes}
                 onChange={(e) => setCompletionNotes(e.target.value)}
                 placeholder="Overall area condition, atmospheric gas readings summary, compliance notes..."
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition-colors"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setSubmitModalInspection(null)}
-                className="px-4 py-2 rounded-lg border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-xs"
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -233,15 +276,15 @@ export const AssignedFieldInspectionsView: React.FC = () => {
                 type="button"
                 onClick={handleSubmit}
                 disabled={processingId === submitModalInspection.id}
-                className="px-5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
               >
-                {processingId === submitModalInspection.id ? 'Submitting...' : 'Sign-off & Submit'}
+                <CheckCircle2 className="size-3.5" />
+                <span>{processingId === submitModalInspection.id ? 'Submitting...' : 'Sign-off & Submit'}</span>
               </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

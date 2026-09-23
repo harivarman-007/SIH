@@ -9,7 +9,7 @@ export type ActionStatus =
 
 export type ActionPriority = 'critical' | 'high' | 'medium' | 'low';
 
-export type EvidenceKind = 'before' | 'after' | 'document';
+export type EvidenceKind = 'before' | 'after' | 'document' | 'before_photo' | 'after_photo' | 'note';
 
 export interface ActionEvidence {
   id: string;
@@ -65,7 +65,7 @@ export interface ActionCreatePayload {
   description: string;
   priority: ActionPriority;
   due_at: string;
-  safety_standards_referenced?: string;
+  safety_standards_referenced?: string | string[];
 }
 
 export interface EvidenceUploadPayload {

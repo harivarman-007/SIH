@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Plus,
+  Search,
+  X,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react';
+import {
   fetchComplianceRules,
   createComplianceRule,
   updateComplianceRule,
@@ -98,25 +106,34 @@ export const ComplianceRulesView: React.FC = () => {
     return matchesCat && matchesSearch;
   });
 
+  const catColors: Record<string, string> = {
+    safety: 'bg-rose-50 text-rose-700 border-rose-200',
+    environment: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    labour: 'bg-blue-50 text-blue-700 border-blue-200',
+    production: 'bg-purple-50 text-purple-700 border-purple-200',
+  };
+
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="w-full max-w-5xl space-y-5 text-slate-900">
       {/* Header */}
-      <div className="p-5 rounded-2xl bg-zinc-900/80 border border-zinc-800 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="text-xs uppercase font-bold tracking-wider text-amber-500">
+          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
             DGMS Statutory Compliance / Regulatory Registry
           </div>
-          <h1 className="text-2xl font-black text-white mt-1">Compliance Regulations Catalogue</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <h1 className="text-xl font-bold text-slate-900 mt-0.5">Compliance Regulations Catalogue</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
             Directorate General of Mines Safety (DGMS) statutory standards and enforcement rules
           </p>
         </div>
 
         <button
+          type="button"
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer self-start sm:self-auto"
+          className="px-4 py-2 rounded-xl bg-blue-800 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
         >
-          + Add Regulation
+          <Plus className="size-3.5" />
+          <span>Add Regulation</span>
         </button>
       </div>
 
@@ -124,16 +141,24 @@ export const ComplianceRulesView: React.FC = () => {
         <div
           className={`p-4 rounded-xl text-xs font-medium border flex items-center justify-between ${
             feedback.type === 'success'
-              ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
-              : 'bg-rose-950/40 border-rose-800 text-rose-300'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              : 'bg-rose-50 border-rose-200 text-rose-700'
           }`}
         >
-          <span>{feedback.message}</span>
+          <div className="flex items-center gap-2">
+            {feedback.type === 'success' ? (
+              <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+            ) : (
+              <AlertCircle className="size-4 shrink-0 text-rose-600" />
+            )}
+            <span>{feedback.message}</span>
+          </div>
           <button
+            type="button"
             onClick={() => setFeedback(null)}
-            className="text-zinc-400 hover:text-white ml-3 font-bold"
+            className="text-slate-400 hover:text-slate-700 cursor-pointer ml-3"
           >
-            ✕
+            <X className="size-3.5" />
           </button>
         </div>
       )}
@@ -141,32 +166,35 @@ export const ComplianceRulesView: React.FC = () => {
       {/* Filters & Search */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
+          <Search className="size-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             type="text"
             placeholder="Search regulations by code, keyword, or CMR reference…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-500"
+            className="w-full bg-white border border-slate-200 rounded-xl pl-9.5 pr-10 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-700 shadow-2xs"
           />
           {searchTerm && (
             <button
+              type="button"
               onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-2.5 text-xs text-zinc-400 hover:text-white"
+              className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
             >
               Clear
             </button>
           )}
         </div>
 
-        <div className="flex gap-1.5 p-1 bg-zinc-900 border border-zinc-800 rounded-xl overflow-x-auto text-xs">
+        <div className="flex gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl overflow-x-auto text-xs shrink-0">
           {['all', 'safety', 'environment', 'labour', 'production'].map((cat) => (
             <button
               key={cat}
+              type="button"
               onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1.5 rounded-lg font-bold capitalize transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg font-semibold capitalize text-xs transition-colors cursor-pointer ${
                 categoryFilter === cat
-                  ? 'bg-amber-500 text-black'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                  ? 'bg-blue-800 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               {cat}
@@ -176,57 +204,53 @@ export const ComplianceRulesView: React.FC = () => {
       </div>
 
       {/* Rules Table */}
-      <div className="rounded-2xl bg-zinc-900/80 border border-zinc-800 overflow-hidden">
+      <div className="rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-zinc-400 text-xs">
-            <span className="animate-spin mr-2">⟳</span> Loading statutory regulations…
+          <div className="p-12 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
+            <RefreshCw className="size-4 animate-spin text-blue-700" />
+            <span>Loading statutory regulations...</span>
           </div>
         ) : filteredRules.length === 0 ? (
-          <div className="p-12 text-center text-zinc-500 text-xs">
+          <div className="p-12 text-center text-slate-400 text-xs">
             No compliance regulations matching filter criteria.
           </div>
         ) : (
-          <div className="divide-y divide-zinc-800/80">
+          <div className="divide-y divide-slate-100">
             {filteredRules.map((rule) => {
-              const catColors: Record<string, string> = {
-                safety: 'bg-rose-950 text-rose-400 border-rose-800',
-                environment: 'bg-emerald-950 text-emerald-400 border-emerald-800',
-                labour: 'bg-blue-950 text-blue-400 border-blue-800',
-                production: 'bg-purple-950 text-purple-400 border-purple-800',
-              };
-
               return (
                 <div
                   key={rule.id}
-                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-zinc-950/40 transition-colors"
+                  className="p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
                 >
                   <div className="space-y-1.5 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-white">{rule.code}</span>
+                      <span className="font-mono text-xs font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                        {rule.code}
+                      </span>
                       <span
                         className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${
-                          catColors[rule.category] || 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                          catColors[rule.category] || 'bg-slate-100 text-slate-700 border-slate-200'
                         }`}
                       >
                         {rule.category}
                       </span>
                       {rule.statutory_ref && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                           {rule.statutory_ref}
                         </span>
                       )}
-                      <span className="text-[10px] text-zinc-400 capitalize">
-                        Severity: {rule.default_severity}
+                      <span className="text-[11px] text-slate-400 capitalize">
+                        Severity: <strong className="text-slate-600 font-semibold">{rule.default_severity}</strong>
                       </span>
                     </div>
 
-                    <p className="text-xs text-zinc-300">{rule.description}</p>
+                    <p className="text-xs text-slate-700 leading-relaxed">{rule.description}</p>
                   </div>
 
-                  <div className="flex items-center gap-3 self-end sm:self-auto">
+                  <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
                     <span
-                      className={`text-[11px] font-semibold ${
-                        rule.is_active ? 'text-emerald-400' : 'text-zinc-500'
+                      className={`text-xs font-semibold ${
+                        rule.is_active ? 'text-emerald-700' : 'text-slate-400'
                       }`}
                     >
                       {rule.is_active ? 'Active' : 'Inactive'}
@@ -235,11 +259,11 @@ export const ComplianceRulesView: React.FC = () => {
                       type="button"
                       onClick={() => handleToggleActive(rule)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                        rule.is_active ? 'bg-amber-500' : 'bg-zinc-800'
+                        rule.is_active ? 'bg-emerald-600' : 'bg-slate-300'
                       }`}
                     >
                       <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition-transform ${
                           rule.is_active ? 'translate-x-6' : 'translate-x-1'
                         }`}
                       />
@@ -254,38 +278,42 @@ export const ComplianceRulesView: React.FC = () => {
 
       {/* Add Regulation Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xl text-slate-900">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-white">Register Statutory Regulation</h2>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">CMR 2017 Framework</span>
+                <h2 className="text-base font-bold text-slate-900 mt-0.5">Register Statutory Regulation</h2>
+              </div>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-zinc-400 hover:text-white font-bold"
+                className="text-slate-400 hover:text-slate-700 cursor-pointer p-1 rounded-lg hover:bg-slate-100"
               >
-                ✕
+                <X className="size-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateRule} className="space-y-4 text-xs">
               <div>
-                <label className="block text-zinc-400 font-bold mb-1">Regulation Code</label>
+                <label className="block text-slate-700 font-semibold mb-1">Regulation Code</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. DGMS-CMR-2017-133"
                   value={newCode}
                   onChange={(e) => setNewCode(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-zinc-100 font-mono focus:border-amber-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono focus:border-blue-700 focus:bg-white focus:outline-none transition-colors"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-400 font-bold mb-1">Category</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Category</label>
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-zinc-100 focus:border-amber-500 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:border-blue-700 focus:bg-white focus:outline-none transition-colors"
                   >
                     <option value="safety">Safety</option>
                     <option value="environment">Environment</option>
@@ -295,11 +323,11 @@ export const ComplianceRulesView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-zinc-400 font-bold mb-1">Default Severity</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Default Severity</label>
                   <select
                     value={newSeverity}
                     onChange={(e) => setNewSeverity(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-zinc-100 focus:border-amber-500 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:border-blue-700 focus:bg-white focus:outline-none transition-colors"
                   >
                     <option value="high">High</option>
                     <option value="medium">Medium</option>
@@ -309,25 +337,25 @@ export const ComplianceRulesView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-zinc-400 font-bold mb-1">Statutory Reference</label>
+                <label className="block text-slate-700 font-semibold mb-1">Statutory Reference</label>
                 <input
                   type="text"
                   placeholder="e.g. Coal Mines Regulations 2017, Regulation 133(1)"
                   value={newStatutoryRef}
                   onChange={(e) => setNewStatutoryRef(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-zinc-100 focus:border-amber-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:border-blue-700 focus:bg-white focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-400 font-bold mb-1">Regulation Description</label>
+                <label className="block text-slate-700 font-semibold mb-1">Regulation Description</label>
                 <textarea
                   required
                   rows={3}
                   placeholder="Describe the compliance requirement and inspection criteria…"
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-zinc-100 focus:border-amber-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:border-blue-700 focus:bg-white focus:outline-none transition-colors"
                 />
               </div>
 
@@ -335,14 +363,14 @@ export const ComplianceRulesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold"
+                  className="px-5 py-2 rounded-xl bg-blue-800 hover:bg-blue-700 text-white font-semibold shadow-xs cursor-pointer disabled:opacity-50"
                 >
                   {submitting ? 'Registering…' : 'Save Regulation'}
                 </button>

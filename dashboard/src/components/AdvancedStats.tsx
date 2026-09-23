@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { ClippedAreaChart } from '@/components/ui/advanced-stats-utils/charts'
 import { TimelineAnimation } from '@/components/ui/advanced-stats-utils/timeline-animation'
-import { RefreshCw, Loader2, AlertCircle } from 'lucide-react'
+import { RefreshCw, Loader2, AlertCircle, ShieldCheck } from 'lucide-react'
 import { KPISummary, fetchKPIs } from '@/api/kpi'
 
 interface AdvancedStatsProps {
@@ -130,12 +130,12 @@ export default function AdvancedStats({ kpiData: propKpiData, onRefresh: propOnR
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Chart Section */}
           <TimelineAnimation
             animationNum={1}
             timelineRef={timelineRef}
-            className="lg:col-span-2 p-8 rounded-3xl bg-zinc-50 border border-zinc-200"
+            className="lg:col-span-2 p-6 rounded-2xl bg-white border border-slate-200 shadow-xs"
           >
             <ClippedAreaChart />
           </TimelineAnimation>
@@ -146,33 +146,33 @@ export default function AdvancedStats({ kpiData: propKpiData, onRefresh: propOnR
               <TimelineAnimation
                 animationNum={2}
                 timelineRef={timelineRef}
-                className="p-6 rounded-3xl h-full bg-zinc-900 text-white flex flex-col justify-between shadow-lg"
+                className="p-6 rounded-2xl h-full bg-white border border-slate-200 text-slate-900 flex flex-col justify-between shadow-xs"
               >
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                     Statutory Benchmark
                   </p>
-                  <h4 className="text-xl font-bold tracking-tight">
+                  <h4 className="text-lg font-bold tracking-tight text-slate-900">
                     DGMS Compliance Score
                   </h4>
                 </div>
-                <div className="mt-8">
+                <div className="mt-6">
                   <div className="flex justify-between items-end mb-2">
-                    <span className="text-3xl font-semibold tracking-tighter">
+                    <span className="text-3xl font-extrabold tracking-tight text-slate-900 font-mono">
                       {kpiData ? `${complianceScore}%` : '—'}
                     </span>
-                    <span className="text-xs font-medium text-zinc-400 mb-1">
+                    <span className="text-xs font-semibold text-slate-400 mb-1">
                       Target: 90%
                     </span>
                   </div>
-                  <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                     <div
-                      className="h-full bg-white rounded-full transition-all duration-700"
+                      className="h-full bg-emerald-600 rounded-full transition-all duration-700"
                       style={{ width: kpiData ? `${complianceScore}%` : '0%' }}
                     />
                   </div>
                   {kpiData && (
-                    <p className="text-[10px] text-zinc-500 mt-2">
+                    <p className="text-[11px] text-slate-400 mt-2 font-medium">
                       Based on {kpiData.closed_count} closed / {kpiData.total_observations} total observations
                     </p>
                   )}
@@ -182,41 +182,31 @@ export default function AdvancedStats({ kpiData: propKpiData, onRefresh: propOnR
               <TimelineAnimation
                 animationNum={3}
                 timelineRef={timelineRef}
-                className="p-6 rounded-3xl h-full bg-zinc-50 border border-zinc-200"
+                className="p-6 rounded-2xl h-full bg-white border border-slate-200 shadow-xs"
               >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="size-8 rounded-lg bg-zinc-50 flex items-center justify-center border border-zinc-200">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      className="w-5 h-5 text-black"
-                      fill="none"
-                      stroke="#000000"
-                      strokeWidth="1.75"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      <path d="M9 12l2 2 4-4" />
-                    </svg>
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="size-7 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center">
+                    <ShieldCheck className="size-4 text-blue-800" />
                   </div>
-                  <h4 className="font-bold text-zinc-900">Risk Breakdown</h4>
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">Risk Breakdown</h4>
                 </div>
                 {kpiData ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {[
-                      { label: 'High Risk', count: kpiData.by_risk.high },
-                      { label: 'Medium Risk', count: kpiData.by_risk.medium },
-                      { label: 'Low Risk', count: kpiData.by_risk.low },
-                    ].map(({ label, count }) => (
-                      <div key={label} className="flex justify-between items-center text-sm">
-                        <span className="text-zinc-600">{label}</span>
-                        <span className="font-semibold text-zinc-900">{count}</span>
+                      { label: 'High Risk', count: kpiData.by_risk.high, badge: 'text-rose-700 bg-rose-50 border-rose-200' },
+                      { label: 'Medium Risk', count: kpiData.by_risk.medium, badge: 'text-amber-700 bg-amber-50 border-amber-200' },
+                      { label: 'Low Risk', count: kpiData.by_risk.low, badge: 'text-blue-700 bg-blue-50 border-blue-200' },
+                    ].map(({ label, count, badge }) => (
+                      <div key={label} className="flex justify-between items-center text-xs">
+                        <span className="text-slate-600 font-medium">{label}</span>
+                        <span className={`font-mono font-bold px-2 py-0.5 rounded border text-[11px] ${badge}`}>
+                          {count}
+                        </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-zinc-500">Loading…</p>
+                  <p className="text-xs text-slate-400">Loading telemetry…</p>
                 )}
               </TimelineAnimation>
             </div>
@@ -231,17 +221,17 @@ export default function AdvancedStats({ kpiData: propKpiData, onRefresh: propOnR
               timelineRef={timelineRef}
               key={kpi.label}
               className={cn(
-                'p-6 rounded-2xl border bg-zinc-50 border-zinc-200 transition-colors hover:border-zinc-400 hover:bg-zinc-100'
+                'p-5 rounded-2xl border bg-white border-slate-200 shadow-xs transition-colors hover:border-slate-300'
               )}
             >
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                 {kpi.label}
               </p>
               <div className="flex items-baseline justify-between">
-                <p className="text-2xl font-black text-zinc-900 tracking-tighter">
+                <p className="text-2xl font-extrabold text-slate-900 font-mono tracking-tight">
                   {kpi.value}
                 </p>
-                <span className="text-xs font-bold px-1.5 py-0.5 rounded text-zinc-900 bg-zinc-200">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-slate-700 bg-slate-100 border border-slate-200">
                   {kpi.change}
                 </span>
               </div>

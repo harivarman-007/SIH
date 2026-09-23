@@ -1,5 +1,20 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
+  RefreshCw,
+  Clock,
+  ArrowRight,
+  AlertTriangle,
+  CheckCircle2,
+  Play,
+  Camera,
+  Upload,
+  X,
+  MapPin,
+  AlertCircle,
+  ShieldCheck,
+  FileText,
+} from 'lucide-react';
+import {
   fetchActions,
   fetchAction,
   acceptAction,
@@ -38,9 +53,10 @@ export const ContractorWorkQueue: React.FC = () => {
   const [geoPrompted, setGeoPrompted] = useState(false);
   const [currentGeo, setCurrentGeo] = useState<{ lat: number; lng: number } | null>(null);
 
-  const filePickerRef = useRef<HTMLInputElement>(null);
   const cameraPickerRef = useRef<HTMLInputElement>(null);
+  const filePickerRef = useRef<HTMLInputElement>(null);
 
+  // Load contractor actions
   const loadActions = async () => {
     setLoading(true);
     setError(null);
@@ -58,27 +74,7 @@ export const ContractorWorkQueue: React.FC = () => {
     loadActions();
   }, []);
 
-  // Request browser geolocation once (Q3)
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && navigator.geolocation && !geoPrompted) {
-      setGeoPrompted(true);
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setCurrentGeo({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          });
-        },
-        () => {
-          // Graceful fallback if user denies or location is unavailable
-          setCurrentGeo(null);
-        },
-        { timeout: 8000 }
-      );
-    }
-  }, [geoPrompted]);
-
-  // Load detail when action selected
+  // Fetch individual action detail when opened in drawer
   useEffect(() => {
     if (!selectedActionId) {
       setActionDetail(null);
@@ -89,79 +85,74 @@ export const ContractorWorkQueue: React.FC = () => {
       return;
     }
 
-    setDetailLoading(true);
-    fetchAction(selectedActionId)
-      .then((detail) => {
+    const loadDetail = async () => {
+      setDetailLoading(true);
+      setExecutionError(null);
+      try {
+        const detail = await fetchAction(selectedActionId);
         setActionDetail(detail);
-      })
-      .catch((err) => {
+      } catch (err: any) {
         setExecutionError(err.message || 'Failed to load action details.');
-      })
-      .finally(() => setDetailLoading(false));
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+
+    loadDetail();
   }, [selectedActionId]);
 
-  // Handle file staging with client validation (Q3)
-  const handleFilesSelected = (files: FileList | null, defaultKind: EvidenceKind = 'after') => {
-    if (!files || files.length === 0) return;
-    setExecutionError(null);
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
-    const maxSizeBytes = 10 * 1024 * 1024; // 10MB
-
-    const newStaged: StagedFile[] = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-
-      if (!allowedTypes.includes(file.type)) {
-        setExecutionError(`File ${file.name} has unsupported type (${file.type}). Allowed: JPG, PNG, WEBP, PDF.`);
-        continue;
-      }
-
-      if (file.size > maxSizeBytes) {
-        setExecutionError(`File ${file.name} exceeds 10MB limit.`);
-        continue;
-      }
-
-      const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
-
-      newStaged.push({
-        file,
-        previewUrl,
-        kind: defaultKind,
-        description: `Proof of remediation for ${actionDetail?.code || 'action'}`,
-        geo: currentGeo || undefined,
-      });
+  // Request browser geolocation once on mount or when camera tapped
+  const requestGeolocation = () => {
+    if (geoPrompted) return;
+    setGeoPrompted(true);
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCurrentGeo({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          });
+        },
+        (err) => {
+          console.warn('Geolocation not granted or unavailable:', err.message);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
     }
-
-    setStagedFiles((prev) => [...prev, ...newStaged]);
   };
 
-  const removeStagedFile = (index: number) => {
-    setStagedFiles((prev) => {
-      const copy = [...prev];
-      const removed = copy.splice(index, 1)[0];
-      if (removed.previewUrl) {
-        URL.revokeObjectURL(removed.previewUrl);
-      }
-      return copy;
-    });
+  // State transitions: Accept
+  const handleAccept = async () => {
+    if (!actionDetail) return;
+    setProcessing(true);
+    setExecutionError(null);
+    try {
+      const updated = await acceptAction(actionDetail.id);
+      setActionDetail((prev) => (prev ? { ...prev, status: updated.status } : null));
+      setExecutionSuccess('Work order accepted! Click "Start Remediation" when beginning on-site work.');
+      await loadActions();
+    } catch (err: any) {
+      setExecutionError(err.message || 'Failed to accept work order.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
-  const updateStagedKind = (index: number, kind: EvidenceKind) => {
-    setStagedFiles((prev) => {
-      const copy = [...prev];
-      copy[index].kind = kind;
-      return copy;
-    });
-  };
-
-  const updateStagedDescription = (index: number, desc: string) => {
-    setStagedFiles((prev) => {
-      const copy = [...prev];
-      copy[index].description = desc;
-      return copy;
-    });
+  // State transitions: Start
+  const handleStart = async () => {
+    if (!actionDetail) return;
+    setProcessing(true);
+    setExecutionError(null);
+    try {
+      const updated = await startAction(actionDetail.id);
+      setActionDetail((prev) => (prev ? { ...prev, status: updated.status } : null));
+      setExecutionSuccess('Work order marked in progress! Remediation started.');
+      await loadActions();
+    } catch (err: any) {
+      setExecutionError(err.message || 'Failed to start work order.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   // Convert File to base64 Data URL for evidence upload
@@ -174,193 +165,241 @@ export const ContractorWorkQueue: React.FC = () => {
     });
   };
 
-  // Transition Handlers
-  const handleAccept = async () => {
-    if (!actionDetail) return;
-    setProcessing(true);
-    setExecutionError(null);
-    try {
-      const updated = await acceptAction(actionDetail.id);
-      setActionDetail((prev) => (prev ? { ...prev, status: updated.status } : null));
-      setExecutionSuccess('Work order accepted! Click "Start Remediation" when beginning on-site work.');
-      await loadActions();
-    } catch (err: any) {
-      setExecutionError(err.message || 'Failed to accept action.');
-    } finally {
-      setProcessing(false);
-    }
+  // Staging files for upload (Q3)
+  const handleFilesSelected = (files: FileList | null, defaultKind: EvidenceKind = 'after') => {
+    if (!files || files.length === 0) return;
+    requestGeolocation();
+
+    const newStaged: StagedFile[] = [];
+    Array.from(files).forEach((file) => {
+      const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+      newStaged.push({
+        file,
+        previewUrl,
+        kind: defaultKind,
+        description: '',
+        geo: currentGeo || undefined,
+      });
+    });
+
+    setStagedFiles((prev) => [...prev, ...newStaged]);
   };
 
-  const handleStart = async () => {
-    if (!actionDetail) return;
-    setProcessing(true);
-    setExecutionError(null);
-    try {
-      const updated = await startAction(actionDetail.id);
-      setActionDetail((prev) => (prev ? { ...prev, status: updated.status } : null));
-      setExecutionSuccess('Work in progress! You may now upload evidence and submit for verification.');
-      await loadActions();
-    } catch (err: any) {
-      setExecutionError(err.message || 'Failed to start action.');
-    } finally {
-      setProcessing(false);
-    }
+  const removeStagedFile = (idx: number) => {
+    setStagedFiles((prev) => {
+      const copy = [...prev];
+      if (copy[idx]?.previewUrl) {
+        URL.revokeObjectURL(copy[idx].previewUrl);
+      }
+      copy.splice(idx, 1);
+      return copy;
+    });
   };
 
-  // Submit flow (Q3 & Q4)
+  const updateStagedKind = (idx: number, kind: EvidenceKind) => {
+    setStagedFiles((prev) => {
+      const copy = [...prev];
+      copy[idx].kind = kind;
+      return copy;
+    });
+  };
+
+  const updateStagedDescription = (idx: number, desc: string) => {
+    setStagedFiles((prev) => {
+      const copy = [...prev];
+      copy[idx].description = desc;
+      return copy;
+    });
+  };
+
+  // Validation: Must have at least 1 "after" photo to submit
+  const hasAfterPhoto = useMemo(() => {
+    return stagedFiles.some((f) => f.kind === 'after');
+  }, [stagedFiles]);
+
+  const canSubmit = hasAfterPhoto && completionNotes.trim().length > 0;
+
+  // Submit Work for Review (Q3)
   const handleSubmitWork = async () => {
     if (!actionDetail) return;
+    if (!canSubmit) {
+      setExecutionError('Mandatory: Attach at least 1 "AFTER" proof photo and provide completion notes.');
+      return;
+    }
+
     setProcessing(true);
     setExecutionError(null);
     setExecutionSuccess(null);
 
     try {
-      // 1. Upload any staged files first
+      // 1. Upload all staged evidence files sequentially
       for (const staged of stagedFiles) {
         const fileUrl = await fileToDataUrl(staged.file);
         await uploadEvidence(actionDetail.id, {
           kind: staged.kind,
           file_url: fileUrl,
           file_size_bytes: staged.file.size,
-          description: staged.description,
+          description: staged.description || `${staged.kind.toUpperCase()} Remediation Proof`,
         });
       }
 
-      // 2. Submit for verification
+      // 2. Submit action for official review
       const updated = await submitAction(actionDetail.id);
       setActionDetail((prev) => (prev ? { ...prev, status: updated.status } : null));
       setStagedFiles([]);
-      setExecutionSuccess('Work successfully submitted for Mine Official verification!');
+      setExecutionSuccess('Remediation work submitted successfully! Awaiting DGMS / Mine Official review.');
       await loadActions();
     } catch (err: any) {
-      setExecutionError(err.message || 'Failed to submit work for verification.');
+      setExecutionError(err.message || 'Failed to submit work order for verification.');
     } finally {
       setProcessing(false);
     }
   };
 
-  // Validation: Check if at least 1 "after" photo exists (in uploaded or staged) and completion note is present (Q3)
-  const hasAfterPhoto = useMemo(() => {
-    const inUploaded = actionDetail?.evidences?.some((ev) => ev.kind === 'after');
-    const inStaged = stagedFiles.some((f) => f.kind === 'after');
-    return inUploaded || inStaged;
-  }, [actionDetail, stagedFiles]);
-
-  const canSubmit = useMemo(() => {
-    if (!actionDetail || (actionDetail.status || '').toLowerCase() !== 'in_progress') return false;
-    return hasAfterPhoto && completionNotes.trim().length > 0;
-  }, [actionDetail, hasAfterPhoto, completionNotes]);
-
-  const isOverdue = (dueAtStr: string, status: string) => {
-    const s = (status || '').toLowerCase();
-    if (s === 'closed' || s === 'verified') return false;
-    return new Date(dueAtStr).getTime() < new Date().getTime();
+  const isOverdue = (due_at: string, status: string) => {
+    if (['closed', 'submitted', 'verified'].includes(status.toLowerCase())) return false;
+    return new Date(due_at).getTime() < Date.now();
   };
 
-  const getPriorityBadge = (p: ActionPriority | string) => {
-    switch ((p || '').toLowerCase()) {
+  const getPriorityBadge = (priority: ActionPriority) => {
+    switch (priority.toLowerCase()) {
       case 'critical':
-        return 'bg-rose-500/20 text-rose-400 border border-rose-500/40';
+        return 'bg-rose-50 text-rose-700 border border-rose-200';
       case 'high':
-        return 'bg-amber-500/20 text-amber-400 border border-amber-500/40';
+        return 'bg-amber-50 text-amber-700 border border-amber-200';
       case 'medium':
-        return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40';
-      case 'low':
-        return 'bg-blue-500/20 text-blue-400 border border-blue-500/40';
+        return 'bg-blue-50 text-blue-700 border border-blue-200';
       default:
-        return 'bg-zinc-700 text-zinc-300';
+        return 'bg-slate-100 text-slate-700 border border-slate-200';
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch ((status || '').toLowerCase()) {
+      case 'closed':
+      case 'verified':
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+      case 'in_progress':
+        return 'bg-amber-50 text-amber-700 border border-amber-200';
+      case 'submitted':
+        return 'bg-blue-50 text-blue-700 border border-blue-200';
+      case 'rejected':
+        return 'bg-rose-50 text-rose-700 border border-rose-200';
+      default:
+        return 'bg-slate-100 text-slate-700 border border-slate-200';
     }
   };
 
   return (
-    <div className="space-y-6">
-      
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-zinc-900/60 p-5 rounded-2xl border border-zinc-800 backdrop-blur-xl">
+    <div className="w-full space-y-5 text-slate-900">
+      {/* Executive Header */}
+      <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="text-xs uppercase font-bold tracking-wider text-amber-500">
+          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
             Contractor Portal / Remediation Execution
           </div>
-          <h1 className="text-2xl font-black text-white mt-1">Assigned Work Orders</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <h1 className="text-xl font-bold text-slate-900 mt-0.5">Assigned Work Orders</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
             Review assigned hazard remediation tasks, capture evidence, and submit proof of closure
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={loadActions}
             disabled={loading}
-            className="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 border border-zinc-700/80 rounded-xl text-zinc-300 text-xs font-semibold transition-colors flex items-center gap-1.5"
+            className="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <span className={loading ? 'animate-spin' : ''}>⟳</span>
+            <RefreshCw className={`size-3.5 ${loading ? 'animate-spin text-blue-700' : ''}`} />
             <span>Refresh Queue</span>
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-sm">
-          {error}
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+          <AlertCircle className="size-4 shrink-0 text-rose-600" />
+          <span>{error}</span>
         </div>
       )}
 
       {/* Main Work Orders List */}
       {loading ? (
-        <div className="text-center py-20 text-zinc-400 text-sm">Loading work orders...</div>
+        <div className="text-center py-20 text-slate-400 text-sm flex flex-col items-center justify-center gap-2">
+          <RefreshCw className="size-5 animate-spin text-blue-700" />
+          <span>Loading work orders...</span>
+        </div>
       ) : actions.length === 0 ? (
-        <div className="p-12 text-center bg-zinc-900/40 rounded-2xl border border-zinc-800 text-zinc-500 text-sm">
-          No corrective actions assigned at this time.
+        <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 text-sm shadow-xs">
+          <ShieldCheck className="size-8 mx-auto text-slate-400 mb-2" />
+          <p className="font-semibold text-slate-700">No corrective actions assigned at this time.</p>
+          <p className="text-xs text-slate-400 mt-0.5">New remediation work dispatched by Mine Manager will appear here.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {actions.map((act) => {
             const overdue = isOverdue(act.due_at, act.status);
+            const isClosed = ['closed', 'verified'].includes((act.status || '').toLowerCase());
             return (
               <div
                 key={act.id}
-                className={`p-5 rounded-2xl bg-zinc-900/80 border space-y-3 transition-all cursor-pointer hover:border-amber-500/60 ${
+                className={`p-5 rounded-2xl bg-white border shadow-xs space-y-3.5 transition-all cursor-pointer hover:border-slate-300 hover:shadow-sm ${
                   overdue
-                    ? 'border-rose-500/50 bg-rose-950/10'
+                    ? 'border-rose-300 bg-rose-50/20'
                     : (act.status || '').toLowerCase() === 'rejected'
-                    ? 'border-amber-500/50 bg-amber-950/10'
-                    : 'border-zinc-800 hover:bg-zinc-900'
+                    ? 'border-amber-300 bg-amber-50/20'
+                    : 'border-slate-200'
                 }`}
                 onClick={() => setSelectedActionId(act.id)}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-amber-400">{act.code}</span>
+                  <span className="text-xs font-mono font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-md">
+                    {act.code}
+                  </span>
                   <div className="flex items-center gap-1.5">
-                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${getPriorityBadge(act.priority)}`}>
+                    <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${getPriorityBadge(act.priority)}`}>
                       {act.priority}
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-zinc-800 text-zinc-300">
+                    <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${getStatusBadge(act.status)}`}>
                       {act.status.replace('_', ' ')}
                     </span>
                   </div>
                 </div>
 
-                <h3 className="text-sm font-bold text-white leading-snug line-clamp-2">{act.title}</h3>
-                <p className="text-xs text-zinc-400 line-clamp-2">{act.description}</p>
+                <h3 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2">{act.title}</h3>
+                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">{act.description}</p>
 
                 {/* Rejection notice preview if rejected */}
                 {(act.status || '').toLowerCase() === 'rejected' && (
-                  <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 flex items-center justify-between">
-                    <span>⚠️ Rejected by Mine Official</span>
-                    <span className="font-bold underline text-amber-200">View Reason →</span>
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <AlertTriangle className="size-3.5 text-rose-600" /> Rejected by Mine Official
+                    </span>
+                    <span className="font-semibold underline text-rose-800 flex items-center gap-0.5">
+                      View Reason <ArrowRight className="size-3" />
+                    </span>
                   </div>
                 )}
 
-                <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-zinc-400">
-                    <span>⏰</span>
-                    <span className={overdue ? 'text-rose-400 font-bold' : 'text-zinc-300'}>
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-500 font-mono">
+                    <Clock className="size-3.5 text-slate-400" />
+                    <span className={overdue ? 'text-rose-600 font-bold' : 'text-slate-600'}>
                       Due {new Date(act.due_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
 
-                  <button className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow transition-all">
-                    Execute →
+                  <button
+                    type="button"
+                    className={`px-3 py-1.5 rounded-xl font-semibold text-xs transition-colors flex items-center gap-1 shadow-2xs ${
+                      isClosed
+                        ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                        : 'bg-blue-800 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    <span>{isClosed ? 'View Details' : 'Execute'}</span>
+                    <ArrowRight className="size-3" />
                   </button>
                 </div>
               </div>
@@ -369,90 +408,97 @@ export const ContractorWorkQueue: React.FC = () => {
         </div>
       )}
 
-      {/* Action Execution Modal / Workspace (Q3 & Q4) */}
+      {/* Action Execution Drawer / Modal */}
       {selectedActionId && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm transition-opacity">
-          <div className="relative w-full max-w-2xl bg-zinc-900 border-l border-zinc-800 text-zinc-100 h-full shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/60 backdrop-blur-sm transition-opacity">
+          <div className="relative w-full max-w-2xl bg-white border-l border-slate-200 text-slate-900 h-full shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
             
-            {/* Header */}
-            <div className="p-6 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/60">
+            {/* Drawer Header */}
+            <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-amber-500">
+                  <span className="text-xs font-mono font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
                     {actionDetail?.code || 'ACTION'}
                   </span>
                   {actionDetail && (
-                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase ${getPriorityBadge(actionDetail.priority)}`}>
+                    <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${getPriorityBadge(actionDetail.priority)}`}>
                       {actionDetail.priority}
                     </span>
                   )}
                   {actionDetail && (
-                    <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase bg-zinc-800 text-zinc-300">
+                    <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${getStatusBadge(actionDetail.status)}`}>
                       {actionDetail.status.replace('_', ' ')}
                     </span>
                   )}
                 </div>
-                <h2 className="text-xl font-bold text-white mt-1">
+                <h2 className="text-lg font-bold text-slate-900 mt-1">
                   {actionDetail?.title || 'Loading Action...'}
                 </h2>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedActionId(null)}
-                className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-800 rounded-xl hover:bg-white border border-slate-200 transition-colors cursor-pointer"
               >
-                ✕
+                <X className="size-4" />
               </button>
             </div>
 
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Drawer Body */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
               {detailLoading ? (
-                <div className="text-center py-20 text-zinc-400">Loading details...</div>
+                <div className="text-center py-20 text-slate-400 flex flex-col items-center justify-center gap-2">
+                  <RefreshCw className="size-5 animate-spin text-blue-700" />
+                  <span>Loading details...</span>
+                </div>
               ) : actionDetail ? (
                 <>
                   {/* Status Banner Messages */}
                   {executionError && (
-                    <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs">
-                      {executionError}
+                    <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+                      <AlertCircle className="size-4 shrink-0 text-rose-600" />
+                      <span>{executionError}</span>
                     </div>
                   )}
 
                   {executionSuccess && (
-                    <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs">
-                      {executionSuccess}
+                    <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs flex items-center gap-2">
+                      <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+                      <span>{executionSuccess}</span>
                     </div>
                   )}
 
-                  {/* Q4 Rejection Banner: Amber banner at top with reason, round, date, and prominent Resume Work button */}
+                  {/* Rejection Banner */}
                   {(actionDetail.status || '').toLowerCase() === 'rejected' && (
-                    <div className="p-5 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 space-y-3 shadow-xl">
+                    <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
-                          <span>⚠️</span>
+                        <span className="text-xs font-bold uppercase text-rose-700 tracking-wider flex items-center gap-1.5">
+                          <AlertTriangle className="size-4 text-rose-600" />
                           <span>Submission Rejected by Mine Official</span>
                         </span>
-                        <span className="text-xs font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold">
-                          Submission Round {actionDetail.submission_round}
+                        <span className="text-[11px] font-mono bg-rose-100 text-rose-800 px-2 py-0.5 rounded font-bold">
+                          Round {actionDetail.submission_round}
                         </span>
                       </div>
 
-                      <div className="p-3 bg-zinc-950/80 rounded-xl border border-amber-500/30">
-                        <span className="text-[10px] text-zinc-400 uppercase block mb-1">Official Rejection Reason:</span>
-                        <p className="text-xs font-medium text-amber-200">
+                      <div className="p-3 bg-white rounded-xl border border-rose-200/80">
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Official Rejection Reason:</span>
+                        <p className="text-xs font-medium text-slate-800 leading-relaxed">
                           {actionDetail.rejection_reason || 'Evidence does not meet DGMS safety compliance threshold.'}
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-xs text-amber-300">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                        <span className="text-xs text-slate-600">
                           Click <strong>Resume Work</strong> to restart on-site remediation and unlock evidence upload.
                         </span>
                         <button
+                          type="button"
                           onClick={handleStart}
                           disabled={processing}
-                          className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs shadow-lg shadow-amber-500/30 transition-all flex items-center gap-1.5"
+                          className="px-4 py-2 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
                         >
-                          <span>⚡</span>
+                          <Play className="size-3.5" />
                           <span>Resume Work</span>
                         </button>
                       </div>
@@ -461,15 +507,16 @@ export const ContractorWorkQueue: React.FC = () => {
 
                   {/* State transition triggers for Assigned / Accepted */}
                   {(actionDetail.status || '').toLowerCase() === 'assigned' && (
-                    <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
-                        <h4 className="text-sm font-bold text-white">Work Order Assigned</h4>
-                        <p className="text-xs text-zinc-400">Accept this work order to acknowledge statutory SLA timeline.</p>
+                        <h4 className="text-sm font-bold text-slate-900">Work Order Assigned</h4>
+                        <p className="text-xs text-slate-500 mt-0.5">Accept this work order to acknowledge statutory SLA timeline.</p>
                       </div>
                       <button
+                        type="button"
                         onClick={handleAccept}
                         disabled={processing}
-                        className="px-5 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white font-bold text-xs shadow-lg transition-all"
+                        className="px-4 py-2 rounded-xl bg-blue-800 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
                       >
                         {processing ? 'Accepting...' : 'Accept Work Order'}
                       </button>
@@ -477,31 +524,33 @@ export const ContractorWorkQueue: React.FC = () => {
                   )}
 
                   {(actionDetail.status || '').toLowerCase() === 'accepted' && (
-                    <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
-                        <h4 className="text-sm font-bold text-white">Work Order Accepted</h4>
-                        <p className="text-xs text-zinc-400">Click below when commencing physical remediation at mine site.</p>
+                        <h4 className="text-sm font-bold text-slate-900">Work Order Accepted</h4>
+                        <p className="text-xs text-slate-500 mt-0.5">Click below when commencing physical remediation at mine site.</p>
                       </div>
                       <button
+                        type="button"
                         onClick={handleStart}
                         disabled={processing}
-                        className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow-lg transition-all"
+                        className="px-4 py-2 rounded-xl bg-blue-800 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
                       >
-                        {processing ? 'Starting...' : '⚡ Start Remediation Work'}
+                        <Play className="size-3.5" />
+                        <span>{processing ? 'Starting...' : 'Start Remediation Work'}</span>
                       </button>
                     </div>
                   )}
 
                   {/* Remediation Instructions */}
-                  <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                       Scope of Remediation & Safety Standard
                     </h4>
-                    <p className="text-xs text-zinc-200 whitespace-pre-wrap leading-relaxed">
+                    <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
                       {actionDetail.description}
                     </p>
                     {actionDetail.safety_standards_referenced && (
-                      <div className="text-xs text-amber-400/90 pt-1 font-mono">
+                      <div className="text-xs text-blue-900 pt-1 font-mono">
                         Standard: {actionDetail.safety_standards_referenced}
                       </div>
                     )}
@@ -509,68 +558,68 @@ export const ContractorWorkQueue: React.FC = () => {
 
                   {/* Previously Uploaded Evidence */}
                   <div className="space-y-3">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                       Attached Proof of Work ({actionDetail.evidences?.length || 0})
                     </h4>
 
                     {actionDetail.evidences && actionDetail.evidences.length > 0 ? (
                       <div className="grid grid-cols-2 gap-3">
                         {actionDetail.evidences.map((ev) => (
-                          <div key={ev.id} className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2">
+                          <div key={ev.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                             <div className="flex items-center justify-between">
                               <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
                                 ev.kind === 'after'
-                                  ? 'bg-emerald-500/20 text-emerald-400'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                   : ev.kind === 'before'
-                                  ? 'bg-blue-500/20 text-blue-400'
-                                  : 'bg-zinc-800 text-zinc-300'
+                                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                  : 'bg-slate-100 text-slate-700 border border-slate-200'
                               }`}>
                                 {ev.kind}
                               </span>
-                              <span className="text-[10px] text-zinc-500 font-mono">
+                              <span className="text-[10px] text-slate-400 font-mono">
                                 {new Date(ev.uploaded_at).toLocaleDateString()}
                               </span>
                             </div>
 
                             {ev.file_url.match(/\.(jpeg|jpg|png|gif|webp)$/i) || ev.file_url.startsWith('data:image') ? (
-                              <div className="rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900 h-28">
+                              <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-100 h-28">
                                 <img src={ev.file_url} alt="Proof" className="w-full h-full object-cover" />
                               </div>
                             ) : (
-                              <div className="h-20 flex items-center justify-center bg-zinc-900 rounded-lg border border-zinc-800 text-xs font-mono text-zinc-400">
-                                📄 Document Attachment
+                              <div className="h-20 flex items-center justify-center bg-slate-100 rounded-lg border border-slate-200 text-xs font-mono text-slate-500">
+                                <FileText className="size-4 mr-1 text-slate-400" /> Document Attachment
                               </div>
                             )}
 
                             {ev.description && (
-                              <p className="text-[11px] text-zinc-300 line-clamp-2">{ev.description}</p>
+                              <p className="text-[11px] text-slate-600 line-clamp-2">{ev.description}</p>
                             )}
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="p-4 rounded-xl bg-zinc-950 border border-dashed border-zinc-800 text-center text-xs text-zinc-500">
+                      <div className="p-4 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center text-xs text-slate-400">
                         No previous evidence attached.
                       </div>
                     )}
                   </div>
 
-                  {/* Evidence Upload Section (Q3: Camera + File Picker side by side) */}
-                  <div className={`space-y-4 p-5 rounded-2xl bg-zinc-950 border border-zinc-800 ${
-                    actionDetail.status !== 'in_progress' ? 'opacity-50 pointer-events-none' : ''
+                  {/* Evidence Upload Section */}
+                  <div className={`space-y-4 p-5 rounded-2xl bg-slate-50 border border-slate-200 ${
+                    (actionDetail.status || '').toLowerCase() !== 'in_progress' ? 'opacity-50 pointer-events-none' : ''
                   }`}>
                     <div>
                       <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-                          Upload Proof of Work (Q3)
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                          Upload Proof of Work
                         </h4>
                         {currentGeo && (
-                          <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono">
-                            <span>📍 Geo-tagged</span>
+                          <span className="text-[10px] text-emerald-700 flex items-center gap-1 font-mono">
+                            <MapPin className="size-3 text-emerald-600" /> Geo-tagged
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-zinc-400 mt-0.5">
+                      <p className="text-xs text-slate-500 mt-0.5">
                         Capture on-site photos (minimum 1 "AFTER" photo required for submission)
                       </p>
                     </div>
@@ -593,31 +642,31 @@ export const ContractorWorkQueue: React.FC = () => {
                       onChange={(e) => handleFilesSelected(e.target.files, 'after')}
                     />
 
-                    {/* Side-by-side Camera + File Picker buttons (Q3) */}
+                    {/* Side-by-side Camera + File Picker buttons */}
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
                         onClick={() => cameraPickerRef.current?.click()}
-                        className="p-4 rounded-xl bg-zinc-900 border border-zinc-700 hover:border-amber-500/80 hover:bg-zinc-850 flex flex-col items-center justify-center gap-2 text-xs font-bold text-zinc-200 transition-all shadow-sm"
+                        className="p-3.5 rounded-xl bg-white border border-slate-200 hover:border-blue-400 hover:bg-slate-50 flex flex-col items-center justify-center gap-1.5 text-xs font-bold text-slate-700 transition-all shadow-2xs cursor-pointer"
                       >
-                        <span className="text-2xl">📷</span>
+                        <Camera className="size-5 text-blue-700" />
                         <span>Capture with Camera</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => filePickerRef.current?.click()}
-                        className="p-4 rounded-xl bg-zinc-900 border border-zinc-700 hover:border-amber-500/80 hover:bg-zinc-850 flex flex-col items-center justify-center gap-2 text-xs font-bold text-zinc-200 transition-all shadow-sm"
+                        className="p-3.5 rounded-xl bg-white border border-slate-200 hover:border-blue-400 hover:bg-slate-50 flex flex-col items-center justify-center gap-1.5 text-xs font-bold text-slate-700 transition-all shadow-2xs cursor-pointer"
                       >
-                        <span className="text-2xl">📁</span>
+                        <Upload className="size-5 text-blue-700" />
                         <span>Upload Files / PDF</span>
                       </button>
                     </div>
 
-                    {/* Staged files thumbnail preview list (Q3) */}
+                    {/* Staged files thumbnail preview list */}
                     {stagedFiles.length > 0 && (
                       <div className="space-y-3 pt-2">
-                        <span className="text-xs font-semibold text-zinc-400">
+                        <span className="text-xs font-semibold text-slate-600">
                           Selected Files for Upload ({stagedFiles.length})
                         </span>
 
@@ -625,30 +674,31 @@ export const ContractorWorkQueue: React.FC = () => {
                           {stagedFiles.map((staged, idx) => (
                             <div
                               key={idx}
-                              className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 flex items-start gap-3"
+                              className="p-3 rounded-xl bg-white border border-slate-200 flex items-start gap-3 shadow-2xs"
                             >
                               {staged.previewUrl ? (
                                 <img
                                   src={staged.previewUrl}
                                   alt="preview"
-                                  className="w-16 h-16 rounded-lg object-cover border border-zinc-700 flex-shrink-0"
+                                  className="w-16 h-16 rounded-lg object-cover border border-slate-200 shrink-0"
                                 />
                               ) : (
-                                <div className="w-16 h-16 rounded-lg bg-zinc-800 flex items-center justify-center text-xs font-mono text-zinc-400 flex-shrink-0">
+                                <div className="w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-mono text-slate-400 shrink-0">
                                   PDF
                                 </div>
                               )}
 
                               <div className="flex-1 space-y-2 text-xs">
                                 <div className="flex items-center justify-between">
-                                  <span className="font-semibold text-white truncate max-w-[200px]">
+                                  <span className="font-semibold text-slate-900 truncate max-w-[200px]">
                                     {staged.file.name}
                                   </span>
                                   <button
+                                    type="button"
                                     onClick={() => removeStagedFile(idx)}
-                                    className="text-zinc-500 hover:text-rose-400 text-xs px-1"
+                                    className="text-slate-400 hover:text-rose-600 text-xs px-1 cursor-pointer"
                                   >
-                                    ✕ Remove
+                                    Remove
                                   </button>
                                 </div>
 
@@ -656,7 +706,7 @@ export const ContractorWorkQueue: React.FC = () => {
                                   <select
                                     value={staged.kind}
                                     onChange={(e) => updateStagedKind(idx, e.target.value as EvidenceKind)}
-                                    className="bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-xs text-white focus:outline-none"
+                                    className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-900 focus:outline-none"
                                   >
                                     <option value="after">AFTER (Post-Remediation)</option>
                                     <option value="before">BEFORE (Initial State)</option>
@@ -668,7 +718,7 @@ export const ContractorWorkQueue: React.FC = () => {
                                     value={staged.description}
                                     onChange={(e) => updateStagedDescription(idx, e.target.value)}
                                     placeholder="Evidence notes..."
-                                    className="bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-xs text-white focus:outline-none"
+                                    className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-900 focus:outline-none placeholder:text-slate-400"
                                   />
                                 </div>
                               </div>
@@ -678,9 +728,9 @@ export const ContractorWorkQueue: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Completion Notes (Mandatory for submit) */}
+                    {/* Completion Notes */}
                     <div className="pt-2">
-                      <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                         Completion Note & Summary *
                       </label>
                       <textarea
@@ -688,7 +738,7 @@ export const ContractorWorkQueue: React.FC = () => {
                         value={completionNotes}
                         onChange={(e) => setCompletionNotes(e.target.value)}
                         placeholder="Detail the completed repairs, tests conducted, and statutory standard compliance achieved..."
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500"
+                        className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 transition-colors shadow-2xs"
                       />
                     </div>
                   </div>
@@ -698,10 +748,11 @@ export const ContractorWorkQueue: React.FC = () => {
 
             {/* Footer with Submit Button */}
             {actionDetail && (
-              <div className="p-6 border-t border-zinc-800 bg-zinc-950/80 flex items-center justify-between gap-3">
+              <div className="p-5 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
                 <button
+                  type="button"
                   onClick={() => setSelectedActionId(null)}
-                  className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs font-semibold cursor-pointer shadow-2xs transition-colors"
                 >
                   Close
                 </button>
@@ -709,22 +760,26 @@ export const ContractorWorkQueue: React.FC = () => {
                 {(actionDetail.status || '').toLowerCase() === 'in_progress' && (
                   <div className="flex items-center gap-3">
                     {!hasAfterPhoto && (
-                      <span className="text-[11px] text-amber-400">
-                        ⚠️ Must attach at least 1 "AFTER" photo
+                      <span className="text-xs text-rose-600 font-medium">
+                        Must attach at least 1 "AFTER" photo
                       </span>
                     )}
                     <button
+                      type="button"
                       onClick={handleSubmitWork}
                       disabled={!canSubmit || processing}
-                      className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs shadow-lg shadow-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                      className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-xs shadow-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
                     >
                       {processing ? (
                         <>
-                          <span className="animate-spin">⟳</span>
+                          <RefreshCw className="size-3.5 animate-spin" />
                           <span>Uploading & Submitting...</span>
                         </>
                       ) : (
-                        <span>✓ Submit Work for Verification</span>
+                        <>
+                          <CheckCircle2 className="size-3.5" />
+                          <span>Submit Work for Verification</span>
+                        </>
                       )}
                     </button>
                   </div>

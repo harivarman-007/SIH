@@ -355,6 +355,7 @@ DEFAULT_ROLE_PERMISSIONS: Dict[UserRole, List[Permission]] = {
         Permission.EVIDENCE_VIEW,
         Permission.KPI_VIEW,
         Permission.REPORT_VIEW,
+        Permission.REPORT_CREATE,
         Permission.REPORT_EXPORT,
         Permission.AUDIT_VIEW,
         Permission.AUDIT_EXPORT,

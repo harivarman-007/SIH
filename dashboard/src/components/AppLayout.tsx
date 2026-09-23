@@ -42,6 +42,20 @@ export const AppLayout: React.FC = () => {
     });
   }, []);
 
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    const saved = localStorage.getItem('sidebar_collapsed');
+    if (saved !== null) return saved === 'true';
+    return window.innerWidth < 1024;
+  });
+
+  const toggleCollapsed = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('sidebar_collapsed', String(next));
+      return next;
+    });
+  };
+
   const currentRole = user?.role || 'mine_official';
 
   return (
@@ -51,12 +65,18 @@ export const AppLayout: React.FC = () => {
         kpis={kpis}
         isOpenMobile={isOpenMobile}
         onCloseMobile={() => setIsOpenMobile(false)}
+        isCollapsed={isCollapsed}
+        onToggleCollapsed={toggleCollapsed}
       />
 
-      {/* Main Content Area — Margin adjusts for fixed sidebar */}
-      <div className="flex-1 flex flex-col min-w-0 transition-all duration-200 md:pl-16 lg:pl-60">
+      {/* Main Content Area — Smoothly adjusts padding to match sidebar state */}
+      <div
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${
+          isCollapsed ? 'md:pl-16' : 'md:pl-60'
+        }`}
+      >
         {/* Top Header Bar */}
-        <header className="h-16 border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 flex items-center justify-between gap-4">
+        <header className="h-16 border-b border-zinc-200 bg-white/95 sticky top-0 z-30 px-4 sm:px-8 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             {/* Mobile Menu Toggle */}
             <button

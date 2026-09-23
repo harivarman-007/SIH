@@ -57,61 +57,105 @@ export interface MapObservation extends ObservationData {
 // ---------------------------------------------------------------------------
 // Real Indian Coalfields per Phase 1 & Seed Data
 // ---------------------------------------------------------------------------
+export interface MineSite {
+  id: string;
+  name: string;
+  location: string;
+  lat: number;
+  lng: number;
+  zoom: number;
+  elevation: string;
+  activeHazardsCount: number;
+  baselineRisk: number;
+  subsidiary: string;
+  seamInfo: string;
+  depthStr: string;
+}
+
 const MINE_SITES: MineSite[] = [
   {
-    id: 'jharia',
-    name: 'Jharia Coalfield Central',
-    location: 'Dhanbad, Jharkhand',
-    lat: 23.7957,
-    lng: 86.4304,
+    id: 'jharia_moonidih',
+    name: 'Moonidih Underground Mine (BCCL)',
+    location: 'Jharia Coalfield, Dhanbad, Jharkhand',
+    lat: 23.7388,
+    lng: 86.3533,
     zoom: 15,
-    elevation: '+180m Surface / -240m UG',
-    activeHazardsCount: 5,
+    elevation: '+180m Surface / -240m UG (Deep Seam XVI)',
+    activeHazardsCount: 1,
     baselineRisk: 0.76,
+    subsidiary: 'Bharat Coking Coal Ltd. (BCCL)',
+    seamInfo: 'Seam XVI (Top) & Seam XV',
+    depthStr: '-240m MSL',
   },
   {
-    id: 'raniganj',
-    name: 'Raniganj North Block',
-    location: 'Raniganj, West Bengal',
-    lat: 23.6169,
-    lng: 87.1275,
+    id: 'raniganj_chinakuri',
+    name: 'Chinakuri 1 & 2 Pit (ECL)',
+    location: 'Raniganj Coalfield, Asansol, West Bengal',
+    lat: 23.6844,
+    lng: 86.9144,
     zoom: 15,
-    elevation: '+145m Surface / -190m UG',
-    activeHazardsCount: 3,
+    elevation: '+115m Surface / -600m UG (Deepest Mine in India)',
+    activeHazardsCount: 0,
     baselineRisk: 0.62,
+    subsidiary: 'Eastern Coalfields Ltd. (ECL)',
+    seamInfo: 'Dishergarh Seam',
+    depthStr: '-600m MSL',
   },
   {
-    id: 'korba',
-    name: 'Korba East Mine',
-    location: 'Korba, Chhattisgarh',
+    id: 'korba_kusmunda',
+    name: 'Kusmunda Colliery (SECL)',
+    location: 'Korba Coalfield, Chhattisgarh',
     lat: 22.3595,
-    lng: 82.7501,
+    lng: 82.6800,
     zoom: 15,
     elevation: '+290m Surface / -160m UG',
-    activeHazardsCount: 4,
+    activeHazardsCount: 0,
     baselineRisk: 0.58,
+    subsidiary: 'South Eastern Coalfields Ltd. (SECL)',
+    seamInfo: 'Upper & Lower Kusmunda Seam',
+    depthStr: '-160m MSL',
   },
   {
-    id: 'singrauli',
-    name: 'Singrauli Opencast',
-    location: 'Singrauli, Madhya Pradesh',
-    lat: 24.1993,
-    lng: 82.6647,
+    id: 'singrauli_jayant',
+    name: 'Jayant Opencast Project (NCL)',
+    location: 'Singrauli Coalfield, Madhya Pradesh',
+    lat: 24.1167,
+    lng: 82.6667,
     zoom: 14,
-    elevation: '+320m Surface Pit',
-    activeHazardsCount: 4,
+    elevation: '+320m Surface Pit Bench',
+    activeHazardsCount: 0,
     baselineRisk: 0.81,
+    subsidiary: 'Northern Coalfields Ltd. (NCL)',
+    seamInfo: 'Purewa & Turra Seams (40m Thickness)',
+    depthStr: 'Surface Bench (+320m)',
   },
   {
-    id: 'talcher',
-    name: 'Talcher Phase II',
-    location: 'Talcher, Odisha',
-    lat: 20.9516,
-    lng: 85.2279,
+    id: 'talcher_bhubaneswari',
+    name: 'Bhubaneswari Colliery (MCL)',
+    location: 'Talcher Coalfield, Angul, Odisha',
+    lat: 20.9500,
+    lng: 85.2167,
     zoom: 15,
     elevation: '+110m Surface / -280m UG',
-    activeHazardsCount: 2,
+    activeHazardsCount: 0,
     baselineRisk: 0.45,
+    subsidiary: 'Mahanadi Coalfields Ltd. (MCL)',
+    seamInfo: 'Seam II & III Composite',
+    depthStr: '-280m MSL',
+  },
+  {
+    id: 'singareni_kothagudem',
+    name: 'PVK Incline / Kothagudem (SCCL)',
+    location: 'Godavari Valley, Kothagudem, Telangana',
+    lat: 17.5511,
+    lng: 80.6175,
+    zoom: 15,
+    elevation: '+90m Surface / -310m UG',
+    activeHazardsCount: 0,
+    baselineRisk: 0.52,
+    subsidiary: 'Singareni Collieries Co. Ltd. (SCCL)',
+    seamInfo: 'King Seam & Queen Seam',
+    depthStr: '-310m MSL',
   },
 ];
 
@@ -257,29 +301,33 @@ const MOCK_MAP_HAZARDS: MapObservation[] = [
   },
 ];
 
-// Zone perimeters for Jharia Coalfield Central
-const ZONE_PERIMETERS = [
-  {
-    name: 'Surface Processing & Dispatch Yard',
-    baseline: '0.35 Baseline',
-    polygon: [
-      [23.7915, 86.4265],
-      [23.7945, 86.4265],
-      [23.795, 86.4305],
-      [23.792, 86.4305],
-    ] as [number, number][],
-  },
-  {
-    name: 'Deep Longwall Extraction Perimeter',
-    baseline: '0.78 Baseline',
-    polygon: [
-      [23.7955, 86.427],
-      [23.7995, 86.427],
-      [23.7995, 86.4345],
-      [23.7955, 86.4345],
-    ] as [number, number][],
-  },
-];
+// Dynamic statutory zone perimeters computed around each Indian coalfield
+function getZonePerimeters(site: MineSite) {
+  const dLat = 0.003;
+  const dLng = 0.0035;
+  return [
+    {
+      name: `${site.name} — Pithead & Dispatch Yard`,
+      baseline: `${(site.baselineRisk * 0.55).toFixed(2)} Surface Baseline`,
+      polygon: [
+        [site.lat - dLat * 0.7, site.lng - dLng * 0.8],
+        [site.lat + dLat * 0.3, site.lng - dLng * 0.8],
+        [site.lat + dLat * 0.3, site.lng + dLng * 0.4],
+        [site.lat - dLat * 0.7, site.lng + dLng * 0.4],
+      ] as [number, number][],
+    },
+    {
+      name: `${site.name} — Active Extraction District (${site.seamInfo})`,
+      baseline: `${site.baselineRisk.toFixed(2)} Underground Baseline`,
+      polygon: [
+        [site.lat + dLat * 0.4, site.lng - dLng * 0.6],
+        [site.lat + dLat * 1.6, site.lng - dLng * 0.6],
+        [site.lat + dLat * 1.6, site.lng + dLng * 1.2],
+        [site.lat + dLat * 0.4, site.lng + dLng * 1.2],
+      ] as [number, number][],
+    },
+  ];
+}
 
 // ---------------------------------------------------------------------------
 // Custom Leaflet Icons (Crisp Monochromatic SVG Pins)
@@ -292,18 +340,14 @@ const createCustomPinIcon = (
   const isHigh = severity === 'high';
   const isMed = severity === 'medium';
 
-  const bgColor = isHigh ? '#000000' : isMed ? '#27272a' : '#ffffff';
-  const textColor = isHigh || isMed ? '#ffffff' : '#000000';
-  const borderColor = isSelected ? '#000000' : '#000000';
-  const ringScale = isSelected ? 'scale-125' : 'scale-100';
-
-  const pulseRingHtml = isHigh
-    ? `<span class="absolute -inset-2.5 rounded-full border-2 border-black animate-radar opacity-70 pointer-events-none"></span>`
-    : '';
+  // Crisp royal palette: Crimson for High, Amber for Medium, Emerald for Low
+  const bgColor = isHigh ? '#be123c' : isMed ? '#b45309' : '#047857';
+  const textColor = '#ffffff';
+  const borderColor = isSelected ? '#1e40af' : '#ffffff';
+  const ringScale = isSelected ? 'scale-110 ring-2 ring-blue-600' : 'scale-100 hover:scale-105';
 
   const html = `
-    <div class="relative flex items-center justify-center cursor-pointer transition-transform duration-200 ${ringScale}">
-      ${pulseRingHtml}
+    <div class="relative flex items-center justify-center cursor-pointer transition-transform duration-150 ${ringScale}">
       <div style="background-color: ${bgColor}; color: ${textColor}; border: 2px solid ${borderColor};" 
            class="relative flex items-center justify-center w-8 h-8 rounded-full shadow-md font-mono text-[11px] font-bold">
         ${isHigh ? '!' : Math.round(score * 100)}
@@ -411,15 +455,16 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
   const [showZones, setShowZones] = useState<boolean>(true);
   const [showTelemetrySensors, setShowTelemetrySensors] = useState<boolean>(true);
 
-  // Live hazards state
-  const [hazards, setHazards] = useState<MapObservation[]>(MOCK_MAP_HAZARDS);
+  // Live hazards state (only real DB observations, zero fake mock hazards)
+  const [hazards, setHazards] = useState<MapObservation[]>([]);
   const [rawObservations, setRawObservations] = useState<ObservationOut[]>([]);
   const [isLoadingHazards, setIsLoadingHazards] = useState<boolean>(false);
+  const [mapLayerType, setMapLayerType] = useState<'osm' | 'satellite'>('osm');
 
   // Inspector & Modal State
-  const [activeHazard, setActiveHazard] = useState<MapObservation | null>(MOCK_MAP_HAZARDS[0]);
+  const [activeHazard, setActiveHazard] = useState<MapObservation | null>(null);
   const [riskCardModalItem, setRiskCardModalItem] = useState<ObservationData | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const loadMapHazards = useCallback(async () => {
@@ -432,12 +477,16 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
           mapObservationToMapHazard(obs, idx, selectedSite.lat, selectedSite.lng)
         );
         setHazards(mapped);
-        if (mapped.length > 0) {
-          setActiveHazard(mapped[0]);
-        }
+        setActiveHazard(mapped[0]);
+      } else {
+        setRawObservations([]);
+        setHazards([]);
+        setActiveHazard(null);
       }
     } catch {
-      // Keep mock hazards as fallback
+      setRawObservations([]);
+      setHazards([]);
+      setActiveHazard(null);
     } finally {
       setIsLoadingHazards(false);
     }
@@ -488,67 +537,55 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
       {/* ------------------------------------------------------------------- */}
       {/* 1. Header Toolbar & Site Selector HUD */}
       {/* ------------------------------------------------------------------- */}
-      <div className="border border-zinc-200 rounded-2xl p-4 sm:p-5 bg-white shadow-xs mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Site Selector + Location Info */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="border border-slate-200 rounded-2xl p-3.5 bg-white shadow-xs mb-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Site Selector + Coordinates */}
+          <div className="flex items-center gap-2.5 flex-wrap">
             <div className="relative">
-              <label className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block mb-1">
-                Active Coalfield Block
-              </label>
-              <div className="relative inline-block">
-                <select
-                  value={selectedSite.id}
-                  onChange={(e) => {
-                    const site = MINE_SITES.find((s) => s.id === e.target.value);
-                    if (site) setSelectedSite(site);
-                  }}
-                  className="appearance-none bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-black font-semibold text-sm rounded-lg px-3 py-2 pr-9 cursor-pointer focus:outline-none focus:ring-1 focus:ring-black transition-colors"
-                >
-                  {MINE_SITES.map((site) => (
-                    <option key={site.id} value={site.id}>
-                      {site.name} ({site.location})
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-2.5 size-4 text-zinc-500 pointer-events-none" />
-              </div>
+              <select
+                value={selectedSite.id}
+                onChange={(e) => {
+                  const site = MINE_SITES.find((s) => s.id === e.target.value);
+                  if (site) setSelectedSite(site);
+                }}
+                className="appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-900 font-bold text-xs rounded-xl px-3 py-2 pr-8 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-700 transition-colors"
+              >
+                {MINE_SITES.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.name} ({site.location})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2.5 top-2.5 size-3.5 text-slate-500 pointer-events-none" />
             </div>
 
-            <div className="hidden sm:block h-8 w-[1px] bg-zinc-200 mx-1" />
-
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-zinc-100 border border-zinc-200 text-xs font-mono text-zinc-700">
-                <Crosshair className="size-3.5 text-black" />
-                <span>
-                  {selectedSite.lat.toFixed(4)}°N, {selectedSite.lng.toFixed(4)}°E
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-zinc-100 border border-zinc-200 text-xs font-mono text-zinc-700">
-                <Compass className="size-3.5 text-black" />
-                <span>{selectedSite.elevation}</span>
-              </div>
-              {isLoadingHazards && (
-                <span className="text-[11px] font-mono text-zinc-400 animate-pulse hidden md:inline">
-                  Syncing live hazards...
-                </span>
-              )}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-700">
+              <Crosshair className="size-3 text-blue-700" />
+              <span>{selectedSite.lat.toFixed(4)}°N, {selectedSite.lng.toFixed(4)}°E</span>
             </div>
+
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-600">
+              <Compass className="size-3 text-slate-500" />
+              <span>{selectedSite.elevation}</span>
+            </div>
+
+            {isLoadingHazards && (
+              <span className="text-[11px] font-mono text-blue-600 animate-pulse hidden md:inline">
+                Syncing live hazards...
+              </span>
+            )}
           </div>
 
           {/* Perspective View Switcher: Surface GIS vs Underground CAD */}
           <div className="flex items-center gap-2">
-            <span className="text-xs uppercase font-bold tracking-wider text-zinc-400 mr-1 hidden sm:inline">
-              Mode:
-            </span>
-            <div className="flex p-1 bg-zinc-100 rounded-xl border border-zinc-200">
+            <div className="flex p-0.5 bg-slate-100 rounded-xl border border-slate-200">
               <button
                 type="button"
                 onClick={() => setViewMode('surface')}
-                className={`relative px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
                   viewMode === 'surface'
-                    ? 'bg-black text-white shadow-xs'
-                    : 'text-zinc-600 hover:text-black'
+                    ? 'bg-blue-900 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <MapPin className="size-3.5" />
@@ -557,23 +594,46 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
               <button
                 type="button"
                 onClick={() => setViewMode('underground')}
-                className={`relative px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
                   viewMode === 'underground'
-                    ? 'bg-black text-white shadow-xs'
-                    : 'text-zinc-600 hover:text-black'
+                    ? 'bg-blue-900 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Radio className="size-3.5" />
-                <span>Underground CAD (-240m)</span>
+                <span>Underground CAD ({selectedSite.depthStr})</span>
               </button>
             </div>
+
+            {viewMode === 'surface' && (
+              <div className="flex p-0.5 bg-slate-100 rounded-xl border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setMapLayerType('osm')}
+                  className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    mapLayerType === 'osm' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  OSM
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMapLayerType('satellite')}
+                  className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    mapLayerType === 'satellite' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Satellite
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Filter Toolbar & Quick Counters */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 mt-4 border-t border-zinc-100">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-zinc-400 mr-1">Severity:</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 mt-2.5 border-t border-slate-100">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs font-semibold text-slate-400 mr-1 uppercase text-[10px]">Severity:</span>
             {(['all', 'high', 'medium', 'low'] as const).map((sev) => {
               const active = filterSeverity === sev;
               const count =
@@ -585,16 +645,16 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
                   key={sev}
                   type="button"
                   onClick={() => setFilterSeverity(sev)}
-                  className={`text-xs px-2.5 py-1 rounded-md border font-medium transition-all ${
+                  className={`text-xs px-2.5 py-1 rounded-xl border font-semibold transition-all ${
                     active
-                      ? 'bg-black text-white border-black'
-                      : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
+                      ? 'bg-blue-900 text-white border-blue-900 shadow-xs'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                   }`}
                 >
                   <span className="capitalize">{sev}</span>
                   <span
-                    className={`ml-1.5 text-[10px] font-mono px-1 rounded ${
-                      active ? 'bg-zinc-800 text-white' : 'bg-zinc-100 text-zinc-600'
+                    className={`ml-1 text-[10px] font-mono px-1 rounded ${
+                      active ? 'bg-blue-800 text-white' : 'bg-slate-100 text-slate-600'
                     }`}
                   >
                     {count}
@@ -603,15 +663,15 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
               );
             })}
 
-            <div className="h-4 w-[1px] bg-zinc-200 mx-1 hidden sm:block" />
+            <div className="h-4 w-[1px] bg-slate-200 mx-1 hidden sm:block" />
 
             <button
               type="button"
               onClick={() => setShowZones(!showZones)}
-              className={`text-xs px-2.5 py-1 rounded-md border font-medium flex items-center gap-1 transition-all ${
+              className={`text-xs px-2.5 py-1 rounded-xl border font-semibold flex items-center gap-1 transition-all ${
                 showZones
-                  ? 'bg-zinc-100 text-black border-zinc-300'
-                  : 'bg-white text-zinc-400 border-zinc-200 hover:bg-zinc-50'
+                  ? 'bg-blue-50 text-blue-800 border-blue-200'
+                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
               }`}
             >
               <Layers className="size-3" />
@@ -621,14 +681,14 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
             <button
               type="button"
               onClick={() => setShowTelemetrySensors(!showTelemetrySensors)}
-              className={`text-xs px-2.5 py-1 rounded-md border font-medium flex items-center gap-1 transition-all ${
+              className={`text-xs px-2.5 py-1 rounded-xl border font-semibold flex items-center gap-1 transition-all ${
                 showTelemetrySensors
-                  ? 'bg-zinc-100 text-black border-zinc-300'
-                  : 'bg-white text-zinc-400 border-zinc-200 hover:bg-zinc-50'
+                  ? 'bg-blue-50 text-blue-800 border-blue-200'
+                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
               }`}
             >
               <Activity className="size-3" />
-              <span>IoT Telemetry Nodes</span>
+              <span>IoT Telemetry</span>
             </button>
           </div>
 
@@ -636,18 +696,18 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
             <button
               type="button"
               onClick={handleFocusHighestRisk}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-200 flex items-center gap-1.5 transition-colors"
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 flex items-center gap-1.5 transition-colors"
             >
-              <Crosshair className="size-3.5 text-black" />
-              <span>Target Critical Hazard</span>
+              <Crosshair className="size-3 text-rose-600" />
+              <span>Target Critical</span>
             </button>
             <button
               type="button"
               onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-              className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-600 hover:text-black hover:bg-zinc-50 flex items-center gap-1"
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 transition-colors"
             >
               <Eye className="size-3.5" />
-              <span>{isDrawerOpen ? 'Hide List' : 'Show List'}</span>
+              <span>{isDrawerOpen ? 'Hide Hazards' : 'Show Hazards'}</span>
             </button>
           </div>
         </div>
@@ -678,16 +738,24 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
                 zoom={selectedSite.zoom}
               />
 
-              {/* Monochromatic Clean Positron Light Tiles */}
-              <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                maxZoom={19}
-              />
+              {/* Dual-Mode Tile Layer: OpenStreetMap Standard or High-Res Esri Satellite */}
+              {mapLayerType === 'satellite' ? (
+                <TileLayer
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                  attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                  maxZoom={18}
+                />
+              ) : (
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  maxZoom={19}
+                />
+              )}
 
-              {/* Zone Perimeters */}
+              {/* Dynamic Statutory Zone Perimeters around active Coalfield */}
               {showZones &&
-                ZONE_PERIMETERS.map((zone, idx) => (
+                getZonePerimeters(selectedSite).map((zone, idx) => (
                   <Polygon
                     key={idx}
                     positions={zone.polygon}
@@ -763,89 +831,179 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
                 }}
               />
 
-              {/* Underground Schematic Vector Layer */}
+              {/* Underground / Opencast Schematic Vector Layer */}
               <svg className="w-full h-full" viewBox="0 0 1000 600" preserveAspectRatio="none">
-                {/* Surface Ground Line */}
-                <line x1="0" y1="100" x2="1000" y2="100" stroke="#000000" strokeWidth="2" />
-                <text x="30" y="85" fill="#71717a" fontSize="11" fontFamily="monospace">
-                  SURFACE LEVEL (+180m MSL) — SECTOR 4 HEADFRAME
+                {/* Title Stamp */}
+                <rect x="20" y="20" width="380" height="42" fill="#ffffff" stroke="#000000" strokeWidth="1.2" />
+                <text x="32" y="38" fill="#000000" fontSize="10" fontWeight="bold" fontFamily="monospace">
+                  STATUTORY MINING CAD • DGMS REG. 112 / CMR 2017
+                </text>
+                <text x="32" y="52" fill="#71717a" fontSize="9" fontFamily="monospace">
+                  {selectedSite.subsidiary} &bull; {selectedSite.name.toUpperCase()}
                 </text>
 
-                {/* Vertical Winding Shaft No. 1 */}
-                <rect x="180" y="100" width="30" height="420" fill="#f4f4f5" stroke="#000000" strokeWidth="1.5" />
-                <line x1="195" y1="100" x2="195" y2="520" stroke="#000000" strokeWidth="1" strokeDasharray="3 3" />
-                <text x="130" y="240" fill="#a1a1aa" fontSize="10" fontFamily="monospace" transform="rotate(-90 130 240)">
-                  VERTICAL SHAFT NO. 1 (DEPTH 320m)
-                </text>
+                {selectedSite.id === 'singrauli_jayant' ? (
+                  /* ========================================================= */
+                  /* OPENCAST MINE CAD BENCH PROFILE (Jayant Opencast Project) */
+                  /* ========================================================= */
+                  <g id="opencast-profile">
+                    {/* Natural Surface Ground Profile */}
+                    <line x1="0" y1="80" x2="160" y2="80" stroke="#000000" strokeWidth="2" />
+                    <text x="25" y="72" fill="#71717a" fontSize="10" fontFamily="monospace">
+                      ORIGINAL GROUND LEVEL (+320m MSL)
+                    </text>
 
-                {/* Main Haulage Incline Tunnel */}
-                <path
-                  d="M 210 100 L 520 280 L 880 280"
-                  fill="none"
-                  stroke="#000000"
-                  strokeWidth="22"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="opacity-10"
-                />
-                <path
-                  d="M 210 100 L 520 280 L 880 280"
-                  fill="none"
-                  stroke="#000000"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <text x="310" y="180" fill="#71717a" fontSize="11" fontFamily="monospace">
-                  MAIN INCLINE HAULAGE (1 IN 4.5 GRADE)
-                </text>
+                    {/* Terraced Opencast Pit Benches */}
+                    {/* Bench 1: Topsoil / Overburden */}
+                    <path d="M 160 80 L 200 130 L 280 130" fill="none" stroke="#000000" strokeWidth="2" />
+                    <text x="210" y="122" fill="#52525b" fontSize="9" fontFamily="monospace">
+                      BENCH 1 &bull; OVERBURDEN (+305m)
+                    </text>
 
-                {/* Gallery A: North Return Airway Split (Depth -210m) */}
-                <rect x="210" y="250" width="700" height="45" fill="#fafafa" stroke="#000000" strokeWidth="1.5" />
-                <text x="230" y="278" fill="#000000" fontSize="12" fontWeight="600" fontFamily="sans-serif">
-                  GALLERY A &bull; NORTH RETURN AIRWAY (DEPTH -210m)
-                </text>
+                    {/* Bench 2: Intermediate Strata */}
+                    <path d="M 280 130 L 330 200 L 420 200" fill="none" stroke="#000000" strokeWidth="2" />
+                    <text x="340" y="192" fill="#52525b" fontSize="9" fontFamily="monospace">
+                      BENCH 2 &bull; SANDSTONE RIDGE (+280m)
+                    </text>
 
-                {/* Gallery B: Active Longwall Extraction Face (Depth -280m) */}
-                <rect x="210" y="420" width="700" height="55" fill="#fafafa" stroke="#000000" strokeWidth="1.5" />
-                <text x="230" y="452" fill="#000000" fontSize="12" fontWeight="600" fontFamily="sans-serif">
-                  GALLERY B &bull; ACTIVE LONGWALL COAL FACE (DEPTH -280m)
-                </text>
+                    {/* Bench 3: Purewa Seam (Exposed Coal) */}
+                    <path d="M 420 200 L 470 280 L 590 280" fill="none" stroke="#000000" strokeWidth="2" />
+                    <rect x="470" y="274" width="120" height="12" fill="#18181b" />
+                    <text x="480" y="268" fill="#000000" fontSize="10" fontWeight="bold" fontFamily="sans-serif">
+                      PUREWA COAL SEAM (+250m)
+                    </text>
 
-                {/* Airflow Velocity Vectors (Animated subtle dashed stream) */}
-                <path
-                  d="M 220 272 L 890 272"
-                  fill="none"
-                  stroke="#000000"
-                  strokeWidth="2"
-                  className="animate-ventilation opacity-30"
-                />
-                <path
-                  d="M 220 447 L 890 447"
-                  fill="none"
-                  stroke="#000000"
-                  strokeWidth="2"
-                  className="animate-ventilation opacity-30"
-                />
+                    {/* Bench 4: Interburden Shales */}
+                    <path d="M 590 280 L 640 370 L 730 370" fill="none" stroke="#000000" strokeWidth="2" />
+                    <text x="645" y="362" fill="#52525b" fontSize="9" fontFamily="monospace">
+                      BENCH 4 &bull; INTERBURDEN SHALE (+210m)
+                    </text>
 
-                {/* Cross Connecting Shafts / Ventilation Stoppings */}
-                <line x1="450" y1="295" x2="450" y2="420" stroke="#000000" strokeWidth="14" opacity="0.1" />
-                <line x1="450" y1="295" x2="450" y2="420" stroke="#000000" strokeWidth="1.5" strokeDasharray="4 4" />
-                <text x="460" y="360" fill="#71717a" fontSize="10" fontFamily="monospace">
-                  AIRWAY SPLIT 2
-                </text>
+                    {/* Bench 5: Turra Main Coal Seam (40m Thick Extraction Face) */}
+                    <path d="M 730 370 L 780 470 L 890 470" fill="none" stroke="#000000" strokeWidth="2.5" />
+                    <rect x="780" y="458" width="110" height="24" fill="#18181b" />
+                    <text x="790" y="448" fill="#000000" fontSize="11" fontWeight="bold" fontFamily="sans-serif">
+                      TURRA SEAM (40M THICK FACE)
+                    </text>
 
-                <line x1="720" y1="295" x2="720" y2="420" stroke="#000000" strokeWidth="14" opacity="0.1" />
-                <line x1="720" y1="295" x2="720" y2="420" stroke="#000000" strokeWidth="1.5" strokeDasharray="4 4" />
-                <text x="730" y="360" fill="#71717a" fontSize="10" fontFamily="monospace">
-                  REGULATOR DOOR R-4
-                </text>
+                    {/* Pit Floor Basin & Sump */}
+                    <path d="M 890 470 L 920 530 L 980 530" fill="none" stroke="#000000" strokeWidth="2" />
+                    <rect x="920" y="525" width="60" height="25" fill="#f4f4f5" stroke="#000000" strokeWidth="1" />
+                    <text x="925" y="542" fill="#71717a" fontSize="9" fontFamily="monospace">
+                      PIT SUMP (+140m)
+                    </text>
 
-                {/* Sump Siphon Bottom Tunnel */}
-                <rect x="210" y="510" width="300" height="30" fill="#f4f4f5" stroke="#000000" strokeWidth="1" />
-                <text x="230" y="530" fill="#71717a" fontSize="10" fontFamily="monospace">
-                  DEWATERING SUMP DRAINAGE PIT (-320m)
-                </text>
+                    {/* Haul Road Ramp Zigzag */}
+                    <line x1="160" y1="80" x2="900" y2="470" stroke="#000000" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.4" />
+                    <text x="400" y="330" fill="#71717a" fontSize="10" fontFamily="monospace" transform="rotate(27 400 330)">
+                      HEAVY HAUL ROAD (GRADIENT 1 IN 16) &bull; DUMPER ALIGNMENT
+                    </text>
+
+                    {/* Highwall Slope Warning Barrier */}
+                    <line x1="880" y1="80" x2="880" y2="470" stroke="#000000" strokeWidth="1" strokeDasharray="2 2" opacity="0.3" />
+                    <text x="885" y="260" fill="#a1a1aa" fontSize="9" fontFamily="monospace" transform="rotate(90 885 260)">
+                      EASTERN HIGHWALL SLOPE 45°
+                    </text>
+                  </g>
+                ) : (
+                  /* ========================================================= */
+                  /* UNDERGROUND COAL MINE CAD PROFILE (Deep Seam Extraction)  */
+                  /* ========================================================= */
+                  <g id="underground-profile">
+                    {/* Surface Ground Line */}
+                    <line x1="0" y1="95" x2="1000" y2="95" stroke="#000000" strokeWidth="2" />
+                    <text x="420" y="85" fill="#71717a" fontSize="11" fontFamily="monospace">
+                      SURFACE DATUM ({selectedSite.elevation.split('/')[0]?.trim() || '+180m'}) &bull; HEADFRAME & FAN DRIFT
+                    </text>
+
+                    {/* Surface Headframe Winding Derrick */}
+                    <polygon points="175,95 195,30 215,95" fill="none" stroke="#000000" strokeWidth="1.5" />
+                    <circle cx="195" cy="30" r="8" fill="#ffffff" stroke="#000000" strokeWidth="1.5" />
+
+                    {/* Vertical Winding Shaft No. 1 */}
+                    <rect x="180" y="95" width="30" height="430" fill="#f4f4f5" stroke="#000000" strokeWidth="1.5" />
+                    <line x1="195" y1="95" x2="195" y2="525" stroke="#000000" strokeWidth="1" strokeDasharray="3 3" />
+                    <text x="130" y="250" fill="#a1a1aa" fontSize="10" fontFamily="monospace" transform="rotate(-90 130 250)">
+                      MAIN WINDING SHAFT ({selectedSite.depthStr})
+                    </text>
+
+                    {/* Secondary Upcast Fan Ventilation Shaft */}
+                    <rect x="880" y="95" width="24" height="370" fill="#f4f4f5" stroke="#000000" strokeWidth="1.5" />
+                    <line x1="892" y1="95" x2="892" y2="465" stroke="#000000" strokeWidth="1" strokeDasharray="3 3" />
+                    <text x="915" y="220" fill="#a1a1aa" fontSize="9" fontFamily="monospace" transform="rotate(90 915 220)">
+                      UPCAST EXHAUST FAN SHAFT
+                    </text>
+
+                    {/* Main Haulage Incline Tunnel */}
+                    <path
+                      d="M 210 95 L 480 250 L 880 250"
+                      fill="none"
+                      stroke="#000000"
+                      strokeWidth="22"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="opacity-10"
+                    />
+                    <path
+                      d="M 210 95 L 480 250 L 880 250"
+                      fill="none"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <text x="260" y="160" fill="#71717a" fontSize="10" fontFamily="monospace">
+                      INCLINE DRIFT HAULAGE (1 IN 4.5 GRADE)
+                    </text>
+
+                    {/* Upper Gallery: Intake & Haulage Split */}
+                    <rect x="210" y="235" width="670" height="45" fill="#fafafa" stroke="#000000" strokeWidth="1.5" />
+                    <text x="230" y="262" fill="#000000" fontSize="11" fontWeight="600" fontFamily="sans-serif">
+                      GALLERY A &bull; INTAKE AIRWAY &amp; LOCOMOTIVE LEVEL ({selectedSite.seamInfo.split('&')[0]?.trim() || selectedSite.seamInfo})
+                    </text>
+
+                    {/* Lower Gallery: Active Coal Extraction Face */}
+                    <rect x="210" y="415" width="670" height="55" fill="#fafafa" stroke="#000000" strokeWidth="1.5" />
+                    <text x="230" y="447" fill="#000000" fontSize="11" fontWeight="600" fontFamily="sans-serif">
+                      GALLERY B &bull; ACTIVE EXTRACTION DISTRICT &bull; {selectedSite.seamInfo} ({selectedSite.depthStr})
+                    </text>
+
+                    {/* Airflow Velocity Vectors (Animated subtle dashed stream) */}
+                    <path
+                      d="M 220 257 L 870 257"
+                      fill="none"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      className="animate-ventilation opacity-30"
+                    />
+                    <path
+                      d="M 220 442 L 870 442"
+                      fill="none"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      className="animate-ventilation opacity-30"
+                    />
+
+                    {/* Cross Connecting Shafts / Ventilation Stoppings */}
+                    <line x1="430" y1="280" x2="430" y2="415" stroke="#000000" strokeWidth="14" opacity="0.1" />
+                    <line x1="430" y1="280" x2="430" y2="415" stroke="#000000" strokeWidth="1.5" strokeDasharray="4 4" />
+                    <text x="440" y="350" fill="#71717a" fontSize="10" fontFamily="monospace">
+                      VENTILATION SPLIT 1
+                    </text>
+
+                    <line x1="680" y1="280" x2="680" y2="415" stroke="#000000" strokeWidth="14" opacity="0.1" />
+                    <line x1="680" y1="280" x2="680" y2="415" stroke="#000000" strokeWidth="1.5" strokeDasharray="4 4" />
+                    <text x="690" y="350" fill="#71717a" fontSize="10" fontFamily="monospace">
+                      DGMS REGULATOR DOOR R-2
+                    </text>
+
+                    {/* Sump Siphon Bottom Tunnel */}
+                    <rect x="210" y="505" width="280" height="30" fill="#f4f4f5" stroke="#000000" strokeWidth="1" />
+                    <text x="230" y="525" fill="#71717a" fontSize="10" fontFamily="monospace">
+                      DEWATERING SUMP DRAINAGE PIT ({selectedSite.depthStr})
+                    </text>
+                  </g>
+                )}
               </svg>
 
               {/* Real Observation-Derived Underground Gas Badges */}
@@ -940,21 +1098,6 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
               })}
             </div>
           )}
-
-          {/* Floating Reticle & Map Legend HUD (Top Left) */}
-          <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur border border-zinc-200 rounded-xl p-3 shadow-sm max-w-xs">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="size-2 rounded-full bg-black animate-pulse" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-black">
-                {viewMode === 'surface' ? 'SURFACE TELEMETRY GRID' : 'SUB-SURFACE CAD SCHEMATIC'}
-              </span>
-            </div>
-            <p className="text-xs text-zinc-500 leading-relaxed">
-              {viewMode === 'surface'
-                ? 'Geospatial GPS rendering of open pits, processing yards & incline shafts.'
-                : 'RFID/BLE beacon array across underground galleries with ventilation vectors.'}
-            </p>
-          </div>
 
           {/* Collapsible Observation Side-Drawer (Floating Right Side) */}
           <AnimatePresence>

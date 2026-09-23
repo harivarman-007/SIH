@@ -121,14 +121,18 @@ export default function App() {
                   <Route
                     path="dashboard"
                     element={
-                      <div className="max-w-xl mx-auto space-y-6">
-                        <div className="p-4 bg-zinc-900 text-white rounded-2xl flex items-center justify-between">
+                      <div className="w-full space-y-5">
+                        <div className="p-5 bg-white border border-slate-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                           <div>
-                            <div className="text-xs uppercase text-zinc-400 font-semibold tracking-wider">Field Inspector</div>
-                            <div className="text-lg font-bold">Mobile Workspace</div>
+                            <div className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Field Safety Inspector</div>
+                            <div className="text-xl font-bold text-slate-900 mt-0.5">Mobile Inspection Workspace</div>
+                            <div className="text-xs text-slate-500 mt-0.5">Real-time statutory observation logging & colliery audit records</div>
                           </div>
-                          <div className="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded-full font-mono">
-                            Online
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                              Operational · Online
+                            </span>
                           </div>
                         </div>
                         <ObservationTable role="inspector" />

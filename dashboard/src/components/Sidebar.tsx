@@ -70,22 +70,28 @@ interface SidebarProps {
   kpis?: KPISummary | null;
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapsed?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   kpis = null,
   isOpenMobile = false,
   onCloseMobile,
+  isCollapsed: controlledCollapsed,
+  onToggleCollapsed,
 }) => {
   const navigate = useNavigate();
   const { user, logout, switchRole } = useAuthStore();
   const { can } = usePermissions();
 
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+  const [internalCollapsed, setInternalCollapsed] = useState<boolean>(() => {
     const saved = localStorage.getItem('sidebar_collapsed');
     if (saved !== null) return saved === 'true';
     return window.innerWidth < 1024;
   });
+
+  const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
 
   const [showPersonaMenu, setShowPersonaMenu] = useState(false);
 
@@ -93,17 +99,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024 && !isCollapsed) {
-        setIsCollapsed(true);
+        if (onToggleCollapsed) {
+          onToggleCollapsed();
+        } else {
+          setInternalCollapsed(true);
+        }
       }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [isCollapsed]);
+  }, [isCollapsed, onToggleCollapsed]);
 
   const toggleCollapsed = () => {
-    const next = !isCollapsed;
-    setIsCollapsed(next);
-    localStorage.setItem('sidebar_collapsed', String(next));
+    if (onToggleCollapsed) {
+      onToggleCollapsed();
+    } else {
+      const next = !internalCollapsed;
+      setInternalCollapsed(next);
+      localStorage.setItem('sidebar_collapsed', String(next));
+    }
   };
 
   const handleLogout = async () => {

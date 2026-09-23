@@ -79,12 +79,35 @@ async def create_observation(
     now_utc = datetime.now(timezone.utc)
     obs_created_at = req.created_at or now_utc
 
+    # Auto-resolve mine_site_id from the user's own profile if not provided
+    resolved_site_id = req.mine_site_id or current_user.mine_site_id
+    if not resolved_site_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="mine_site_id is required (user has no assigned mine site)",
+        )
+
+    # Auto-resolve zone_id: use provided value or pick the first zone for this site
+    from app.models import Zone
+    resolved_zone_id = req.zone_id
+    if not resolved_zone_id:
+        zone_stmt = select(Zone).where(Zone.mine_site_id == resolved_site_id).limit(1)
+        zone_result = await db.execute(zone_stmt)
+        default_zone = zone_result.scalar_one_or_none()
+        if default_zone:
+            resolved_zone_id = default_zone.id
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No zone found for this mine site. Please configure zones first.",
+            )
+
     new_obs = Observation(
         created_at=obs_created_at,
         synced_at=now_utc,
         inspector_id=current_user.id,
-        mine_site_id=req.mine_site_id,
-        zone_id=req.zone_id,
+        mine_site_id=resolved_site_id,
+        zone_id=resolved_zone_id,
         inspection_id=req.inspection_id,
         category=req.category,
         description=req.description,

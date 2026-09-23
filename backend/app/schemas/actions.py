@@ -40,6 +40,21 @@ class EvidenceCreate(BaseModel):
     hash_sha256: Optional[str] = None
     file_size_bytes: Optional[int] = None
 
+    @field_validator("kind", mode="before")
+    @classmethod
+    def normalize_kind(cls, v):
+        if isinstance(v, str):
+            vl = v.lower()
+            if vl in ("after", "after_photo"):
+                return EvidenceKind.after_photo
+            if vl in ("before", "before_photo"):
+                return EvidenceKind.before_photo
+            if vl in ("document", "doc"):
+                return EvidenceKind.document
+            if vl in ("note", "notes"):
+                return EvidenceKind.note
+        return v
+
 
 class EvidenceOut(BaseModel):
     id: UUID
