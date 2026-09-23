@@ -7,7 +7,7 @@ import {
   Polygon,
   useMap,
 } from 'react-leaflet';
-import L from 'leaflet';
+import L from './leafletPlugins';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Layers,
@@ -28,7 +28,9 @@ import {
 } from 'lucide-react';
 import { RiskCardModal, ObservationData } from './RiskCardModal';
 import { fetchObservations, closeObservation, ObservationOut } from '@/api/observations';
+import { fetchTrendsAnalytics, ZoneHotspotItem } from '@/api/analytics';
 
+// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // Types & Interfaces
 // ---------------------------------------------------------------------------
@@ -44,6 +46,10 @@ export interface MineSite {
   elevation: string;
   activeHazardsCount: number;
   baselineRisk: number;
+  subsidiary: string;
+  seamInfo: string;
+  depthStr: string;
+  leaseholdBoundary: [number, number][];
 }
 
 export interface MapObservation extends ObservationData {
@@ -57,21 +63,6 @@ export interface MapObservation extends ObservationData {
 // ---------------------------------------------------------------------------
 // Real Indian Coalfields per Phase 1 & Seed Data
 // ---------------------------------------------------------------------------
-export interface MineSite {
-  id: string;
-  name: string;
-  location: string;
-  lat: number;
-  lng: number;
-  zoom: number;
-  elevation: string;
-  activeHazardsCount: number;
-  baselineRisk: number;
-  subsidiary: string;
-  seamInfo: string;
-  depthStr: string;
-}
-
 const MINE_SITES: MineSite[] = [
   {
     id: 'jharia_moonidih',
@@ -86,6 +77,14 @@ const MINE_SITES: MineSite[] = [
     subsidiary: 'Bharat Coking Coal Ltd. (BCCL)',
     seamInfo: 'Seam XVI (Top) & Seam XV',
     depthStr: '-240m MSL',
+    leaseholdBoundary: [
+      [23.7485, 86.3420],
+      [23.7512, 86.3585],
+      [23.7445, 86.3678],
+      [23.7315, 86.3650],
+      [23.7278, 86.3495],
+      [23.7358, 86.3398],
+    ],
   },
   {
     id: 'raniganj_chinakuri',
@@ -100,6 +99,14 @@ const MINE_SITES: MineSite[] = [
     subsidiary: 'Eastern Coalfields Ltd. (ECL)',
     seamInfo: 'Dishergarh Seam',
     depthStr: '-600m MSL',
+    leaseholdBoundary: [
+      [23.6930, 86.9030],
+      [23.6965, 86.9210],
+      [23.6890, 86.9295],
+      [23.6765, 86.9260],
+      [23.6730, 86.9085],
+      [23.6815, 86.9005],
+    ],
   },
   {
     id: 'korba_kusmunda',
@@ -114,6 +121,14 @@ const MINE_SITES: MineSite[] = [
     subsidiary: 'South Eastern Coalfields Ltd. (SECL)',
     seamInfo: 'Upper & Lower Kusmunda Seam',
     depthStr: '-160m MSL',
+    leaseholdBoundary: [
+      [22.3695, 82.6680],
+      [22.3730, 82.6880],
+      [22.3650, 82.6965],
+      [22.3510, 82.6925],
+      [22.3475, 82.6730],
+      [22.3560, 82.6640],
+    ],
   },
   {
     id: 'singrauli_jayant',
@@ -128,6 +143,14 @@ const MINE_SITES: MineSite[] = [
     subsidiary: 'Northern Coalfields Ltd. (NCL)',
     seamInfo: 'Purewa & Turra Seams (40m Thickness)',
     depthStr: 'Surface Bench (+320m)',
+    leaseholdBoundary: [
+      [24.1280, 82.6520],
+      [24.1315, 82.6750],
+      [24.1225, 82.6850],
+      [24.1070, 82.6810],
+      [24.1030, 82.6580],
+      [24.1120, 82.6480],
+    ],
   },
   {
     id: 'talcher_bhubaneswari',
@@ -142,6 +165,14 @@ const MINE_SITES: MineSite[] = [
     subsidiary: 'Mahanadi Coalfields Ltd. (MCL)',
     seamInfo: 'Seam II & III Composite',
     depthStr: '-280m MSL',
+    leaseholdBoundary: [
+      [20.9605, 85.2040],
+      [20.9635, 85.2250],
+      [20.9550, 85.2335],
+      [20.9415, 85.2295],
+      [20.9380, 85.2100],
+      [20.9470, 85.2005],
+    ],
   },
   {
     id: 'singareni_kothagudem',
@@ -156,148 +187,14 @@ const MINE_SITES: MineSite[] = [
     subsidiary: 'Singareni Collieries Co. Ltd. (SCCL)',
     seamInfo: 'King Seam & Queen Seam',
     depthStr: '-310m MSL',
-  },
-];
-
-const MOCK_MAP_HAZARDS: MapObservation[] = [
-  {
-    id: 'hz-101',
-    name: 'Gallery 4: Roof Fall & Support Prop Failure',
-    category: 'safety',
-    severity: 'high',
-    score: 0.94,
-    lat: 23.7972,
-    lng: 86.4285,
-    elevation: '-240m UG',
-    zoneName: 'Underground Gallery 4 East Dip',
-    beaconId: 'BCN-JHR-402',
-    description:
-      'Severe strata delamination detected along 18 meters of unsupported roof span. Hydraulic props #14 and #15 buckled under strata load. Direct violation of DGMS Coal Mines Regulations 2017 (Reg 112).',
-    location: 'Mine Sector 4, Gallery 4 East Dip',
-    photoUrl:
-      'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?q=80&w=800&auto=format&fit=crop',
-    inspectorName: 'Rajesh Kumar (DGMS Certified)',
-    date: '2026-09-11',
-    topContributors: [
-      'Keyword pattern: [roof fall, collapse] in field observation (+0.41)',
-      'Underground strata baseline stress elevated to 0.84 (+0.28)',
-      'Gallery uninspected for 28 consecutive days (+0.25)',
+    leaseholdBoundary: [
+      [17.5615, 80.6050],
+      [17.5648, 80.6260],
+      [17.5565, 80.6345],
+      [17.5425, 80.6305],
+      [17.5390, 80.6110],
+      [17.5475, 80.6015],
     ],
-    suggestedAction:
-      'IMMEDIATE ACTION: Withdraw all personnel from Gallery 4. Isolate 3.3kV traction power. Deploy hydraulic timber pack and install secondary rock bolts per DGMS Circular 4/2019.',
-    status: 'open',
-    schematicCoords: { x: 68, y: 74 },
-  },
-  {
-    id: 'hz-102',
-    name: 'Return Airway: Methane Gas Concentration 2.1%',
-    category: 'safety',
-    severity: 'high',
-    score: 0.88,
-    lat: 23.7942,
-    lng: 86.4328,
-    elevation: '-210m UG',
-    zoneName: 'North Return Airway Split B',
-    beaconId: 'BCN-JHR-403',
-    description:
-      'Telemetric methane sensor node registered 2.1% CH₄ at return airway junction. Exceeds statutory threshold of 1.25% mandated under DGMS Reg 169. Danger of explosive air-gas mixture.',
-    location: 'North Return Airway Junction',
-    photoUrl:
-      'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop',
-    inspectorName: 'Amitabh Sharma',
-    date: '2026-09-11',
-    topContributors: [
-      'CH₄ telemetry peak exceeding 2.0% threshold (+0.44)',
-      'Auxiliary ventilation fan velocity drop (-18%) (+0.26)',
-      'Gas classification: Degasification Gassy Seam III (+0.18)',
-    ],
-    suggestedAction:
-      'STATUTORY MANDATE: Cut electrical power to district longwall section immediately. Verify auxiliary exhaust ducting integrity. Evacuate miners to fresh air intake split.',
-    status: 'in-progress',
-    schematicCoords: { x: 74, y: 46 },
-  },
-  {
-    id: 'hz-103',
-    name: 'Underground Dip: Inundation Breakthrough Hazard',
-    category: 'safety',
-    severity: 'high',
-    score: 0.82,
-    lat: 23.7985,
-    lng: 86.4335,
-    elevation: '-280m UG',
-    zoneName: 'Sump Dip Advance Heading',
-    beaconId: 'BCN-JHR-405',
-    description:
-      'Water percolation rate increased to 450 gpm through advance pilot borehole. Proximity to old waterlogged abandoned workings estimated within 15 meters without protective barrier.',
-    location: 'Bottom Sump Dip Face',
-    photoUrl:
-      'https://images.unsplash.com/photo-1516937941344-00b4e0337589?q=80&w=800&auto=format&fit=crop',
-    inspectorName: 'Pooja Verma',
-    date: '2026-09-10',
-    topContributors: [
-      'Water ingress rate spike beyond safe margin (+0.38)',
-      'Proximity to abandoned waterlogged seam (+0.29)',
-      'Geotechnical fault fissure detected (+0.15)',
-    ],
-    suggestedAction:
-      'STOP HEADING ADVANCE: Drill statutory advance proving holes not less than 3 meters in advance of working face per DGMS Water Inrush Safeguard Norms.',
-    status: 'open',
-    schematicCoords: { x: 38, y: 84 },
-  },
-  {
-    id: 'hz-104',
-    name: 'Crushing Plant: Particulate Dust Plume Discharge',
-    category: 'environment',
-    severity: 'medium',
-    score: 0.65,
-    lat: 23.7935,
-    lng: 86.4278,
-    elevation: '+182m Surface',
-    zoneName: 'Surface Coal Preparation Plant',
-    beaconId: 'BCN-SRF-102',
-    description:
-      'Water atomizing spray nozzles clogged on primary jaw crusher feed chute. Airborne respirable dust particulate concentrations exceed 3.0 mg/m³ statutory ceiling.',
-    location: 'Surface Plant Feed Hopper 2',
-    photoUrl:
-      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800&auto=format&fit=crop',
-    inspectorName: 'Sanjay Deshmukh',
-    date: '2026-09-10',
-    topContributors: [
-      'Suppression water pressure drop < 2.5 bar (+0.31)',
-      'Dust monitor reading PM10 elevated (+0.22)',
-      'High ambient dry wind factor (+0.12)',
-    ],
-    suggestedAction:
-      'Flush spray manifolds and clean inline particulate filter. Verify minimum 5.0 bar atomization pressure before restarting crushing cycle.',
-    status: 'in-progress',
-    schematicCoords: { x: 22, y: 22 },
-  },
-  {
-    id: 'hz-105',
-    name: 'Haulage Road Bend: Boulder Fall Clearance',
-    category: 'safety',
-    severity: 'low',
-    score: 0.42,
-    lat: 23.792,
-    lng: 86.431,
-    elevation: '+180m Surface',
-    zoneName: 'Main Surface Haul Road Km 2.4',
-    beaconId: 'BCN-SRF-108',
-    description:
-      'Loose bench spillage on internal transport ramp. Minor berm erosion along western parapet wall. Heavy dumper passing clearance slightly constricted.',
-    location: 'Haul Road Junction 3',
-    photoUrl:
-      'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?q=80&w=800&auto=format&fit=crop',
-    inspectorName: 'Rajesh Kumar',
-    date: '2026-09-09',
-    topContributors: [
-      'Road berm height below 1.5x dumper wheel diameter (+0.24)',
-      'Drainage ditch sedimentation (+0.18)',
-    ],
-    suggestedAction:
-      'Deploy front-end loader for roadway grading and reconstruct 2.2m safety berm along ramp crest.',
-    status: 'completed',
-    schematicCoords: { x: 50, y: 16 },
   },
 ];
 
@@ -364,6 +261,197 @@ const createCustomPinIcon = (
     popupAnchor: [0, -38],
   });
 };
+
+// ---------------------------------------------------------------------------
+// Recurring Hotspot Radar Beacon Icon
+// ---------------------------------------------------------------------------
+const createHotspotIcon = (item: ZoneHotspotItem) => {
+  const isRising = item.recent_trend === 'rising';
+  const color = isRising ? '#dc2626' : '#d97706';
+
+  const html = `
+    <div class="relative flex items-center justify-center cursor-pointer group">
+      <div style="background-color: ${color};" class="absolute w-7 h-7 rounded-full opacity-40 animate-ping"></div>
+      <div style="background-color: ${color}; border: 2px solid #ffffff;" class="relative flex items-center justify-center w-7 h-7 rounded-full text-white shadow-md font-mono text-[10px] font-bold">
+        ${item.total_violations}
+      </div>
+      <div class="absolute -bottom-5 bg-slate-900 text-white text-[9px] font-mono px-1.5 py-0.5 rounded shadow opacity-90 whitespace-nowrap pointer-events-none">
+        ${item.zone_name.split(' ')[0]}
+      </div>
+    </div>
+  `;
+
+  return L.divIcon({
+    html,
+    className: 'custom-hotspot-beacon',
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+};
+
+// ---------------------------------------------------------------------------
+// GIS Hazard Heatmap Layer (leaflet.heat)
+// ---------------------------------------------------------------------------
+function HazardHeatmapLayer({ hazards }: { hazards: MapObservation[] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!hazards.length) return;
+
+    // Weight each point by risk_score (0.25 floor to 1.0 ceiling)
+    const points = hazards.map((h) => [
+      h.lat,
+      h.lng,
+      Math.max(0.25, Math.min(1.0, h.score)),
+    ]);
+
+    const heatLayer = (L as any).heatLayer(points, {
+      radius: 35,
+      blur: 22,
+      maxZoom: 18,
+      max: 1.0,
+      gradient: {
+        0.2: '#059669', // Emerald/Low
+        0.5: '#d97706', // Amber/Medium
+        0.8: '#dc2626', // Crimson/High
+        1.0: '#991b1b', // Severe
+      },
+    });
+
+    heatLayer.addTo(map);
+
+    return () => {
+      map.removeLayer(heatLayer);
+    };
+  }, [map, hazards]);
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Risk-Aware Spatial Cluster Layer (leaflet.markercluster)
+// ---------------------------------------------------------------------------
+function ClusteredHazardMarkers({
+  hazards,
+  activeHazard,
+  onSelectHazard,
+  onOpenRiskCard,
+}: {
+  hazards: MapObservation[];
+  activeHazard: MapObservation | null;
+  onSelectHazard: (h: MapObservation) => void;
+  onOpenRiskCard: (h: MapObservation) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!hazards.length) return;
+
+    const clusterGroup = (L as any).markerClusterGroup({
+      showCoverageOnHover: false,
+      maxClusterRadius: 45,
+      spiderfyOnMaxZoom: true,
+      zoomToBoundsOnClick: true,
+      iconCreateFunction: (cluster: any) => {
+        const markers = cluster.getAllChildMarkers();
+        const count = markers.length;
+
+        // Dynamic risk severity inspection of all markers in cluster
+        let maxScore = 0;
+        let hasHigh = false;
+        let hasMed = false;
+
+        markers.forEach((m: any) => {
+          const obs = m.options?.obsData as MapObservation | undefined;
+          const score = obs?.score ?? 0;
+          const sev = obs?.severity;
+          if (score > maxScore) maxScore = score;
+          if (sev === 'high' || score >= 0.7) hasHigh = true;
+          else if (sev === 'medium' || score >= 0.4) hasMed = true;
+        });
+
+        // Dynamic color styling: Rose/Danger for High, Amber for Medium, Emerald for Low
+        const bg = hasHigh ? '#be123c' : hasMed ? '#b45309' : '#047857';
+        const ring = hasHigh ? 'animate-pulse ring-4 ring-rose-300' : 'ring-2 ring-white';
+        const label = hasHigh ? 'CRITICAL' : hasMed ? 'WARN' : 'NORM';
+
+        const html = `
+          <div class="relative flex items-center justify-center">
+            <div style="background-color: ${bg};" class="w-9 h-9 rounded-full flex flex-col items-center justify-center text-white shadow-lg ${ring} border-2 border-white transition-transform hover:scale-110">
+              <span class="font-mono text-xs font-bold leading-none">${count}</span>
+              <span class="text-[8px] font-extrabold tracking-tight opacity-90 leading-none">${label}</span>
+            </div>
+            ${
+              hasHigh
+                ? `<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span></span>`
+                : ''
+            }
+          </div>
+        `;
+
+        return L.divIcon({
+          html,
+          className: 'custom-cluster-icon',
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+        });
+      },
+    });
+
+    hazards.forEach((h) => {
+      const isSelected = activeHazard?.id === h.id;
+      const icon = createCustomPinIcon(h.severity, h.score, isSelected);
+      const marker = L.marker([h.lat, h.lng], {
+        icon,
+        obsData: h,
+      } as any);
+
+      // Monochromatic crisp popup matching Executive Light Theme
+      const popupDiv = document.createElement('div');
+      popupDiv.className = 'p-3 w-64 text-zinc-950 font-sans';
+      popupDiv.innerHTML = `
+        <div class="flex items-center justify-between pb-1.5 border-b border-zinc-100 mb-2">
+          <span class="text-[10px] uppercase font-bold tracking-wider text-zinc-500">
+            ${h.beaconId || 'SURFACE-GPS'}
+          </span>
+          <span class="text-[10px] font-bold px-1.5 py-0.5 rounded font-mono ${
+            h.severity === 'high' ? 'bg-rose-100 text-rose-800' : 'bg-zinc-100 text-zinc-800'
+          }">
+            ${(h.score * 100).toFixed(0)}% RISK
+          </span>
+        </div>
+        <h4 class="font-semibold text-xs text-black leading-snug mb-1">${h.name}</h4>
+        <p class="text-[11px] text-zinc-500 line-clamp-2 mb-2.5">${h.description}</p>
+        <button id="view-risk-btn-${h.id}" class="w-full text-center py-1.5 px-3 bg-blue-900 hover:bg-blue-800 text-white rounded-md text-xs font-semibold transition-colors">
+          View DGMS Risk Card
+        </button>
+      `;
+
+      marker.bindPopup(popupDiv, { className: 'monochrome-popup' });
+
+      marker.on('click', () => {
+        onSelectHazard(h);
+      });
+
+      marker.on('popupopen', () => {
+        const btn = document.getElementById(`view-risk-btn-${h.id}`);
+        if (btn) {
+          btn.onclick = () => onOpenRiskCard(h);
+        }
+      });
+
+      clusterGroup.addLayer(marker);
+    });
+
+    map.addLayer(clusterGroup);
+
+    return () => {
+      map.removeLayer(clusterGroup);
+    };
+  }, [map, hazards, activeHazard, onSelectHazard, onOpenRiskCard]);
+
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Leaflet Map Camera Controller
@@ -455,6 +543,12 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
   const [showZones, setShowZones] = useState<boolean>(true);
   const [showTelemetrySensors, setShowTelemetrySensors] = useState<boolean>(true);
 
+  // GIS Layer & Feature Visibility States
+  const [displayMode, setDisplayMode] = useState<'both' | 'heatmap' | 'pins'>('both');
+  const [showBoundaries, setShowBoundaries] = useState<boolean>(true);
+  const [showHotspots, setShowHotspots] = useState<boolean>(true);
+  const [hotspots, setHotspots] = useState<ZoneHotspotItem[]>([]);
+
   // Live hazards state (only real DB observations, zero fake mock hazards)
   const [hazards, setHazards] = useState<MapObservation[]>([]);
   const [rawObservations, setRawObservations] = useState<ObservationOut[]>([]);
@@ -492,6 +586,20 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
     }
   }, [selectedSite.lat, selectedSite.lng]);
 
+  const loadHotspots = useCallback(async () => {
+    try {
+      const res = await fetchTrendsAnalytics({ mine_site_id: selectedSite.id });
+      if (res && res.zone_hotspots) {
+        setHotspots(res.zone_hotspots);
+      } else {
+        setHotspots([]);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch trends hotspots for map', err);
+      setHotspots([]);
+    }
+  }, [selectedSite.id]);
+
   // Derive real telemetry from actual submitted observations
   const latestGasObs = useMemo(() => {
     return (
@@ -504,6 +612,10 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
   useEffect(() => {
     loadMapHazards();
   }, [loadMapHazards, role]);
+
+  useEffect(() => {
+    loadHotspots();
+  }, [loadHotspots]);
 
   // Filtered Hazards
   const filteredHazards = useMemo(() => {
@@ -633,13 +745,49 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
         {/* Filter Toolbar & Quick Counters */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 mt-2.5 border-t border-slate-100">
           <div className="flex flex-wrap items-center gap-1.5">
+            {/* GIS Layer Mode Selector */}
+            {viewMode === 'surface' && (
+              <>
+                <span className="text-xs font-semibold text-slate-400 mr-0.5 uppercase text-[10px]">GIS Mode:</span>
+                <div className="flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 mr-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setDisplayMode('both')}
+                    className={`px-2 py-1 text-xs font-semibold rounded-lg transition-all ${
+                      displayMode === 'both' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Both
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDisplayMode('heatmap')}
+                    className={`px-2 py-1 text-xs font-semibold rounded-lg transition-all ${
+                      displayMode === 'heatmap' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Heatmap
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDisplayMode('pins')}
+                    className={`px-2 py-1 text-xs font-semibold rounded-lg transition-all ${
+                      displayMode === 'pins' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Pins
+                  </button>
+                </div>
+              </>
+            )}
+
             <span className="text-xs font-semibold text-slate-400 mr-1 uppercase text-[10px]">Severity:</span>
             {(['all', 'high', 'medium', 'low'] as const).map((sev) => {
               const active = filterSeverity === sev;
               const count =
                 sev === 'all'
-                  ? MOCK_MAP_HAZARDS.length
-                  : MOCK_MAP_HAZARDS.filter((h) => h.severity === sev).length;
+                  ? hazards.length
+                  : hazards.filter((h) => h.severity === sev).length;
               return (
                 <button
                   key={sev}
@@ -664,6 +812,38 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
             })}
 
             <div className="h-4 w-[1px] bg-slate-200 mx-1 hidden sm:block" />
+
+            {viewMode === 'surface' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowBoundaries(!showBoundaries)}
+                  className={`text-xs px-2.5 py-1 rounded-xl border font-semibold flex items-center gap-1 transition-all ${
+                    showBoundaries
+                      ? 'bg-blue-50 text-blue-800 border-blue-200'
+                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                  }`}
+                  title="Toggle DGMS Leasehold Perimeter"
+                >
+                  <ShieldAlert className="size-3" />
+                  <span>Boundary</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowHotspots(!showHotspots)}
+                  className={`text-xs px-2.5 py-1 rounded-xl border font-semibold flex items-center gap-1 transition-all ${
+                    showHotspots
+                      ? 'bg-rose-50 text-rose-800 border-rose-200'
+                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                  }`}
+                  title="Toggle Recurring Zone Hotspot Beacons"
+                >
+                  <Flame className="size-3 text-rose-600" />
+                  <span>Hotspots ({hotspots.length})</span>
+                </button>
+              </>
+            )}
 
             <button
               type="button"
@@ -720,9 +900,10 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
         {/* Main Canvas Area */}
         <div className="relative w-full h-[620px] bg-zinc-100">
           {viewMode === 'surface' ? (
-            /* ============================================================= */
-            /* VIEW 1: Surface GIS Satellite / CartoDB Monochromatic Map   */
-            /* ============================================================= */
+            <>
+              {/* ============================================================= */}
+              {/* VIEW 1: Surface GIS Satellite / CartoDB Monochromatic Map   */}
+              {/* ============================================================= */}
             <MapContainer
               center={[selectedSite.lat, selectedSite.lng]}
               zoom={selectedSite.zoom}
@@ -753,6 +934,35 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
                 />
               )}
 
+              {/* Mine Site Leasehold Boundary Perimeter */}
+              {showBoundaries && (
+                <Polygon
+                  positions={selectedSite.leaseholdBoundary}
+                  pathOptions={{
+                    color: '#1e40af',
+                    weight: 2,
+                    dashArray: '6, 6',
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.04,
+                  }}
+                >
+                  <Popup>
+                    <div className="p-2.5 max-w-xs font-sans text-slate-900">
+                      <div className="flex items-center gap-1.5 font-bold text-xs text-blue-900 mb-1">
+                        <ShieldAlert className="size-3.5 text-blue-700" />
+                        <span>{selectedSite.name}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 mb-2">
+                        DGMS Statutory Leasehold Perimeter ({selectedSite.subsidiary})
+                      </div>
+                      <div className="text-[10px] text-amber-700 bg-amber-50 p-1.5 rounded border border-amber-200">
+                        Provisional perimeter pending official DGMS GIS survey shapefiles.
+                      </div>
+                    </div>
+                  </Popup>
+                </Polygon>
+              )}
+
               {/* Dynamic Statutory Zone Perimeters around active Coalfield */}
               {showZones &&
                 getZonePerimeters(selectedSite).map((zone, idx) => (
@@ -769,53 +979,99 @@ export default function MineMap({ role, onKpiRefresh }: MineMapProps) {
                   />
                 ))}
 
-              {/* Observation / Hazard Markers */}
-              {filteredHazards.map((h) => {
-                const isSelected = activeHazard?.id === h.id;
-                return (
-                  <Marker
-                    key={h.id}
-                    position={[h.lat, h.lng]}
-                    icon={createCustomPinIcon(h.severity, h.score, isSelected)}
-                    eventHandlers={{
-                      click: () => handleSelectHazard(h),
-                    }}
-                  >
-                    <Popup className="monochrome-popup">
-                      <div className="p-3 w-64 text-zinc-950 font-sans">
-                        <div className="flex items-center justify-between pb-1.5 border-b border-zinc-100 mb-2">
-                          <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500">
-                            {h.beaconId || 'SURFACE-GPS'}
-                          </span>
-                          <span
-                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded font-mono ${
-                              h.severity === 'high'
-                                ? 'bg-black text-white'
-                                : 'bg-zinc-100 text-zinc-800'
-                            }`}
-                          >
-                            {(h.score * 100).toFixed(0)}% RISK
-                          </span>
+              {/* Step 1: Hazard Density Heatmap Layer */}
+              {(displayMode === 'heatmap' || displayMode === 'both') && (
+                <HazardHeatmapLayer hazards={filteredHazards} />
+              )}
+
+              {/* Step 2: Risk-Aware Clustered Pin Markers */}
+              {(displayMode === 'pins' || displayMode === 'both') && (
+                <ClusteredHazardMarkers
+                  hazards={filteredHazards}
+                  activeHazard={activeHazard}
+                  onSelectHazard={handleSelectHazard}
+                  onOpenRiskCard={(h) => setRiskCardModalItem(h)}
+                />
+              )}
+
+              {/* Step 4: AI Recurring Trend Hotspot Beacons */}
+              {showHotspots &&
+                hotspots.map((item) => {
+                  const zoneObs = hazards.filter(
+                    (h) =>
+                      h.zoneName?.toLowerCase().includes(item.zone_name.toLowerCase()) ||
+                      h.location?.toLowerCase().includes(item.zone_name.toLowerCase()) ||
+                      h.id.includes(item.zone_id)
+                  );
+                  let hLat = selectedSite.lat;
+                  let hLng = selectedSite.lng;
+                  if (zoneObs.length > 0) {
+                    hLat = zoneObs.reduce((acc, o) => acc + o.lat, 0) / zoneObs.length;
+                    hLng = zoneObs.reduce((acc, o) => acc + o.lng, 0) / zoneObs.length;
+                  } else {
+                    const hash = item.zone_id
+                      .split('')
+                      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                    hLat = selectedSite.lat + (((hash % 7) - 3) * 0.0022);
+                    hLng = selectedSite.lng + ((((hash * 3) % 7) - 3) * 0.0025);
+                  }
+
+                  return (
+                    <Marker
+                      key={`hotspot-${item.zone_id}`}
+                      position={[hLat, hLng]}
+                      icon={createHotspotIcon(item)}
+                    >
+                      <Popup className="monochrome-popup">
+                        <div className="p-3 w-60 text-slate-900 font-sans">
+                          <div className="flex items-center justify-between pb-1 border-b border-slate-100 mb-1.5">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 flex items-center gap-1">
+                              <Flame className="size-3" />
+                              TREND HOTSPOT
+                            </span>
+                            <span
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono ${
+                                item.recent_trend === 'rising'
+                                  ? 'bg-rose-100 text-rose-700'
+                                  : 'bg-amber-100 text-amber-700'
+                              }`}
+                            >
+                              {item.recent_trend}
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-xs text-slate-900 mb-1">{item.zone_name}</h4>
+                          <div className="space-y-1 text-[11px] text-slate-600 font-mono mb-2">
+                            <div className="flex justify-between">
+                              <span>14-Day Violations:</span>
+                              <span className="font-bold text-slate-900">{item.count_14d}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>30-Day Violations:</span>
+                              <span className="font-bold text-slate-900">{item.count_30d}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>90-Day Total:</span>
+                              <span className="font-bold text-slate-900">{item.total_violations}</span>
+                            </div>
+                          </div>
+                          <div className="text-[10px] text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100">
+                            Identified via recurrent spatial incident analytics.
+                          </div>
                         </div>
-                        <h4 className="font-semibold text-xs text-black leading-snug mb-1">
-                          {h.name}
-                        </h4>
-                        <p className="text-[11px] text-zinc-500 line-clamp-2 mb-2.5">
-                          {h.description}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setRiskCardModalItem(h)}
-                          className="w-full text-center py-1.5 px-3 bg-black hover:bg-zinc-800 text-white rounded-md text-xs font-medium transition-colors"
-                        >
-                          View DGMS Risk Card
-                        </button>
-                      </div>
-                    </Popup>
-                  </Marker>
-                );
-              })}
+                      </Popup>
+                    </Marker>
+                  );
+                })}
             </MapContainer>
+
+            {/* Floating Provisional Survey Disclaimer */}
+            {showBoundaries && (
+              <div className="absolute bottom-3 left-3 z-[400] bg-white/95 backdrop-blur-xs border border-slate-200 rounded-lg px-2.5 py-1.5 shadow-xs text-[10px] text-slate-600 flex items-center gap-1.5 pointer-events-none">
+                <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
+                <span>Leasehold perimeters provisional pending official DGMS GIS survey shapefiles</span>
+              </div>
+            )}
+            </>
           ) : (
             /* ============================================================= */
             /* VIEW 2: Underground Tactical CAD Schematics (-240m Section)   */
