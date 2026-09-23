@@ -204,25 +204,27 @@ export default function DashboardScreen({ navigation }: Props) {
           />
         </View>
 
-        {/* Labour Register Banner Card */}
-        <TouchableOpacity
-          style={styles.labourCard}
-          onPress={() => navigation.navigate("LabourAttendance")}
-          activeOpacity={0.8}
-        >
-          <View style={styles.labourCardLeft}>
-            <View style={styles.labourIconBox}>
-              <Ionicons name="people-outline" size={20} color={colors.primary} />
+        {/* Labour Register Banner Card - Mine Official Only */}
+        {user?.role === "mine_official" && (
+          <TouchableOpacity
+            style={styles.labourCard}
+            onPress={() => navigation.navigate("LabourAttendance")}
+            activeOpacity={0.8}
+          >
+            <View style={styles.labourCardLeft}>
+              <View style={styles.labourIconBox}>
+                <Ionicons name="people-outline" size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.labourCardTitle}>Labour Compliance Register</Text>
+                <Text style={styles.labourCardSubtitle}>
+                  Mines Act 1952 statutory attendance & overtime audit
+                </Text>
+              </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.labourCardTitle}>Labour Compliance Register</Text>
-              <Text style={styles.labourCardSubtitle}>
-                Mines Act 1952 statutory attendance & overtime audit
-              </Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
-        </TouchableOpacity>
+            <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+          </TouchableOpacity>
+        )}
 
         {/* Recent Observations */}
         <View style={styles.section}>

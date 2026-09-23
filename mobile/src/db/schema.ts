@@ -86,6 +86,19 @@ export interface InspectionOutboxItem {
   created_at: string;
 }
 
+export interface LocalWorker {
+  id: string;
+  badge_number: string;
+  name: string;
+  role: string;
+  contractor_id: string | null;
+  contractor_name: string | null;
+  mine_site_id: string;
+  mine_site_name: string | null;
+  is_active: boolean;
+  synced_at: string;
+}
+
 export interface LocalLabourAttendance {
   local_id: number;
   server_uuid: string | null;
@@ -93,7 +106,9 @@ export interface LocalLabourAttendance {
   retry_count: number;
   last_error: string | null;
   worker_id: string;
+  worker_badge_number?: string;
   worker_name: string;
+  worker_role?: string | null;
   mine_site_id: string;
   contractor_id: string | null;
   shift_date: string;
@@ -243,6 +258,25 @@ export async function initSchema(db: SQLite.SQLiteDatabase): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_labour_sync_status
       ON local_labour_attendance(sync_status);
+
+    CREATE TABLE IF NOT EXISTS local_workers (
+      id              TEXT PRIMARY KEY,
+      badge_number    TEXT NOT NULL,
+      name            TEXT NOT NULL,
+      role            TEXT NOT NULL,
+      contractor_id   TEXT DEFAULT NULL,
+      contractor_name TEXT DEFAULT NULL,
+      mine_site_id    TEXT NOT NULL,
+      mine_site_name  TEXT DEFAULT NULL,
+      is_active       INTEGER DEFAULT 1,
+      synced_at       TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_workers_badge
+      ON local_workers(badge_number);
+
+    CREATE INDEX IF NOT EXISTS idx_workers_mine_site
+      ON local_workers(mine_site_id);
   `);
 
   // Safe migrations for databases created on earlier versions
@@ -262,6 +296,8 @@ export async function initSchema(db: SQLite.SQLiteDatabase): Promise<void> {
     "ALTER TABLE local_observations ADD COLUMN threshold_breach_detail TEXT DEFAULT NULL;",
     "ALTER TABLE cached_inspections ADD COLUMN notes TEXT DEFAULT NULL;",
     "ALTER TABLE cached_inspections ADD COLUMN observation_count INTEGER DEFAULT 0;",
+    "ALTER TABLE local_labour_attendance ADD COLUMN worker_badge_number TEXT DEFAULT NULL;",
+    "ALTER TABLE local_labour_attendance ADD COLUMN worker_role TEXT DEFAULT NULL;",
   ];
 
   for (const sql of safeMigrations) {

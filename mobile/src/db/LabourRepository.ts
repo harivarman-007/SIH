@@ -9,7 +9,9 @@ import { getDatabase, LocalLabourAttendance } from "./schema";
 
 export interface NewAttendanceInput {
   worker_id: string;
+  worker_badge_number?: string;
   worker_name: string;
+  worker_role?: string | null;
   mine_site_id: string;
   contractor_id?: string | null;
   shift_date: string;
@@ -29,14 +31,16 @@ export class LabourRepository {
 
     const result = await db.runAsync(
       `INSERT INTO local_labour_attendance (
-        worker_id, worker_name, mine_site_id, contractor_id,
+        worker_id, worker_badge_number, worker_name, worker_role, mine_site_id, contractor_id,
         shift_date, shift_type, clock_in, clock_out,
         hours_worked, overtime_hours, is_violation, violation_reason,
         created_at, sync_status, retry_count
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
       [
         input.worker_id,
+        input.worker_badge_number ?? null,
         input.worker_name,
+        input.worker_role ?? null,
         input.mine_site_id,
         input.contractor_id ?? null,
         input.shift_date,

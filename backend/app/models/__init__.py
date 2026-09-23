@@ -608,14 +608,29 @@ class ContractorProfile(Base):
 # Labour Attendance & Statutory Labour Compliance (Item 1)
 # ---------------------------------------------------------------------------
 
+class Worker(Base):
+    __tablename__ = "workers"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    badge_number: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    role: Mapped[str] = mapped_column(String(128), default="General Miner")
+    contractor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    mine_site_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("mine_sites.id", ondelete="CASCADE"), nullable=False, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    mine_site = relationship("MineSite")
+    contractor = relationship("User", foreign_keys=[contractor_id])
+    attendance_records = relationship("LabourAttendance", back_populates="worker", cascade="all, delete-orphan")
+
+
 class LabourAttendance(Base):
     __tablename__ = "labour_attendance"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    worker_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    worker_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    worker_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("workers.id", ondelete="CASCADE"), nullable=False, index=True)
     mine_site_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("mine_sites.id", ondelete="CASCADE"), nullable=False, index=True)
-    contractor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     shift_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     shift_type: Mapped[str] = mapped_column(String(32), nullable=False)  # "day", "night", "morning", "evening"
     clock_in: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -626,8 +641,8 @@ class LabourAttendance(Base):
     violation_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    worker = relationship("Worker", back_populates="attendance_records")
     mine_site = relationship("MineSite")
-    contractor = relationship("User", foreign_keys=[contractor_id])
 
 
 class LabourComplianceRule(Base):
