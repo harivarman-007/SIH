@@ -46,6 +46,7 @@ import { RolesPermissionsView } from './components/RolesPermissionsView';
 import { ComplianceRulesView } from './components/ComplianceRulesView';
 import { ComplianceReportsView } from './components/ComplianceReportsView';
 import { LabourRegisterView } from './components/LabourRegisterView';
+import { TrendAnalyticsView } from './components/TrendAnalyticsView';
 
 import { useAuthStore } from './store/authStore';
 import { ROLE_HOME_PATHS, Permission } from './types/permissions';
@@ -85,6 +86,7 @@ export default function App() {
                   <Route path="inspections" element={<InspectionsManagementView />} />
                   <Route path="actions" element={<CorrectiveActionsBoard />} />
                   <Route path="labour" element={<LabourRegisterView />} />
+                  <Route path="trends" element={<TrendAnalyticsView />} />
                   <Route path="*" element={<AccessDeniedPage />} />
                 </Route>
 
@@ -103,6 +105,7 @@ export default function App() {
                     }
                   />
                   <Route path="labour" element={<LabourRegisterView />} />
+                  <Route path="trends" element={<TrendAnalyticsView />} />
                   <Route path="*" element={<AccessDeniedPage />} />
                 </Route>
 
@@ -115,6 +118,7 @@ export default function App() {
                   <Route path="map" element={<MineMap role="regulator" />} />
                   <Route path="violations" element={<StatutoryEnforcementView />} />
                   <Route path="labour" element={<LabourRegisterView />} />
+                  <Route path="trends" element={<TrendAnalyticsView />} />
                   <Route path="*" element={<AccessDeniedPage />} />
                 </Route>
 
@@ -204,6 +208,7 @@ export default function App() {
                     }
                   />
                   <Route path="labour" element={<LabourRegisterView />} />
+                  <Route path="trends" element={<TrendAnalyticsView />} />
                   <Route path="*" element={<AccessDeniedPage />} />
                 </Route>
 

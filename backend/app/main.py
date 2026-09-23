@@ -23,6 +23,7 @@ from app.api import (
     reports_router,
     sync_router,
     labour_router,
+    analytics_router,
 )
 from app.config import settings
 from app.scheduler import run_escalation_and_alert
@@ -89,6 +90,7 @@ app.include_router(actions_router)
 app.include_router(admin_router)
 app.include_router(reports_router)
 app.include_router(labour_router)
+app.include_router(analytics_router)
 
 
 @app.get("/health", tags=["system"])

@@ -80,6 +80,14 @@ export const NAV_REGISTRY: NavItem[] = [
     roles: ['mine_official'],
     requires: Permission.OBSERVATION_VIEW,
   },
+  {
+    id: 'manager-trends',
+    label: 'Hazard Trends',
+    path: '/manager/trends',
+    icon: 'TrendingUp',
+    roles: ['mine_official'],
+    requires: Permission.KPI_VIEW,
+  },
 
   // --- CORPORATE MANAGEMENT ---
   {
@@ -119,6 +127,14 @@ export const NAV_REGISTRY: NavItem[] = [
     label: 'Labour Register',
     path: '/corporate/labour',
     icon: 'Users',
+    roles: ['corporate_management'],
+    requires: Permission.KPI_VIEW,
+  },
+  {
+    id: 'corporate-trends',
+    label: 'Failure Trends',
+    path: '/corporate/trends',
+    icon: 'TrendingUp',
     roles: ['corporate_management'],
     requires: Permission.KPI_VIEW,
   },
@@ -169,6 +185,14 @@ export const NAV_REGISTRY: NavItem[] = [
     label: 'Labour Register',
     path: '/regulator/labour',
     icon: 'Users',
+    roles: ['regulator'],
+    requires: Permission.OBSERVATION_VIEW,
+  },
+  {
+    id: 'regulator-trends',
+    label: 'Statutory Trends',
+    path: '/regulator/trends',
+    icon: 'TrendingUp',
     roles: ['regulator'],
     requires: Permission.OBSERVATION_VIEW,
   },
@@ -289,6 +313,14 @@ export const NAV_REGISTRY: NavItem[] = [
     icon: 'Users',
     roles: ['super_admin'],
     requires: Permission.SETTING_VIEW,
+  },
+  {
+    id: 'admin-trends',
+    label: 'Failure Analytics',
+    path: '/admin/trends',
+    icon: 'TrendingUp',
+    roles: ['super_admin'],
+    requires: Permission.KPI_VIEW,
   },
 ];
 

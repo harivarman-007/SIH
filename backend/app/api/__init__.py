@@ -10,6 +10,7 @@ from app.api.actions import router as actions_router
 from app.api.admin import router as admin_router
 from app.api.reports import router as reports_router
 from app.api.labour import router as labour_router
+from app.api.analytics import router as analytics_router
 
 __all__ = [
     "auth_router",
@@ -24,5 +25,6 @@ __all__ = [
     "admin_router",
     "reports_router",
     "labour_router",
+    "analytics_router",
 ]
 
