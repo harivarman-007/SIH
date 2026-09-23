@@ -1,6 +1,7 @@
 /**
  * LoginScreen.tsx
  * Inspector login screen with JWT auth.
+ * Executive Light Theme with vector icons and Royal Blue branding.
  */
 
 import React, { useState } from "react";
@@ -16,9 +17,11 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../store/authStore";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
+import { colors, shadows } from "../theme";
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "Login">;
@@ -52,20 +55,21 @@ export default function LoginScreen({ navigation }: Props) {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Text style={styles.logoIcon}>⛏️</Text>
+            <Ionicons name="shield-checkmark" size={36} color={colors.primary} />
           </View>
           <Text style={styles.appName}>INTELLIFUSION</Text>
-          <Text style={styles.tagline}>AI-Powered Mine Safety Compliance</Text>
+          <Text style={styles.tagline}>Directorate General of Mines Safety (DGMS)</Text>
         </View>
 
         {/* Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Inspector Login</Text>
-          <Text style={styles.cardSubtitle}>Sign in to your DGMS account</Text>
+          <Text style={styles.cardTitle}>Field Mobility Console</Text>
+          <Text style={styles.cardSubtitle}>Sign in to your inspector account</Text>
 
           {error ? (
             <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>⚠️ {error}</Text>
+              <Ionicons name="alert-circle" size={16} color={colors.dangerText} />
+              <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
 
@@ -73,8 +77,8 @@ export default function LoginScreen({ navigation }: Props) {
             <Text style={styles.label}>Email Address</Text>
             <TextInput
               style={styles.input}
-              placeholder="inspector@coalmine.gov.in"
-              placeholderTextColor="#4B5563"
+              placeholder="inspector1@mine.in"
+              placeholderTextColor={colors.textLight}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -89,7 +93,7 @@ export default function LoginScreen({ navigation }: Props) {
             <TextInput
               style={styles.input}
               placeholder="••••••••"
-              placeholderTextColor="#4B5563"
+              placeholderTextColor={colors.textLight}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -107,7 +111,10 @@ export default function LoginScreen({ navigation }: Props) {
             {isLoading ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.loginButtonText}>Sign In →</Text>
+              <View style={styles.btnRow}>
+                <Text style={styles.loginButtonText}>Sign In</Text>
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              </View>
             )}
           </TouchableOpacity>
         </View>
@@ -115,7 +122,7 @@ export default function LoginScreen({ navigation }: Props) {
         {/* Demo hint */}
         <View style={styles.demoHint}>
           <Text style={styles.demoHintText}>
-            Demo: Use seeded inspector credentials from generate_mock_data.py
+            Demo: inspector1@mine.in • password123
           </Text>
         </View>
       </ScrollView>
@@ -126,7 +133,7 @@ export default function LoginScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0F172A",
+    backgroundColor: colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -136,118 +143,120 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 32,
   },
   logoContainer: {
-    width: 80,
-    height: 80,
+    width: 72,
+    height: 72,
     borderRadius: 20,
-    backgroundColor: "#1E3A5F",
+    backgroundColor: colors.primaryLight,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#2563EB",
-    shadowColor: "#2563EB",
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  logoIcon: {
-    fontSize: 36,
+    borderColor: colors.primaryBorder,
+    ...shadows.sm,
   },
   appName: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "800",
-    color: "#FFFFFF",
-    letterSpacing: 3,
+    color: colors.text,
+    letterSpacing: 2,
   },
   tagline: {
-    marginTop: 6,
+    marginTop: 4,
     fontSize: 12,
-    color: "#64748B",
-    letterSpacing: 0.5,
+    color: colors.textMuted,
+    fontWeight: "500",
   },
   card: {
-    backgroundColor: "#1E293B",
-    borderRadius: 16,
-    padding: 28,
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    padding: 24,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: colors.border,
+    ...shadows.md,
   },
   cardTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
-    color: "#F1F5F9",
-    marginBottom: 4,
+    color: colors.text,
+    marginBottom: 2,
   },
   cardSubtitle: {
-    fontSize: 13,
-    color: "#64748B",
-    marginBottom: 24,
+    fontSize: 12,
+    color: colors.textMuted,
+    marginBottom: 20,
   },
   errorBanner: {
-    backgroundColor: "#7F1D1D",
-    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: colors.dangerLight,
+    borderRadius: 10,
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#DC2626",
+    borderColor: colors.dangerBorder,
   },
   errorText: {
-    color: "#FCA5A5",
-    fontSize: 13,
+    color: colors.dangerText,
+    fontSize: 12,
+    fontWeight: "500",
+    flex: 1,
   },
   fieldGroup: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
   label: {
-    color: "#94A3B8",
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: 0.8,
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.6,
     textTransform: "uppercase",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   input: {
-    backgroundColor: "#0F172A",
+    backgroundColor: colors.surfaceSubtle,
     borderWidth: 1,
-    borderColor: "#334155",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: "#F1F5F9",
-    fontSize: 15,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: colors.text,
+    fontSize: 14,
   },
   loginButton: {
-    backgroundColor: "#2563EB",
-    borderRadius: 10,
-    paddingVertical: 16,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
     alignItems: "center",
+    justifyContent: "center",
     marginTop: 8,
-    shadowColor: "#2563EB",
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 4,
+    ...shadows.sm,
   },
   loginButtonDisabled: {
     opacity: 0.6,
   },
+  btnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   loginButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700",
     letterSpacing: 0.5,
   },
   demoHint: {
-    marginTop: 24,
+    marginTop: 20,
     alignItems: "center",
   },
   demoHintText: {
-    color: "#475569",
+    color: colors.textLight,
     fontSize: 11,
     textAlign: "center",
-    lineHeight: 16,
   },
 });

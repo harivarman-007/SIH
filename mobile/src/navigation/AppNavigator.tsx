@@ -1,6 +1,7 @@
 /**
  * AppNavigator.tsx
- * Stack navigator — Login → (authenticated) Dashboard ↔ Inspections ↔ Actions ↔ NewObservation → RiskCard, Queue
+ * Stack navigator - Login -> (authenticated) Dashboard <-> Inspections <-> Actions <-> NewObservation -> RiskCard, Queue
+ * Executive Light Theme navigation container with Royal Blue accents.
  */
 
 import React from "react";
@@ -15,6 +16,7 @@ import ActionsScreen from "../screens/ActionsScreen";
 import NewObservationScreen from "../screens/NewObservationScreen";
 import RiskCardScreen from "../screens/RiskCardScreen";
 import QueueScreen from "../screens/QueueScreen";
+import { colors } from "../theme";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -29,11 +31,11 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const SCREEN_OPTIONS = {
-  headerStyle: { backgroundColor: "#0F172A" },
-  headerTintColor: "#F1F5F9",
-  headerTitleStyle: { fontWeight: "700" as const, fontSize: 16 },
+  headerStyle: { backgroundColor: colors.surface },
+  headerTintColor: colors.text,
+  headerTitleStyle: { fontWeight: "800" as const, fontSize: 16, color: colors.text },
   headerShadowVisible: false,
-  contentStyle: { backgroundColor: "#0F172A" },
+  contentStyle: { backgroundColor: colors.background },
 };
 
 export default function AppNavigator() {
@@ -49,7 +51,7 @@ export default function AppNavigator() {
           name="Dashboard"
           component={DashboardScreen}
           options={{
-            title: "Intellifusion",
+            title: "Intellifusion SafeMine",
             headerLeft: () => null,
             gestureEnabled: false,
           }}

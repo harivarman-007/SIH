@@ -1,12 +1,13 @@
 /**
  * InspectionsScreen.tsx
  * Field Inspector statutory inspections screen:
+ * - Executive Light Theme (white surfaces, slate-50 canvas, royal blue accents)
  * - Offline-first execution: SCHEDULED -> IN_PROGRESS -> SUBMITTED queued in local outbox
  * - Mandatory sign-off notes when submitting with zero observations (Phase 29 Rule #2)
  * - Pull-to-refresh two-way delta sync
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -20,10 +21,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import { inspectionRepository } from "../db/InspectionRepository";
 import { pullDeltaSync } from "../sync/SyncWorker";
 import { CachedInspection } from "../db/schema";
 import { BottomNavBar } from "../components/BottomNavBar";
+import { colors, shadows } from "../theme";
 
 type StatusFilter = "ALL" | "SCHEDULED" | "IN_PROGRESS" | "SUBMITTED" | "CLOSED";
 
@@ -149,15 +152,15 @@ export default function InspectionsScreen({ navigation }: any) {
     const s = status.toLowerCase();
     switch (s) {
       case "scheduled":
-        return { color: "#60A5FA", bg: "#1E3A8A" };
+        return { color: "#1D4ED8", bg: "#EFF6FF", border: "#BFDBFE" };
       case "in_progress":
-        return { color: "#F59E0B", bg: "#78350F" };
+        return { color: "#B45309", bg: "#FEF3C7", border: "#FDE68A" };
       case "submitted":
-        return { color: "#C084FC", bg: "#581C87" };
+        return { color: "#7E22CE", bg: "#F3E8FF", border: "#E9D5FF" };
       case "closed":
-        return { color: "#22C55E", bg: "#14532D" };
+        return { color: "#047857", bg: "#ECFDF5", border: "#A7F3D0" };
       default:
-        return { color: "#94A3B8", bg: "#334155" };
+        return { color: "#475569", bg: "#F1F5F9", border: "#E2E8F0" };
     }
   };
 
@@ -174,27 +177,31 @@ export default function InspectionsScreen({ navigation }: any) {
 
       {/* Filter Tabs */}
       <View style={styles.filterRow}>
-        {(["ALL", "SCHEDULED", "IN_PROGRESS", "SUBMITTED", "CLOSED"] as StatusFilter[]).map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.filterChip, filter === f && styles.activeFilterChip]}
-            onPress={() => setFilter(f)}
-          >
-            <Text style={[styles.filterText, filter === f && styles.activeFilterText]}>
-              {f.replace("_", " ")}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {(["ALL", "SCHEDULED", "IN_PROGRESS", "SUBMITTED", "CLOSED"] as StatusFilter[]).map((f) => {
+          const isActive = filter === f;
+          return (
+            <TouchableOpacity
+              key={f}
+              style={[styles.filterChip, isActive && styles.activeFilterChip]}
+              onPress={() => setFilter(f)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.filterText, isActive && styles.activeFilterText]}>
+                {f.replace("_", " ")}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* Inspection List */}
       {loading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#F59E0B" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : filtered.length === 0 ? (
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyIcon}>📋</Text>
+          <Ionicons name="clipboard-outline" size={48} color="#94A3B8" style={{ marginBottom: 12 }} />
           <Text style={styles.emptyTitle}>No Inspections Found</Text>
           <Text style={styles.emptySubtitle}>
             Pull down to sync assigned inspections from server
@@ -209,7 +216,7 @@ export default function InspectionsScreen({ navigation }: any) {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
-              tintColor="#F59E0B"
+              tintColor={colors.primary}
             />
           }
           renderItem={({ item }) => {
@@ -218,10 +225,10 @@ export default function InspectionsScreen({ navigation }: any) {
             const isInProgress = item.status.toLowerCase() === "in_progress";
 
             return (
-              <View style={styles.card}>
+              <View style={[styles.card, shadows.sm]}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.codeText}>{item.code}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: st.bg }]}>
+                  <View style={[styles.statusBadge, { backgroundColor: st.bg, borderColor: st.border }]}>
                     <Text style={[styles.statusText, { color: st.color }]}>
                       {item.status.replace("_", " ").toUpperCase()}
                     </Text>
@@ -235,7 +242,7 @@ export default function InspectionsScreen({ navigation }: any) {
                   <Text style={styles.metaValue}>
                     {new Date(item.scheduled_for).toLocaleDateString()}
                   </Text>
-                  <Text style={[styles.metaLabel, { marginLeft: 12 }]}>Due:</Text>
+                  <Text style={[styles.metaLabel, { marginLeft: 14 }]}>Due:</Text>
                   <Text style={styles.metaValue}>
                     {new Date(item.due_at).toLocaleDateString()}
                   </Text>
@@ -243,12 +250,15 @@ export default function InspectionsScreen({ navigation }: any) {
 
                 {/* Observation Count indicator */}
                 <View style={styles.obsBadgeRow}>
-                  <Text style={styles.obsBadgeText}>
-                    🔍 {item.observation_count} Observation(s) Linked
-                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Ionicons name="search-outline" size={13} color={colors.primary} />
+                    <Text style={styles.obsBadgeText}>
+                      {item.observation_count} Observation(s) Linked
+                    </Text>
+                  </View>
                   {item.notes && (
                     <Text style={styles.notesExcerpt} numberOfLines={1}>
-                      📝 {item.notes}
+                      {item.notes}
                     </Text>
                   )}
                 </View>
@@ -261,7 +271,8 @@ export default function InspectionsScreen({ navigation }: any) {
                       activeOpacity={0.8}
                       onPress={() => handleStart(item)}
                     >
-                      <Text style={styles.startBtnText}>▶ Start Inspection</Text>
+                      <Ionicons name="play" size={13} color="#FFFFFF" style={{ marginRight: 6 }} />
+                      <Text style={styles.startBtnText}>Start Inspection</Text>
                     </TouchableOpacity>
                   )}
 
@@ -277,7 +288,8 @@ export default function InspectionsScreen({ navigation }: any) {
                           })
                         }
                       >
-                        <Text style={styles.addObsBtnText}>➕ Add Observation</Text>
+                        <Ionicons name="add" size={15} color="#FFFFFF" style={{ marginRight: 4 }} />
+                        <Text style={styles.addObsBtnText}>Add Observation</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
@@ -285,7 +297,8 @@ export default function InspectionsScreen({ navigation }: any) {
                         activeOpacity={0.8}
                         onPress={() => handleSubmitPress(item)}
                       >
-                        <Text style={styles.submitBtnText}>✓ Submit Report</Text>
+                        <Ionicons name="checkmark-done" size={15} color="#FFFFFF" style={{ marginRight: 4 }} />
+                        <Text style={styles.submitBtnText}>Submit Report</Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -304,7 +317,7 @@ export default function InspectionsScreen({ navigation }: any) {
         onRequestClose={() => setSubmitModalVisible(false)}
       >
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, shadows.lg]}>
             <Text style={styles.modalTitle}>Zero-Violation Sign-Off</Text>
             <Text style={styles.modalDescription}>
               This inspection ({activeSubmitInspection?.code}) has 0 recorded observations. Per DGMS regulations, submitting a clean inspection requires mandatory certification notes.
@@ -315,7 +328,7 @@ export default function InspectionsScreen({ navigation }: any) {
               multiline
               numberOfLines={4}
               placeholder="Enter statutory sign-off notes (e.g., sector surveyed, all gas levels safe, bulkheads sealed)..."
-              placeholderTextColor="#64748B"
+              placeholderTextColor="#94A3B8"
               value={signOffNotes}
               onChangeText={setSignOffNotes}
             />
@@ -334,7 +347,7 @@ export default function InspectionsScreen({ navigation }: any) {
                 onPress={handleConfirmZeroObsSubmit}
               >
                 {submitting ? (
-                  <ActivityIndicator color="#0F172A" size="small" />
+                  <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
                   <Text style={styles.modalConfirmText}>Certify & Submit</Text>
                 )}
@@ -354,135 +367,143 @@ export default function InspectionsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#0F172A",
+    backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: "#F8FAFC",
+    fontSize: 20,
+    fontWeight: "800",
+    color: colors.text,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: "#94A3B8",
+    color: colors.subtext,
     marginTop: 2,
   },
   filterRow: {
     flexDirection: "row",
     paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingVertical: 10,
     gap: 6,
     flexWrap: "wrap",
+    backgroundColor: colors.background,
   },
   filterChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: "#1E293B",
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: colors.border,
   },
   activeFilterChip: {
-    backgroundColor: "#F59E0B",
-    borderColor: "#D97706",
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   filterText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "700",
-    color: "#94A3B8",
+    color: colors.subtext,
   },
   activeFilterText: {
-    color: "#0F172A",
+    color: "#FFFFFF",
   },
   listContent: {
     padding: 16,
-    paddingTop: 8,
     gap: 12,
   },
   card: {
-    backgroundColor: "#1E293B",
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: colors.border,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 8,
   },
   codeText: {
     fontFamily: "monospace",
     fontWeight: "800",
-    color: "#F59E0B",
+    color: colors.primary,
     fontSize: 13,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    borderWidth: 1,
   },
   statusText: {
     fontSize: 10,
     fontWeight: "800",
+    letterSpacing: 0.4,
   },
   titleText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.text,
     marginBottom: 8,
   },
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   metaLabel: {
     fontSize: 11,
-    color: "#64748B",
+    color: colors.subtext,
     fontWeight: "600",
     marginRight: 4,
   },
   metaValue: {
     fontSize: 11,
-    color: "#CBD5E1",
+    color: colors.text,
     fontWeight: "600",
   },
   obsBadgeRow: {
-    backgroundColor: "#0F172A",
+    backgroundColor: "#F8FAFC",
     borderRadius: 8,
-    padding: 8,
-    marginBottom: 10,
+    padding: 10,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#1E293B",
+    borderColor: colors.border,
   },
   obsBadgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
-    color: "#38BDF8",
+    color: colors.primary,
   },
   notesExcerpt: {
-    fontSize: 10,
-    color: "#94A3B8",
+    fontSize: 11,
+    color: colors.subtext,
     marginTop: 4,
+    fontStyle: "italic",
   },
   actionsRow: {
-    marginTop: 4,
+    marginTop: 2,
   },
   startBtn: {
-    backgroundColor: "#2563EB",
+    backgroundColor: colors.primary,
     paddingVertical: 10,
     borderRadius: 8,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
   },
   startBtnText: {
     color: "#FFFFFF",
-    fontWeight: "800",
+    fontWeight: "700",
     fontSize: 12,
   },
   inProgressActionGroup: {
@@ -491,14 +512,16 @@ const styles = StyleSheet.create({
   },
   addObsBtn: {
     flex: 1,
-    backgroundColor: "#0EA5E9",
+    backgroundColor: "#0284C7",
     paddingVertical: 10,
     borderRadius: 8,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
   },
   addObsBtnText: {
     color: "#FFFFFF",
-    fontWeight: "800",
+    fontWeight: "700",
     fontSize: 12,
   },
   submitBtn: {
@@ -506,11 +529,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#16A34A",
     paddingVertical: 10,
     borderRadius: 8,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
   },
   submitBtnText: {
     color: "#FFFFFF",
-    fontWeight: "800",
+    fontWeight: "700",
     fontSize: 12,
   },
   centerContainer: {
@@ -519,57 +544,53 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 32,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
   emptyTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#F1F5F9",
+    color: colors.text,
   },
   emptySubtitle: {
     fontSize: 12,
-    color: "#64748B",
+    color: colors.subtext,
     textAlign: "center",
     marginTop: 4,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.8)",
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
   },
   modalCard: {
-    backgroundColor: "#1E293B",
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     width: "100%",
     maxWidth: 400,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: colors.border,
   },
   modalTitle: {
     fontSize: 17,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: colors.text,
     marginBottom: 8,
   },
   modalDescription: {
     fontSize: 12,
-    color: "#94A3B8",
-    lineHeight: 16,
+    color: colors.subtext,
+    lineHeight: 17,
     marginBottom: 14,
   },
   modalInput: {
-    backgroundColor: "#0F172A",
+    backgroundColor: "#F8FAFC",
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: colors.border,
     padding: 12,
-    color: "#FFFFFF",
-    fontSize: 12,
+    color: colors.text,
+    fontSize: 13,
     textAlignVertical: "top",
     minHeight: 90,
     marginBottom: 16,
@@ -583,10 +604,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: "#334155",
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   modalCancelText: {
-    color: "#F1F5F9",
+    color: colors.subtext,
     fontWeight: "700",
     fontSize: 12,
   },
@@ -594,10 +617,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: "#F59E0B",
+    backgroundColor: colors.primary,
   },
   modalConfirmText: {
-    color: "#0F172A",
+    color: "#FFFFFF",
     fontWeight: "800",
     fontSize: 12,
   },

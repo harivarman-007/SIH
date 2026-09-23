@@ -1,7 +1,9 @@
 /**
  * RiskCardScreen.tsx
- * Displays the on-device risk assessment immediately after observation capture.
- * Shows score, flag, top contributing factors, and rule override reason.
+ * Displays the on-device risk assessment immediately after observation capture:
+ * - Executive Light Theme (white surfaces, slate-50 canvas, royal blue accents)
+ * - Vector Ionicons (zero emojis)
+ * - Shows score, flag, top contributing factors, and rule override reason.
  */
 
 import React from "react";
@@ -12,20 +14,49 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import type { RiskScoringResult } from "../models/RiskScoringEngine";
+import { colors, shadows } from "../theme";
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "RiskCard">;
   route: RouteProp<RootStackParamList, "RiskCard">;
 };
 
-const FLAG_CONFIG: Record<string, { color: string; bg: string; icon: string; label: string }> = {
-  high: { color: "#EF4444", bg: "#7F1D1D", icon: "🔴", label: "HIGH RISK" },
-  medium: { color: "#F59E0B", bg: "#78350F", icon: "🟡", label: "MEDIUM RISK" },
-  low: { color: "#22C55E", bg: "#14532D", icon: "🟢", label: "LOW RISK" },
+const FLAG_CONFIG: Record<
+  string,
+  {
+    color: string;
+    bg: string;
+    border: string;
+    iconName: keyof typeof Ionicons.glyphMap;
+    label: string;
+  }
+> = {
+  high: {
+    color: "#DC2626",
+    bg: "#FEF2F2",
+    border: "#FECACA",
+    iconName: "alert-circle",
+    label: "HIGH RISK",
+  },
+  medium: {
+    color: "#D97706",
+    bg: "#FFFBEB",
+    border: "#FDE68A",
+    iconName: "warning",
+    label: "MEDIUM RISK",
+  },
+  low: {
+    color: "#16A34A",
+    bg: "#F0FDF4",
+    border: "#BBF7D0",
+    iconName: "checkmark-circle",
+    label: "LOW RISK",
+  },
 };
 
 function ScoreArc({ score }: { score: number }) {
@@ -35,10 +66,14 @@ function ScoreArc({ score }: { score: number }) {
 
   return (
     <View style={[styles.scoreArcContainer, { borderColor: cfg.color }]}>
-      <Text style={styles.scoreIconLarge}>{cfg.icon}</Text>
-      <Text style={[styles.scoreNumber, { color: cfg.color }]}>{pct}</Text>
-      <Text style={styles.scorePercent}>/ 100</Text>
-      <Text style={[styles.scoreFlagLabel, { color: cfg.color }]}>{cfg.label}</Text>
+      <Ionicons name={cfg.iconName} size={32} color={cfg.color} style={{ marginBottom: 4 }} />
+      <View style={{ flexDirection: "row", alignItems: "baseline" }}>
+        <Text style={[styles.scoreNumber, { color: cfg.color }]}>{pct}</Text>
+        <Text style={styles.scorePercent}>/ 100</Text>
+      </View>
+      <View style={[styles.flagPill, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
+        <Text style={[styles.scoreFlagLabel, { color: cfg.color }]}>{cfg.label}</Text>
+      </View>
     </View>
   );
 }
@@ -59,7 +94,7 @@ export default function RiskCardScreen({ navigation, route }: Props) {
   };
 
   const flag = riskResult.flag;
-  const cfg = FLAG_CONFIG[flag];
+  const cfg = FLAG_CONFIG[flag] || FLAG_CONFIG.low;
   const isRuleTrigger = riskResult.rule_triggered;
 
   const handleGoToQueue = () => {
@@ -79,16 +114,19 @@ export default function RiskCardScreen({ navigation, route }: Props) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Risk Assessment</Text>
-        <Text style={styles.headerSubtitle}>On-device edge model result</Text>
+        <Text style={styles.headerSubtitle}>On-device edge AI isolation forest inference</Text>
       </View>
 
       {/* Score Card */}
-      <View style={[styles.scoreCard, { borderColor: cfg.color }]}>
+      <View style={[styles.scoreCard, shadows.sm]}>
         <ScoreArc score={riskResult.score} />
 
         {isRuleTrigger && (
           <View style={styles.ruleBanner}>
-            <Text style={styles.ruleBannerTitle}>⚡ CRITICAL RULE TRIGGERED</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              <Ionicons name="flash" size={14} color="#DC2626" />
+              <Text style={styles.ruleBannerTitle}>CRITICAL DGMS RULE TRIGGERED</Text>
+            </View>
             <Text style={styles.ruleBannerRule}>{riskResult.reasons.rule_override}</Text>
           </View>
         )}
@@ -97,15 +135,18 @@ export default function RiskCardScreen({ navigation, route }: Props) {
       {/* Rationale */}
       {riskResult.reasons.rationale ? (
         <View style={styles.rationaleCard}>
-          <Text style={styles.rationaleLabel}>⚠️ HAZARD DETECTED</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <Ionicons name="warning-outline" size={14} color="#D97706" />
+            <Text style={styles.rationaleLabel}>HAZARD DETECTED</Text>
+          </View>
           <Text style={styles.rationaleText}>{riskResult.reasons.rationale}</Text>
         </View>
       ) : null}
 
       {/* Top Contributors */}
       {riskResult.reasons.top_contributors && riskResult.reasons.top_contributors.length > 0 ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>TOP RISK DRIVERS</Text>
+        <View style={[styles.card, shadows.sm]}>
+          <Text style={styles.sectionLabel}>PRIMARY RISK DRIVERS</Text>
           <View style={styles.contributorsRow}>
             {riskResult.reasons.top_contributors.map((c) => (
               <ContributorBadge key={c} name={c} />
@@ -116,11 +157,11 @@ export default function RiskCardScreen({ navigation, route }: Props) {
 
       {/* Feature Breakdown */}
       {riskResult.reasons.features ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>FEATURE BREAKDOWN</Text>
+        <View style={[styles.card, shadows.sm]}>
+          <Text style={styles.sectionLabel}>FEATURE IMPACT BREAKDOWN</Text>
           <View style={styles.featureTable}>
             {Object.entries(riskResult.reasons.features)
-              .filter(([, v]) => v > 0)
+              .filter(([, v]) => (v as number) > 0)
               .map(([key, val]) => (
                 <View key={key} style={styles.featureRow}>
                   <Text style={styles.featureKey}>{key.replace(/_/g, " ")}</Text>
@@ -144,36 +185,43 @@ export default function RiskCardScreen({ navigation, route }: Props) {
         </View>
       ) : null}
 
-      {/* Offline badge */}
+      {/* Offline Badge */}
       <View style={styles.offlineBadge}>
+        <Ionicons name="cloud-offline-outline" size={15} color={colors.primary} style={{ marginRight: 6 }} />
         <Text style={styles.offlineBadgeText}>
-          📵 Saved offline · Local ID #{localId} · Pending sync
+          Saved offline · Local ID #{localId} · Queued for cloud sync
         </Text>
       </View>
 
       {/* Actions */}
       <View style={styles.actions}>
         <TouchableOpacity
-          style={styles.primaryAction}
+          style={[styles.primaryAction, shadows.sm]}
           onPress={handleGoToQueue}
           testID="goto-queue-button"
+          activeOpacity={0.8}
         >
-          <Text style={styles.primaryActionText}>📤 View Sync Queue</Text>
+          <Ionicons name="cloud-upload-outline" size={17} color="#FFFFFF" style={{ marginRight: 6 }} />
+          <Text style={styles.primaryActionText}>View Sync Queue</Text>
         </TouchableOpacity>
         <View style={styles.secondaryRow}>
           <TouchableOpacity
-            style={styles.secondaryAction}
+            style={[styles.secondaryAction, shadows.sm]}
             onPress={handleNewObservation}
             testID="new-obs-button"
+            activeOpacity={0.8}
           >
-            <Text style={styles.secondaryActionText}>+ New</Text>
+            <Ionicons name="add" size={17} color={colors.primary} style={{ marginRight: 4 }} />
+            <Text style={styles.secondaryActionTextPrimary}>New Observation</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.secondaryAction}
+            style={[styles.secondaryAction, shadows.sm]}
             onPress={handleDashboard}
             testID="dashboard-button"
+            activeOpacity={0.8}
           >
-            <Text style={styles.secondaryActionText}>🏠 Dashboard</Text>
+            <Ionicons name="home-outline" size={17} color={colors.text} style={{ marginRight: 4 }} />
+            <Text style={styles.secondaryActionText}>Dashboard</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -184,109 +232,118 @@ export default function RiskCardScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0F172A",
+    backgroundColor: colors.background,
   },
   content: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 40,
+    gap: 12,
   },
   header: {
-    marginBottom: 20,
+    paddingVertical: 8,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "800",
-    color: "#F1F5F9",
+    color: colors.text,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: "#64748B",
+    color: colors.subtext,
     marginTop: 2,
   },
   scoreCard: {
-    backgroundColor: "#1E293B",
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: 20,
     alignItems: "center",
-    borderWidth: 2,
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   scoreArcContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 3,
-    borderRadius: 80,
     width: 140,
     height: 140,
-    marginBottom: 16,
-  },
-  scoreIconLarge: {
-    fontSize: 28,
-    marginBottom: 2,
+    borderRadius: 70,
+    borderWidth: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F8FAFC",
   },
   scoreNumber: {
-    fontSize: 40,
+    fontSize: 34,
     fontWeight: "900",
-    lineHeight: 44,
+    letterSpacing: -1,
   },
   scorePercent: {
-    fontSize: 12,
-    color: "#64748B",
+    fontSize: 13,
+    color: colors.subtext,
+    fontWeight: "600",
+    marginLeft: 2,
+  },
+  flagPill: {
+    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
   },
   scoreFlagLabel: {
-    marginTop: 4,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.5,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
   ruleBanner: {
-    backgroundColor: "#7F1D1D",
-    borderRadius: 10,
-    padding: 14,
-    width: "100%",
+    backgroundColor: "#FEF2F2",
     borderWidth: 1,
-    borderColor: "#DC2626",
+    borderColor: "#FECACA",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 14,
+    width: "100%",
   },
   ruleBannerTitle: {
-    color: "#FCA5A5",
+    color: "#DC2626",
     fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    marginBottom: 4,
+    fontWeight: "800",
+    letterSpacing: 0.4,
   },
   ruleBannerRule: {
-    color: "#FEE2E2",
-    fontSize: 13,
-    fontWeight: "600",
+    color: "#991B1B",
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "500",
   },
   rationaleCard: {
-    backgroundColor: "#1C1917",
-    borderRadius: 10,
+    backgroundColor: "#FFFBEB",
+    borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#DC2626",
-    marginBottom: 16,
+    borderColor: "#FDE68A",
   },
   rationaleLabel: {
-    color: "#FCA5A5",
+    color: "#D97706",
     fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-    marginBottom: 6,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
   rationaleText: {
-    color: "#FEE2E2",
+    color: "#92400E",
     fontSize: 13,
-    lineHeight: 20,
+    lineHeight: 18,
+    fontWeight: "500",
   },
-  section: {
-    marginBottom: 20,
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   sectionLabel: {
-    color: "#94A3B8",
-    fontSize: 10,
+    color: colors.subtext,
+    fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 1.5,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
     marginBottom: 10,
   },
@@ -296,79 +353,81 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   contributorBadge: {
-    backgroundColor: "#1E3A5F",
-    borderRadius: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    backgroundColor: "#F1F5F9",
     borderWidth: 1,
-    borderColor: "#2563EB",
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   contributorText: {
-    color: "#93C5FD",
+    color: colors.text,
     fontSize: 12,
     fontWeight: "600",
   },
   featureTable: {
-    backgroundColor: "#1E293B",
-    borderRadius: 10,
-    padding: 12,
     gap: 10,
   },
   featureRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    justifyContent: "space-between",
   },
   featureKey: {
-    flex: 2,
-    color: "#94A3B8",
-    fontSize: 11,
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: "600",
     textTransform: "capitalize",
+    width: "40%",
   },
   featureBarOuter: {
-    flex: 3,
-    height: 6,
-    backgroundColor: "#334155",
-    borderRadius: 3,
+    flex: 1,
+    height: 8,
+    backgroundColor: "#F1F5F9",
+    borderRadius: 4,
+    marginHorizontal: 10,
     overflow: "hidden",
   },
   featureBarInner: {
     height: "100%",
-    borderRadius: 3,
-    opacity: 0.8,
+    borderRadius: 4,
   },
   featureVal: {
+    fontSize: 12,
+    fontWeight: "700",
     width: 36,
     textAlign: "right",
-    fontSize: 11,
-    fontWeight: "600",
   },
   offlineBadge: {
-    backgroundColor: "#0C1A2E",
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#1E3A5F",
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: 10,
+    padding: 10,
   },
   offlineBadgeText: {
-    color: "#60A5FA",
-    fontSize: 11,
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "600",
   },
   actions: {
     gap: 10,
+    marginTop: 4,
   },
   primaryAction: {
-    backgroundColor: "#2563EB",
+    backgroundColor: colors.primary,
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
   },
   primaryActionText: {
     color: "#FFFFFF",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
   },
   secondaryRow: {
@@ -377,16 +436,23 @@ const styles = StyleSheet.create({
   },
   secondaryAction: {
     flex: 1,
-    backgroundColor: "#1E293B",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   secondaryActionText: {
-    color: "#94A3B8",
-    fontSize: 14,
+    color: colors.text,
+    fontSize: 13,
     fontWeight: "600",
+  },
+  secondaryActionTextPrimary: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "700",
   },
 });
