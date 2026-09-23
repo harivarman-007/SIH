@@ -297,3 +297,125 @@ async def export_report_csv(
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@router.get("/{report_id}/pdf")
+async def export_report_pdf(
+    report_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.REPORT_VIEW)),
+):
+    """
+    GET /reports/{report_id}/pdf
+    Generates or streams a formatted statutory PDF report return.
+    """
+    from pathlib import Path
+    from app.config import settings
+    from app.services.pdf_generator import generate_compliance_pdf
+
+    stmt = select(Report).where(Report.id == report_id)
+    report = (await db.execute(stmt)).scalar_one_or_none()
+    if not report:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "NOT_FOUND", "message": "Report not found.", "detail": "Report not found."},
+        )
+
+    # Check if pre-rendered PDF exists on disk
+    file_path = report.scope.get("file_path") if report.scope else None
+    if file_path and Path(file_path).exists():
+        pdf_bytes = Path(file_path).read_bytes()
+    else:
+        # Generate on the fly
+        pdf_bytes = generate_compliance_pdf(
+            report_id=str(report.id),
+            report_type=report.type,
+            scope_meta=report.scope or {},
+            payload=report.payload or {},
+            generated_at=report.generated_at or datetime.now(timezone.utc),
+        )
+
+    await append_audit_entry(
+        db=db,
+        action="REPORT_EXPORTED_PDF",
+        payload={
+            "report_id": str(report.id),
+            "type": report.type,
+            "format": "pdf",
+            "exported_by": str(current_user.id),
+        },
+        actor_id=current_user.id,
+    )
+
+    filename = f"statutory-return-{report.type}-{str(report.id)[:8]}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{filename}"',
+            "Content-Type": "application/pdf",
+        },
+    )
+
+
+@router.get("/scheduled/list")
+async def list_scheduled_reports(
+    mine_site_id: Optional[uuid.UUID] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.REPORT_VIEW)),
+):
+    """
+    GET /reports/scheduled/list
+    Lists automated weekly scheduled PDF reports.
+    """
+    allowed_mine_ids = await visible_mine_ids(db, current_user)
+    stmt = select(Report).order_by(Report.generated_at.desc())
+
+    reports = (await db.execute(stmt)).scalars().all()
+
+    scheduled_reports = []
+    for r in reports:
+        scope = r.scope or {}
+        if scope.get("is_scheduled") or scope.get("frequency") == "weekly":
+            site_id = scope.get("mine_site_id")
+            if mine_site_id and site_id != str(mine_site_id):
+                continue
+            if allowed_mine_ids is not None and site_id:
+                try:
+                    if uuid.UUID(site_id) not in allowed_mine_ids:
+                        continue
+                except ValueError:
+                    pass
+
+            scheduled_reports.append(
+                {
+                    "id": str(r.id),
+                    "type": r.type,
+                    "mine_name": scope.get("mine_name", "All Mines"),
+                    "frequency": scope.get("frequency", "weekly"),
+                    "filename": scope.get("filename", f"report-{str(r.id)[:8]}.pdf"),
+                    "generated_at": r.generated_at.isoformat() if r.generated_at else None,
+                    "download_url": f"/reports/{r.id}/pdf",
+                    "date_from": scope.get("date_from"),
+                    "date_to": scope.get("date_to"),
+                    "compliance_rate_pct": r.payload.get("compliance_rate_pct", 100.0),
+                    "total_observations": r.payload.get("total_observations", 0),
+                }
+            )
+
+    return scheduled_reports
+
+
+@router.post("/scheduled/trigger")
+async def trigger_scheduled_reports(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.REPORT_CREATE)),
+):
+    """
+    POST /reports/scheduled/trigger
+    Manually triggers a weekly report generation cycle on demand.
+    """
+    from app.scheduler import generate_weekly_compliance_reports
+
+    count = await generate_weekly_compliance_reports()
+    return {"status": "success", "reports_generated": count}

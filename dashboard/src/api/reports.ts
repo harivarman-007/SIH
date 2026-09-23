@@ -45,3 +45,44 @@ export async function exportReportCsv(reportId: string, filename?: string): Prom
   document.body.removeChild(a);
   window.URL.revokeObjectURL(url);
 }
+
+export interface ScheduledReportItem {
+  id: string;
+  type: string;
+  mine_name: string;
+  frequency: string;
+  filename: string;
+  generated_at: string;
+  download_url: string;
+  date_from?: string;
+  date_to?: string;
+  compliance_rate_pct: number;
+  total_observations: number;
+}
+
+export async function fetchScheduledReports(mine_site_id?: string): Promise<ScheduledReportItem[]> {
+  const res = await client.get<ScheduledReportItem[]>('/reports/scheduled/list', {
+    params: mine_site_id ? { mine_site_id } : undefined,
+  });
+  return res.data;
+}
+
+export async function exportReportPdf(reportId: string, filename?: string): Promise<void> {
+  const res = await client.get(`/reports/${reportId}/pdf`, {
+    responseType: 'blob',
+  });
+  const blob = new Blob([res.data], { type: 'application/pdf' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename || `statutory-return-${reportId.slice(0, 8)}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
+export async function triggerScheduledReports(): Promise<{ status: string; reports_generated: number }> {
+  const res = await client.post('/reports/scheduled/trigger');
+  return res.data;
+}

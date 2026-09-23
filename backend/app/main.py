@@ -26,19 +26,19 @@ from app.api import (
     analytics_router,
 )
 from app.config import settings
-from app.scheduler import run_escalation_and_alert
+from app.scheduler import generate_weekly_compliance_reports, run_escalation_and_alert
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Background scheduler (auto-escalation every 5 minutes)
+# Background scheduler (auto-escalation & automated weekly PDF reports)
 # ---------------------------------------------------------------------------
 scheduler = AsyncIOScheduler()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup: launch the escalation scheduler. Shutdown: stop it cleanly."""
+    """Startup: launch the escalation & weekly report schedulers. Shutdown: stop cleanly."""
     scheduler.add_job(
         run_escalation_and_alert,
         trigger="interval",
@@ -47,8 +47,16 @@ async def lifespan(app: FastAPI):
         replace_existing=True,
         misfire_grace_time=120,
     )
+    scheduler.add_job(
+        generate_weekly_compliance_reports,
+        trigger="interval",
+        days=7,
+        id="weekly_compliance_reports",
+        replace_existing=True,
+        misfire_grace_time=3600,
+    )
     scheduler.start()
-    logger.info("APScheduler started — auto-escalation running every 5 minutes.")
+    logger.info("APScheduler started — auto-escalation (5m) & weekly statutory PDF reports (7d).")
     yield
     scheduler.shutdown(wait=False)
     logger.info("APScheduler stopped.")

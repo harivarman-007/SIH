@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     demo_mode: bool = False  # Enabled in development / SIH evaluation via DEMO_MODE=true
     photo_storage_path: str = "/app/photos"
     ocr_upload_path: str = "/app/uploads/ocr"
+    reports_storage_path: str = "/app/uploads/reports"
 
     # CORS Allowlist: Comma-separated list of trusted origins (no wildcard when allow_credentials=True)
     cors_allowed_origins: str = (
