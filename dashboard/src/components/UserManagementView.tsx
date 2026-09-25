@@ -6,13 +6,14 @@ import {
   CheckCircle2,
   X,
 } from 'lucide-react';
-import { fetchUsers, adminCreateUser, UserInfo, AuthRole } from '../api/auth';
+import { fetchUsers, adminCreateUser, fetchMineSites, MineSiteOption, UserInfo, AuthRole } from '../api/auth';
 import { usePermissions } from './providers/PermissionProvider';
 import { Permission } from '../types/permissions';
 
 export const UserManagementView: React.FC = () => {
   const { can } = usePermissions();
   const [users, setUsers] = useState<UserInfo[]>([]);
+  const [mineSites, setMineSites] = useState<MineSiteOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +23,7 @@ export const UserManagementView: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<AuthRole>('inspector');
-  const [mineSiteId, setMineSiteId] = useState('11111111-1111-1111-1111-111111111111');
+  const [mineSiteId, setMineSiteId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
@@ -42,24 +43,37 @@ export const UserManagementView: React.FC = () => {
 
   useEffect(() => {
     loadUsers();
+    fetchMineSites()
+      .then((sites) => {
+        setMineSites(sites);
+        if (sites.length > 0) {
+          setMineSiteId(sites[0].id);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !email.trim() || !password) {
-      setFormError('All fields are required.');
+      setFormError('All required fields must be filled.');
       return;
     }
 
     setSubmitting(true);
     setFormError(null);
     try {
+      const finalSiteId =
+        role === 'super_admin' || role === 'corporate_management' || role === 'regulator' || !mineSiteId
+          ? undefined
+          : mineSiteId;
+
       await adminCreateUser({
         full_name: fullName.trim(),
         email: email.trim(),
         password,
         role,
-        mine_site_id: role === 'super_admin' ? undefined : mineSiteId,
+        mine_site_id: finalSiteId,
       });
 
       setFormSuccess(`User ${email} provisioned successfully!`);
@@ -68,10 +82,25 @@ export const UserManagementView: React.FC = () => {
       setEmail('');
       setPassword('');
       setRole('inspector');
+      if (mineSites.length > 0) {
+        setMineSiteId(mineSites[0].id);
+      }
       loadUsers();
     } catch (err: any) {
-      const detail = err.response?.data?.detail;
-      setFormError(typeof detail === 'string' ? detail : err.message || 'Failed to create user.');
+      const respData = err.response?.data;
+      let detailMsg = 'Failed to create user.';
+      if (respData) {
+        if (typeof respData.detail === 'string') {
+          detailMsg = respData.detail;
+        } else if (respData.detail && typeof respData.detail === 'object') {
+          detailMsg = respData.detail.message || respData.detail.detail || JSON.stringify(respData.detail);
+        } else if (respData.message) {
+          detailMsg = respData.message;
+        }
+      } else if (err.message) {
+        detailMsg = err.message;
+      }
+      setFormError(detailMsg);
     } finally {
       setSubmitting(false);
     }
@@ -290,14 +319,24 @@ export const UserManagementView: React.FC = () => {
 
               {role !== 'super_admin' && (
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Mine Site Jurisdiction ID</label>
-                  <input
-                    type="text"
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    Assigned Mine Site Jurisdiction {role === 'corporate_management' || role === 'regulator' ? '(Optional)' : '*'}
+                  </label>
+                  <select
                     value={mineSiteId}
                     onChange={(e) => setMineSiteId(e.target.value)}
-                    placeholder="UUID or mine identifier"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:border-blue-700 focus:bg-white transition-colors"
-                  />
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 text-xs focus:outline-none focus:border-blue-700 focus:bg-white transition-colors"
+                  >
+                    <option value="">Global / Corporate Jurisdiction (No specific mine site)</option>
+                    {mineSites.map((site) => (
+                      <option key={site.id} value={site.id}>
+                        {site.name} ({site.location_name})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-slate-400 mt-1 italic">
+                    Inspectors, Mine Managers, and Contractors must be associated with an active mine site.
+                  </p>
                 </div>
               )}
 

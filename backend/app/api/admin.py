@@ -29,6 +29,7 @@ from app.models import (
     ComplianceRule,
     ContractorProfile,
     CorporateMineAccess,
+    MineSite,
     RolePermissionModel,
     SystemSetting,
     User,
@@ -89,6 +90,28 @@ async def list_admin_users(
     return out
 
 
+@router.get("/mine-sites", response_model=List[Dict[str, Any]])
+async def list_mine_sites(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(authenticate),
+):
+    """
+    GET /admin/mine-sites
+    Returns registered mine sites for administrative provisioning.
+    """
+    stmt = select(MineSite).order_by(MineSite.name.asc())
+    res = await db.execute(stmt)
+    sites = res.scalars().all()
+    return [
+        {
+            "id": str(s.id),
+            "name": s.name,
+            "location_name": s.location_name,
+        }
+        for s in sites
+    ]
+
+
 @router.post("/users", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 async def create_user(
     req: AdminUserCreateRequest,
@@ -111,6 +134,19 @@ async def create_user(
                 "detail": "A user with this email already exists.",
             },
         )
+
+    # Validate that the requested mine_site_id actually exists in the database
+    if req.mine_site_id:
+        site = await db.get(MineSite, req.mine_site_id)
+        if not site:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "NOT_FOUND",
+                    "message": f"Mine site with ID '{req.mine_site_id}' does not exist.",
+                    "detail": f"Mine site with ID '{req.mine_site_id}' does not exist.",
+                },
+            )
 
     pw_hash = hash_password(req.password)
     new_user = User(

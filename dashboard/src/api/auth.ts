@@ -70,4 +70,15 @@ export async function adminCreateUser(payload: AdminUserCreatePayload): Promise<
   return res.data;
 }
 
+export interface MineSiteOption {
+  id: string;
+  name: string;
+  location_name: string;
+}
+
+export async function fetchMineSites(): Promise<MineSiteOption[]> {
+  const res = await apiClient.get<MineSiteOption[]>('/auth/mine-sites');
+  return res.data;
+}
+
 
