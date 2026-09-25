@@ -47,6 +47,7 @@ import { ComplianceRulesView } from './components/ComplianceRulesView';
 import { ComplianceReportsView } from './components/ComplianceReportsView';
 import { LabourRegisterView } from './components/LabourRegisterView';
 import { TrendAnalyticsView } from './components/TrendAnalyticsView';
+import { AdminMinesCombinedView } from './components/AdminMinesCombinedView';
 
 import { useAuthStore } from './store/authStore';
 import { ROLE_HOME_PATHS, Permission } from './types/permissions';
@@ -165,7 +166,7 @@ export default function App() {
                 <Route path="admin" element={<RoleGuard allowedRoles={['super_admin']} />}>
                   <Route index element={<Navigate to="dashboard" replace />} />
                   <Route path="dashboard" element={<AdvancedStats />} />
-                  <Route path="mines" element={<MineMap role="super_admin" />} />
+                  <Route path="mines" element={<AdminMinesCombinedView />} />
                   <Route path="audit" element={<AuditTrailView role="super_admin" />} />
                   <Route
                     path="users"

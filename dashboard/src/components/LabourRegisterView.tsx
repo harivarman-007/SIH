@@ -31,6 +31,7 @@ import { useAuthStore } from '../store/authStore';
 
 export const LabourRegisterView: React.FC = () => {
   const { user } = useAuthStore();
+  const canEdit = user?.role === 'mine_official' || user?.role === 'super_admin';
   const [activeTab, setActiveTab] = useState<'attendance' | 'workers'>('attendance');
 
   // Attendance state
@@ -445,31 +446,38 @@ export const LabourRegisterView: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setBulkError(null);
-                  setShowBulkModal(true);
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors"
-              >
-                <Users className="size-3.5 text-blue-700" />
-                <span>Bulk Shift Logging</span>
-              </button>
+            {canEdit ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkError(null);
+                    setShowBulkModal(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors"
+                >
+                  <Users className="size-3.5 text-blue-700" />
+                  <span>Bulk Shift Logging</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setSingleError(null);
-                  setShowSingleModal(true);
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
-              >
-                <Plus className="size-3.5" />
-                <span>Log Shift Entry</span>
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSingleError(null);
+                    setShowSingleModal(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
+                >
+                  <Plus className="size-3.5" />
+                  <span>Log Shift Entry</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs font-semibold">
+                <ShieldAlert className="size-3.5 text-blue-700" />
+                <span>Statutory Read-Only Access (DGMS / Regulatory Audit)</span>
+              </div>
+            )}
           </div>
 
           {/* Table */}
@@ -644,17 +652,19 @@ export const LabourRegisterView: React.FC = () => {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setWorkerError(null);
-                setShowWorkerModal(true);
-              }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
-            >
-              <UserPlus className="size-3.5" />
-              <span>Register New Worker</span>
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => {
+                  setWorkerError(null);
+                  setShowWorkerModal(true);
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
+              >
+                <UserPlus className="size-3.5" />
+                <span>Register New Worker</span>
+              </button>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
@@ -667,13 +677,13 @@ export const LabourRegisterView: React.FC = () => {
                     <th className="py-3 px-4">Designation / Role</th>
                     <th className="py-3 px-4">Employment Category</th>
                     <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    {canEdit && <th className="py-3 px-4 text-right">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                   {filteredWorkers.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-slate-400">
+                      <td colSpan={canEdit ? 6 : 5} className="py-12 text-center text-slate-400">
                         <Users className="size-8 mx-auto mb-2 text-slate-300" />
                         No workers found matching your filter criteria.
                       </td>
@@ -720,19 +730,21 @@ export const LabourRegisterView: React.FC = () => {
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleWorkerStatus(w)}
-                          className={`text-xs px-2.5 py-1 rounded-lg border font-semibold transition-colors ${
-                            w.is_active
-                              ? 'border-slate-200 text-slate-600 hover:bg-slate-100'
-                              : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                          }`}
-                        >
-                          {w.is_active ? 'Deactivate' : 'Reactivate'}
-                        </button>
-                      </td>
+                      {canEdit && (
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleWorkerStatus(w)}
+                            className={`text-xs px-2.5 py-1 rounded-lg border font-semibold transition-colors ${
+                              w.is_active
+                                ? 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            }`}
+                          >
+                            {w.is_active ? 'Deactivate' : 'Reactivate'}
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

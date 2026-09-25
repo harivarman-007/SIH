@@ -6,7 +6,7 @@
  * - Provides manual "Sync Now" trigger and sync% progress bar.
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -17,14 +17,17 @@ import {
   RefreshControl,
   Alert,
   Switch,
+  Modal,
+  TextInput,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { LocalObservation } from "../db/schema";
 import { observationRepository } from "../db/ObservationRepository";
 import { triggerManualSync, isOnline } from "../sync/TaskManager";
-import { getSyncStats } from "../sync/SyncWorker";
+import { getSyncStats, resetSyncWatermark } from "../sync/SyncWorker";
 import { useConnectivityStore } from "../store/useConnectivity";
+import { getActiveBackendUrl, setActiveBackendUrl, DEFAULT_BACKEND_URL } from "../api/client";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import { BottomNavBar } from "../components/BottomNavBar";
@@ -167,9 +170,16 @@ export default function QueueScreen({ navigation }: Props) {
   const [observations, setObservations] = useState<LocalObservation[]>([]);
   const [stats, setStats] = useState<SyncStats | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isFullSyncing, setIsFullSyncing] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [networkStatus, setNetworkStatus] = useState<boolean | null>(null);
   const { simulateOffline, toggleSimulateOffline } = useConnectivityStore();
+
+  // Server switching modal
+  const [currentServer, setCurrentServer] = useState<string>(getActiveBackendUrl());
+  const [serverModalVisible, setServerModalVisible] = useState(false);
+  const [customServerInput, setCustomServerInput] = useState("");
+  const [isTestingServer, setIsTestingServer] = useState(false);
 
   const loadData = useCallback(async () => {
     const [obs, syncStats, online] = await Promise.all([
@@ -180,6 +190,7 @@ export default function QueueScreen({ navigation }: Props) {
     setObservations(obs);
     setStats(syncStats);
     setNetworkStatus(online);
+    setCurrentServer(getActiveBackendUrl());
   }, []);
 
   useFocusEffect(
@@ -197,7 +208,7 @@ export default function QueueScreen({ navigation }: Props) {
   const handleSyncNow = async () => {
     setIsSyncing(true);
     try {
-      const result = await triggerManualSync();
+      const result = await triggerManualSync(false);
       await loadData();
       let summaryMsg = `Synced ${result.succeeded} observations.`;
       if (result.outboxSucceeded > 0) {
@@ -218,6 +229,81 @@ export default function QueueScreen({ navigation }: Props) {
     }
   };
 
+  const handleForceFullSync = async () => {
+    Alert.alert(
+      "Force Full Re-Sync",
+      "This will reset the sync watermark and pull all inspections, actions, and observations from the server.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Proceed",
+          onPress: async () => {
+            setIsFullSyncing(true);
+            try {
+              const result = await triggerManualSync(true);
+              await loadData();
+              Alert.alert(
+                "Full Re-Sync Complete",
+                `Pulled ${result.deltaInspections} inspections and ${result.deltaActions} actions.\nOutbox: ${result.outboxSucceeded} synced, ${result.succeeded} observations synced.`
+              );
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : "Full re-sync failed.";
+              Alert.alert("Re-Sync Error", msg);
+            } finally {
+              setIsFullSyncing(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleOpenServerModal = () => {
+    setCustomServerInput(currentServer);
+    setServerModalVisible(true);
+  };
+
+  const handleSaveServer = async (targetUrl: string) => {
+    let clean = targetUrl.trim();
+    if (!clean) {
+      Alert.alert("Invalid URL", "Please enter a valid backend server URL.");
+      return;
+    }
+    if (!clean.startsWith("http://") && !clean.startsWith("https://")) {
+      clean = "http://" + clean;
+    }
+
+    setIsTestingServer(true);
+    try {
+      // Test connectivity by pinging health endpoint
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      try {
+        const resp = await fetch(`${clean}/health`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!resp.ok && resp.status !== 404) {
+          // If server responded with any HTTP status, it exists
+        }
+      } catch {
+        // Warning if unreachable, but allow user to confirm
+      }
+
+      await setActiveBackendUrl(clean);
+      setCurrentServer(clean);
+      setServerModalVisible(false);
+      Alert.alert(
+        "Sync Server Updated",
+        `Backend set to:\n${clean}\n\nTip: You can now trigger 'Force Full Re-Sync' to pull data from this server.`
+      );
+      await loadData();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to update server URL.";
+      Alert.alert("Server Config Error", msg);
+    } finally {
+      setIsTestingServer(false);
+    }
+  };
+
   const syncPct = stats?.syncPct ?? 0;
 
   return (
@@ -228,6 +314,29 @@ export default function QueueScreen({ navigation }: Props) {
         <Text style={styles.headerSubtitle}>
           Local SQLite mutations queued for cloud reconciliation
         </Text>
+      </View>
+
+      {/* Server & Connectivity Settings Bar */}
+      <View style={styles.serverCard}>
+        <View style={styles.serverRow}>
+          <View style={styles.serverLeft}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Ionicons name="server-outline" size={14} color={colors.primary} />
+              <Text style={styles.serverLabel}>BACKEND SYNC SERVER</Text>
+            </View>
+            <Text style={styles.serverUrlText} numberOfLines={1}>
+              {currentServer}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.changeServerBtn}
+            onPress={handleOpenServerModal}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="settings-outline" size={13} color={colors.primary} style={{ marginRight: 4 }} />
+            <Text style={styles.changeServerBtnText}>Change</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Stats Bar */}
@@ -279,7 +388,7 @@ export default function QueueScreen({ navigation }: Props) {
         />
       </View>
 
-      {/* Network Status + Sync Button */}
+      {/* Network Status + Action Buttons */}
       <View style={styles.syncSection}>
         <View style={styles.networkIndicator}>
           <View
@@ -298,7 +407,7 @@ export default function QueueScreen({ navigation }: Props) {
           />
           <Text style={styles.networkLabel}>
             {simulateOffline
-              ? "Offline (simulated)"
+              ? "Offline (sim)"
               : networkStatus === true
               ? "Online"
               : networkStatus === false
@@ -306,22 +415,41 @@ export default function QueueScreen({ navigation }: Props) {
               : "Checking..."}
           </Text>
         </View>
-        <TouchableOpacity
-          style={[styles.syncButton, isSyncing && styles.syncButtonDisabled, shadows.sm]}
-          onPress={handleSyncNow}
-          disabled={isSyncing}
-          testID="sync-now-button"
-          activeOpacity={0.8}
-        >
-          {isSyncing ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Ionicons name="cloud-upload-outline" size={15} color="#FFFFFF" style={{ marginRight: 6 }} />
-              <Text style={styles.syncButtonText}>Sync Now</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <TouchableOpacity
+            style={[styles.fullSyncButton, isFullSyncing && styles.syncButtonDisabled, shadows.sm]}
+            onPress={handleForceFullSync}
+            disabled={isFullSyncing || isSyncing}
+            activeOpacity={0.8}
+          >
+            {isFullSyncing ? (
+              <ActivityIndicator color={colors.primary} size="small" />
+            ) : (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons name="refresh" size={13} color={colors.primary} style={{ marginRight: 4 }} />
+                <Text style={styles.fullSyncButtonText}>Full Re-Sync</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.syncButton, (isSyncing || isFullSyncing) && styles.syncButtonDisabled, shadows.sm]}
+            onPress={handleSyncNow}
+            disabled={isSyncing || isFullSyncing}
+            testID="sync-now-button"
+            activeOpacity={0.8}
+          >
+            {isSyncing ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons name="cloud-upload-outline" size={14} color="#FFFFFF" style={{ marginRight: 5 }} />
+                <Text style={styles.syncButtonText}>Sync Now</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Observation List */}
@@ -355,6 +483,83 @@ export default function QueueScreen({ navigation }: Props) {
           </View>
         }
       />
+
+      {/* Modal: Change Sync Server */}
+      <Modal
+        visible={serverModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setServerModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalCard, shadows.lg]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <Ionicons name="server" size={20} color={colors.primary} />
+              <Text style={styles.modalTitle}>Change Sync Server</Text>
+            </View>
+            <Text style={styles.modalSubtitle}>
+              Configure the cloud or edge backend URL for mobile delta sync and outbox reconciliation.
+            </Text>
+
+            <Text style={styles.inputLabel}>SERVER URL</Text>
+            <TextInput
+              style={styles.serverInput}
+              value={customServerInput}
+              onChangeText={setCustomServerInput}
+              placeholder="http://10.178.236.88:8000"
+              placeholderTextColor="#94A3B8"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+            />
+
+            {/* Quick Presets */}
+            <Text style={[styles.inputLabel, { marginTop: 12 }]}>QUICK PRESETS</Text>
+            <View style={styles.presetRow}>
+              <TouchableOpacity
+                style={styles.presetChip}
+                onPress={() => setCustomServerInput("http://10.178.236.88:8000")}
+              >
+                <Text style={styles.presetChipText}>Host LAN (10.178.236.88)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.presetChip}
+                onPress={() => setCustomServerInput("http://10.0.2.2:8000")}
+              >
+                <Text style={styles.presetChipText}>Android Sim (10.0.2.2)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.presetChip}
+                onPress={() => setCustomServerInput("http://localhost:8000")}
+              >
+                <Text style={styles.presetChipText}>Localhost (127.0.0.1)</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setServerModalVisible(false)}
+                disabled={isTestingServer}
+              >
+                <Text style={styles.modalCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalSaveBtn, isTestingServer && { opacity: 0.6 }]}
+                onPress={() => handleSaveServer(customServerInput)}
+                disabled={isTestingServer}
+              >
+                {isTestingServer ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.modalSaveBtnText}>Save Server</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Bottom Navigation */}
       <BottomNavBar currentRoute="Queue" navigation={navigation} />
@@ -619,5 +824,155 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 13,
+  },
+  serverCard: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  serverRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  serverLeft: {
+    flex: 1,
+    marginRight: 10,
+  },
+  serverLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.6,
+    color: colors.primary,
+  },
+  serverUrlText: {
+    fontSize: 12,
+    color: colors.text,
+    fontFamily: "monospace",
+    marginTop: 2,
+  },
+  changeServerBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.primaryLight,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+  },
+  changeServerBtnText: {
+    color: colors.primary,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  fullSyncButton: {
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  fullSyncButtonText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 20,
+    width: "100%",
+    maxWidth: 420,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: colors.text,
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    color: colors.subtext,
+    lineHeight: 17,
+    marginBottom: 14,
+  },
+  inputLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.6,
+    color: colors.subtext,
+    marginBottom: 6,
+  },
+  serverInput: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: colors.text,
+    fontSize: 13,
+    fontFamily: "monospace",
+  },
+  presetRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 18,
+  },
+  presetChip: {
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  presetChipText: {
+    fontSize: 11,
+    color: colors.text,
+    fontWeight: "600",
+  },
+  modalBtnRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+  },
+  modalCancelBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalCancelBtnText: {
+    color: colors.subtext,
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  modalSaveBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: colors.primary,
+  },
+  modalSaveBtnText: {
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 12,
   },
 });

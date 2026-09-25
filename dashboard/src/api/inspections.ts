@@ -68,3 +68,20 @@ export async function updateInspectionStatus(
   });
   return response.data;
 }
+
+export interface ZoneOption {
+  id: string;
+  mine_site_id: string;
+  name: string;
+  zone_type: string;
+  risk_baseline: number;
+  created_at: string;
+}
+
+export async function fetchInspectionZones(mineSiteId?: string): Promise<ZoneOption[]> {
+  const params: Record<string, any> = {};
+  if (mineSiteId) params.mine_site_id = mineSiteId;
+  const res = await apiClient.get<ZoneOption[]>('/inspections/zones', { params });
+  return res.data;
+}
+

@@ -4,6 +4,7 @@
  * Also exports triggerManualSync() for the "Sync Now" UI button.
  */
 
+import { Platform } from "react-native";
 import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
 import * as Network from "expo-network";
@@ -59,12 +60,12 @@ export async function unregisterBackgroundSync(): Promise<void> {
  * Manually triggers a sync. Used by the "Sync Now" button.
  * Returns sync result for UI feedback.
  */
-export async function triggerManualSync(): Promise<SyncResult> {
+export async function triggerManualSync(resetWatermark: boolean = false): Promise<SyncResult> {
   const online = await isOnline();
   if (!online) {
     throw new Error("No internet connection. Please check your network and try again.");
   }
-  return syncAll(true);
+  return syncAll(true, resetWatermark);
 }
 
 /**
@@ -74,6 +75,13 @@ export async function triggerManualSync(): Promise<SyncResult> {
 export async function isOnline(): Promise<boolean> {
   const { simulateOffline } = useConnectivityStore.getState();
   if (simulateOffline) return false;
-  const state = await Network.getNetworkStateAsync();
-  return Boolean(state.isInternetReachable);
+  if (Platform.OS === "web") {
+    return typeof navigator !== "undefined" ? navigator.onLine : true;
+  }
+  try {
+    const state = await Network.getNetworkStateAsync();
+    return Boolean(state.isConnected && state.isInternetReachable !== false);
+  } catch {
+    return true;
+  }
 }

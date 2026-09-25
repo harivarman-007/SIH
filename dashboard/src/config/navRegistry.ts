@@ -284,7 +284,7 @@ export const NAV_REGISTRY: NavItem[] = [
   },
   {
     id: 'admin-mines',
-    label: 'Mine Spatial Map',
+    label: 'Mine Sites & Spatial Map',
     path: '/admin/mines',
     icon: 'MapPin',
     roles: ['super_admin'],

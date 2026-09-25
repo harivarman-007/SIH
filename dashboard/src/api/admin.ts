@@ -141,3 +141,58 @@ export async function fetchSystemHealth(): Promise<SystemHealthData> {
   const res = await client.get<SystemHealthData>('/admin/system-health');
   return res.data;
 }
+
+export interface MineSiteRecord {
+  id: string;
+  name: string;
+  location_name: string;
+  lat?: number | null;
+  lng?: number | null;
+  is_active: boolean;
+  created_at: string;
+  zones_count?: number;
+}
+
+export interface ZoneRecord {
+  id: string;
+  mine_site_id: string;
+  name: string;
+  zone_type: string;
+  risk_baseline: number;
+  created_at: string;
+}
+
+export async function fetchAdminMineSites(): Promise<MineSiteRecord[]> {
+  const res = await client.get<MineSiteRecord[]>('/admin/mine-sites');
+  return res.data;
+}
+
+export async function createAdminMineSite(data: {
+  name: string;
+  location_name: string;
+  lat?: number;
+  lng?: number;
+}): Promise<MineSiteRecord> {
+  const res = await client.post<MineSiteRecord>('/admin/mine-sites', data);
+  return res.data;
+}
+
+export async function updateAdminMineSite(
+  siteId: string,
+  update: {
+    name?: string;
+    location_name?: string;
+    lat?: number;
+    lng?: number;
+    is_active?: boolean;
+  }
+): Promise<MineSiteRecord> {
+  const res = await client.patch<MineSiteRecord>(`/admin/mine-sites/${siteId}`, update);
+  return res.data;
+}
+
+export async function fetchMineSiteZones(siteId: string): Promise<ZoneRecord[]> {
+  const res = await client.get<ZoneRecord[]>(`/admin/mine-sites/${siteId}/zones`);
+  return res.data;
+}
+

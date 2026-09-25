@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { fetchInspections, createInspection } from '../api/inspections';
+import { fetchInspections, createInspection, fetchInspectionZones, ZoneOption } from '../api/inspections';
 import { fetchUsers, UserInfo } from '../api/auth';
 import { Inspection, InspectionStatus } from '../types/inspections';
 import { usePermissions } from './providers/PermissionProvider';
@@ -12,6 +12,7 @@ export const InspectionsManagementView: React.FC = () => {
   const { user } = useAuthStore();
   const [inspections, setInspections] = useState<Inspection[]>([]);
   const [inspectors, setInspectors] = useState<UserInfo[]>([]);
+  const [zones, setZones] = useState<ZoneOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,6 +21,7 @@ export const InspectionsManagementView: React.FC = () => {
 
   // Form fields
   const [title, setTitle] = useState('');
+  const [selectedZoneId, setSelectedZoneId] = useState('');
   const [assignedInspectorId, setAssignedInspectorId] = useState('');
   const [scheduledFor, setScheduledFor] = useState('');
   const [dueAt, setDueAt] = useState('');
@@ -50,6 +52,12 @@ export const InspectionsManagementView: React.FC = () => {
         }
       })
       .catch(() => setInspectors([]));
+
+    fetchInspectionZones(user?.mine_site_id ?? undefined)
+      .then((zData) => {
+        setZones(zData);
+      })
+      .catch(() => setZones([]));
 
     // Default scheduled date tomorrow 09:00
     const tomorrow = new Date(Date.now() + 24 * 3600 * 1000);
@@ -88,6 +96,7 @@ export const InspectionsManagementView: React.FC = () => {
     try {
       await createInspection({
         mine_site_id: targetMineSiteId,
+        zone_id: selectedZoneId || undefined,
         title: title.trim(),
         assigned_inspector_id: assignedInspectorId,
         scheduled_for: new Date(scheduledFor).toISOString(),
@@ -97,6 +106,7 @@ export const InspectionsManagementView: React.FC = () => {
 
       setShowCreateModal(false);
       setTitle('');
+      setSelectedZoneId('');
       setNotes('');
       await loadInspections();
     } catch (err: any) {
@@ -306,6 +316,24 @@ export const InspectionsManagementView: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
+                    Inspection Zone / Sector
+                  </label>
+                  <select
+                    value={selectedZoneId}
+                    onChange={(e) => setSelectedZoneId(e.target.value)}
+                    className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
+                  >
+                    <option value="">General Mine Site (All Zones)</option>
+                    {zones.map((z) => (
+                      <option key={z.id} value={z.id}>
+                        {z.name} ({z.zone_type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
                     Assign Inspector *
                   </label>
                   <select
@@ -321,13 +349,14 @@ export const InspectionsManagementView: React.FC = () => {
                     ))}
                   </select>
                 </div>
+              </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-zinc-700 uppercase tracking-wider">
-                      Date &amp; Time *
-                    </label>
-                    <div className="flex items-center gap-1">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+                    Scheduled Date &amp; Time *
+                  </label>
+                  <div className="flex items-center gap-1">
                       <button
                         type="button"
                         onClick={() => {
@@ -362,7 +391,6 @@ export const InspectionsManagementView: React.FC = () => {
                     className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-zinc-900 font-mono focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                   />
                 </div>
-              </div>
 
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">

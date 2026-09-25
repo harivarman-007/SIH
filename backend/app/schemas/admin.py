@@ -122,3 +122,43 @@ class ContractorProfileUpdate(BaseModel):
     license_no: Optional[str] = None
     cert_expiry: Optional[datetime] = None
     is_active: Optional[bool] = None
+
+
+class MineSiteCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=255)
+    location_name: str = Field(min_length=2, max_length=255)
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+
+
+class MineSiteUpdate(BaseModel):
+    name: Optional[str] = None
+    location_name: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    is_active: Optional[bool] = None
+
+
+class MineSiteOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    location_name: str
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    is_active: bool = True
+    created_at: datetime
+    zones_count: Optional[int] = 0
+
+
+class ZoneOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    mine_site_id: uuid.UUID
+    name: str
+    zone_type: str
+    risk_baseline: float
+    created_at: datetime
+

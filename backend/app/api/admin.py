@@ -35,6 +35,7 @@ from app.models import (
     User,
     UserRole,
     UserSession,
+    Zone,
 )
 from app.schemas.admin import (
     ComplianceRuleCreate,
@@ -42,6 +43,9 @@ from app.schemas.admin import (
     ComplianceRuleUpdate,
     ContractorProfileOut,
     ContractorProfileUpdate,
+    MineSiteCreate,
+    MineSiteOut,
+    MineSiteUpdate,
     RiskFlagThresholds,
     RolePermissionsOut,
     RolePermissionToggle,
@@ -50,6 +54,7 @@ from app.schemas.admin import (
     SystemSettingsUpdate,
     UserRoleUpdate,
     UserStatusUpdate,
+    ZoneOut,
 )
 from app.schemas.auth import AdminUserCreateRequest, UserOut
 from app.services.auth import hash_password
@@ -90,26 +95,165 @@ async def list_admin_users(
     return out
 
 
-@router.get("/mine-sites", response_model=List[Dict[str, Any]])
+@router.get("/mine-sites", response_model=List[MineSiteOut])
 async def list_mine_sites(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(authenticate),
 ):
     """
     GET /admin/mine-sites
-    Returns registered mine sites for administrative provisioning.
+    Returns registered mine sites for administrative provisioning with status, coordinates, and zone counts.
     """
     stmt = select(MineSite).order_by(MineSite.name.asc())
     res = await db.execute(stmt)
     sites = res.scalars().all()
-    return [
-        {
-            "id": str(s.id),
-            "name": s.name,
-            "location_name": s.location_name,
-        }
-        for s in sites
-    ]
+    out: List[MineSiteOut] = []
+    for s in sites:
+        z_stmt = select(func.count(Zone.id)).where(Zone.mine_site_id == s.id)
+        z_res = await db.execute(z_stmt)
+        zone_cnt = z_res.scalar() or 0
+        out.append(
+            MineSiteOut(
+                id=s.id,
+                name=s.name,
+                location_name=s.location_name,
+                lat=s.lat,
+                lng=s.lng,
+                is_active=s.is_active if hasattr(s, "is_active") and s.is_active is not None else True,
+                created_at=s.created_at,
+                zones_count=zone_cnt,
+            )
+        )
+    return out
+
+
+@router.post("/mine-sites", response_model=MineSiteOut, status_code=status.HTTP_201_CREATED)
+async def create_mine_site(
+    req: MineSiteCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.SETTING_EDIT)),
+):
+    """
+    POST /admin/mine-sites
+    Provision a new mine site with name, location, and GPS coordinates.
+    """
+    new_site = MineSite(
+        name=req.name.strip(),
+        location_name=req.location_name.strip(),
+        lat=req.lat,
+        lng=req.lng,
+        is_active=True,
+    )
+    db.add(new_site)
+    await db.flush()
+
+    default_zone = Zone(
+        mine_site_id=new_site.id,
+        name=f"{new_site.name} Primary Working Face",
+        zone_type="underground",
+        risk_baseline=0.35,
+    )
+    db.add(default_zone)
+    await db.commit()
+    await db.refresh(new_site)
+
+    await append_audit_entry(
+        db=db,
+        action="MINE_SITE_PROVISIONED",
+        actor_id=current_user.id,
+        payload={
+            "site_id": str(new_site.id),
+            "name": new_site.name,
+            "location_name": new_site.location_name,
+            "lat": new_site.lat,
+            "lng": new_site.lng,
+        },
+    )
+
+    return MineSiteOut(
+        id=new_site.id,
+        name=new_site.name,
+        location_name=new_site.location_name,
+        lat=new_site.lat,
+        lng=new_site.lng,
+        is_active=new_site.is_active,
+        created_at=new_site.created_at,
+        zones_count=1,
+    )
+
+
+@router.patch("/mine-sites/{site_id}", response_model=MineSiteOut)
+async def update_mine_site(
+    site_id: uuid.UUID,
+    req: MineSiteUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.SETTING_EDIT)),
+):
+    """
+    PATCH /admin/mine-sites/{site_id}
+    Update site name, location, coordinates, or deactivate/activate site.
+    """
+    site = await db.get(MineSite, site_id)
+    if not site:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mine site not found.")
+
+    if req.name is not None:
+        site.name = req.name.strip()
+    if req.location_name is not None:
+        site.location_name = req.location_name.strip()
+    if req.lat is not None:
+        site.lat = req.lat
+    if req.lng is not None:
+        site.lng = req.lng
+    if req.is_active is not None:
+        site.is_active = req.is_active
+
+    await db.commit()
+    await db.refresh(site)
+
+    z_stmt = select(func.count(Zone.id)).where(Zone.mine_site_id == site.id)
+    z_res = await db.execute(z_stmt)
+    zone_cnt = z_res.scalar() or 0
+
+    await append_audit_entry(
+        db=db,
+        action="MINE_SITE_UPDATED",
+        actor_id=current_user.id,
+        payload={
+            "site_id": str(site.id),
+            "name": site.name,
+            "location_name": site.location_name,
+            "is_active": site.is_active,
+        },
+    )
+
+    return MineSiteOut(
+        id=site.id,
+        name=site.name,
+        location_name=site.location_name,
+        lat=site.lat,
+        lng=site.lng,
+        is_active=site.is_active,
+        created_at=site.created_at,
+        zones_count=zone_cnt,
+    )
+
+
+@router.get("/mine-sites/{site_id}/zones", response_model=List[ZoneOut])
+async def list_mine_site_zones(
+    site_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(authenticate),
+):
+    """
+    GET /admin/mine-sites/{site_id}/zones
+    List all zones associated with a mine site.
+    """
+    stmt = select(Zone).where(Zone.mine_site_id == site_id).order_by(Zone.name.asc())
+    res = await db.execute(stmt)
+    zones = res.scalars().all()
+    return [ZoneOut.model_validate(z) for z in zones]
+
 
 
 @router.post("/users", response_model=UserOut, status_code=status.HTTP_201_CREATED)

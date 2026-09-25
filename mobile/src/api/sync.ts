@@ -63,8 +63,8 @@ export function localObsToPayload(obs: LocalObservation): SyncObservationPayload
     lat: obs.lat ?? null,
     lng: obs.lng ?? null,
     beacon_id: obs.beacon_id ?? null,
-    mine_site_id: obs.mine_site_id || DEFAULT_MINE_SITE_ID,
-    zone_id: obs.zone_id || DEFAULT_ZONE_ID,
+    mine_site_id: obs.mine_site_id || null,
+    zone_id: obs.zone_id || null,
     inspection_id: obs.inspection_id || null,
     edge_score: obs.edge_score ?? null,
     edge_flag: obs.edge_flag ?? null,
@@ -87,11 +87,17 @@ export async function postSyncBatch(
   return response.data;
 }
 
-export async function fetchSyncPull(since?: string | null): Promise<SyncPullResponse> {
+export async function fetchSyncPull(
+  since?: string | null,
+  forceAll: boolean = false
+): Promise<SyncPullResponse> {
   const client = getApiClient();
-  const params: Record<string, string> = {};
-  if (since) {
+  const params: Record<string, any> = {};
+  if (since && !forceAll) {
     params.since = since;
+  }
+  if (forceAll) {
+    params.force_all = true;
   }
   const response = await client.get<SyncPullResponse>("/sync/pull", { params });
   return response.data;

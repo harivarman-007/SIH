@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import append_audit_entry
@@ -31,13 +31,34 @@ async def sync_batch(
     for item in req.observations:
         client_ts = item.created_at or now_utc
 
+        # Resolve mine_site_id and zone_id with robust DB validation and fallback
         site_id = item.mine_site_id
-        if not site_id:
-            site_id = (await db.execute(select(MineSite.id).limit(1))).scalar()
-
         zone_id = item.zone_id
-        if not zone_id:
+
+        # If linked to an inspection, inherit its site and zone
+        if item.inspection_id:
+            insp = await db.get(Inspection, item.inspection_id)
+            if insp:
+                if not site_id:
+                    site_id = insp.mine_site_id
+                if not zone_id:
+                    zone_id = insp.zone_id
+
+        # Verify site_id exists in DB
+        existing_site = await db.get(MineSite, site_id) if site_id else None
+        if not existing_site:
+            if current_user.mine_site_id:
+                site_id = current_user.mine_site_id
+                existing_site = await db.get(MineSite, site_id)
+            if not existing_site:
+                site_id = (await db.execute(select(MineSite.id).limit(1))).scalar()
+
+        # Verify zone_id exists in DB
+        existing_zone = await db.get(Zone, zone_id) if zone_id else None
+        if not existing_zone or (site_id and existing_zone.mine_site_id != site_id):
             zone_id = (await db.execute(select(Zone.id).where(Zone.mine_site_id == site_id).limit(1))).scalar()
+            if not zone_id:
+                zone_id = (await db.execute(select(Zone.id).limit(1))).scalar()
 
         # Enforce DGMS Critical Safety Floor (roof fall, explosion, gas leak, etc.)
         source, score, flag_str, reasons, manual_reason = apply_dgms_safety_floor(
@@ -134,14 +155,18 @@ async def get_sync_status(
     )
 
 
+from sqlalchemy import and_, func, or_, select
+from app.models import CorrectiveAction, Inspection, InspectionStatus, MineSite, Observation, ObservationStatus, RiskFlag, User, UserRole, Zone
+
 @router.get("/pull", response_model=SyncPullResponse)
 async def sync_pull(
     since: Optional[datetime] = None,
+    force_all: bool = False,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
-    GET /sync/pull?since=<watermark>
+    GET /sync/pull?since=<watermark>&force_all=<bool>
     Two-way delta sync endpoint (Phase 29):
     Returns assigned inspections, caller's observations with updated statuses,
     and linked corrective actions since the specified watermark timestamp.
@@ -152,7 +177,21 @@ async def sync_pull(
     # 1. Assigned Inspections
     insp_stmt = select(Inspection)
     if current_user.role == UserRole.inspector:
-        insp_stmt = insp_stmt.where(Inspection.assigned_inspector_id == current_user.id)
+        if current_user.mine_site_id:
+            insp_stmt = insp_stmt.where(
+                or_(
+                    Inspection.assigned_inspector_id == current_user.id,
+                    and_(
+                        Inspection.mine_site_id == current_user.mine_site_id,
+                        Inspection.status.in_([
+                            InspectionStatus.scheduled,
+                            InspectionStatus.in_progress,
+                        ]),
+                    ),
+                )
+            )
+        else:
+            insp_stmt = insp_stmt.where(Inspection.assigned_inspector_id == current_user.id)
     elif current_user.role == UserRole.mine_official and current_user.mine_site_id:
         insp_stmt = insp_stmt.where(Inspection.mine_site_id == current_user.mine_site_id)
     elif current_user.role == UserRole.super_admin:
@@ -160,8 +199,9 @@ async def sync_pull(
     else:
         insp_stmt = insp_stmt.where(Inspection.id == None)
 
-    if since:
-        insp_stmt = insp_stmt.where(Inspection.updated_at > since)
+    if since and not force_all:
+        if since <= now_utc:
+            insp_stmt = insp_stmt.where(Inspection.updated_at > since)
 
     insp_stmt = insp_stmt.order_by(Inspection.updated_at.asc())
     insp_res = await db.execute(insp_stmt)
@@ -178,14 +218,15 @@ async def sync_pull(
     else:
         obs_stmt = obs_stmt.where(Observation.id == None)
 
-    if since:
-        effective_ts = func.coalesce(
-            Observation.closed_at,
-            Observation.escalated_at,
-            Observation.synced_at,
-            Observation.created_at,
-        )
-        obs_stmt = obs_stmt.where(effective_ts > since)
+    if since and not force_all:
+        if since <= now_utc:
+            effective_ts = func.coalesce(
+                Observation.closed_at,
+                Observation.escalated_at,
+                Observation.synced_at,
+                Observation.created_at,
+            )
+            obs_stmt = obs_stmt.where(effective_ts > since)
 
     obs_stmt = obs_stmt.order_by(Observation.created_at.asc())
     obs_res = await db.execute(obs_stmt)
@@ -196,21 +237,21 @@ async def sync_pull(
     if current_user.role == UserRole.inspector:
         obs_ids_subquery = select(Observation.id).where(Observation.inspector_id == current_user.id)
         action_stmt = select(CorrectiveAction).where(CorrectiveAction.observation_id.in_(obs_ids_subquery))
-        if since:
+        if since and not force_all and since <= now_utc:
             action_stmt = action_stmt.where(CorrectiveAction.updated_at > since)
         action_stmt = action_stmt.order_by(CorrectiveAction.updated_at.asc())
         action_res = await db.execute(action_stmt)
         action_items = action_res.scalars().all()
     elif current_user.role == UserRole.mine_official and current_user.mine_site_id:
         action_stmt = select(CorrectiveAction).where(CorrectiveAction.mine_site_id == current_user.mine_site_id)
-        if since:
+        if since and not force_all and since <= now_utc:
             action_stmt = action_stmt.where(CorrectiveAction.updated_at > since)
         action_stmt = action_stmt.order_by(CorrectiveAction.updated_at.asc())
         action_res = await db.execute(action_stmt)
         action_items = action_res.scalars().all()
     elif current_user.role == UserRole.super_admin:
         action_stmt = select(CorrectiveAction)
-        if since:
+        if since and not force_all and since <= now_utc:
             action_stmt = action_stmt.where(CorrectiveAction.updated_at > since)
         action_stmt = action_stmt.order_by(CorrectiveAction.updated_at.asc())
         action_res = await db.execute(action_stmt)

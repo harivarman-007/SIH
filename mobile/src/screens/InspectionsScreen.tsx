@@ -24,6 +24,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { inspectionRepository } from "../db/InspectionRepository";
 import { pullDeltaSync } from "../sync/SyncWorker";
+import { isOnline } from "../sync/TaskManager";
 import { CachedInspection } from "../db/schema";
 import { BottomNavBar } from "../components/BottomNavBar";
 import { colors, shadows } from "../theme";
@@ -35,6 +36,7 @@ export default function InspectionsScreen({ navigation }: any) {
   const [filter, setFilter] = useState<StatusFilter>("ALL");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [syncingHeader, setSyncingHeader] = useState(false);
 
   // Modal for zero-observation mandatory sign-off notes
   const [submitModalVisible, setSubmitModalVisible] = useState(false);
@@ -42,16 +44,38 @@ export default function InspectionsScreen({ navigation }: any) {
   const [signOffNotes, setSignOffNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const performSync = useCallback(async (resetWatermark: boolean = false) => {
+    setSyncingHeader(true);
+    try {
+      const online = await isOnline();
+      if (online) {
+        await pullDeltaSync(true, resetWatermark);
+      }
+      const data = await inspectionRepository.getAll();
+      setInspections(data);
+    } catch (err: any) {
+      console.warn("Background inspection pull error:", err);
+    } finally {
+      setSyncingHeader(false);
+      setLoading(false);
+    }
+  }, []);
+
   const loadData = useCallback(async () => {
     try {
       const data = await inspectionRepository.getAll();
       setInspections(data);
+      // Auto-sync delta if online; if local cache is empty, reset watermark to ensure fresh grab
+      const online = await isOnline();
+      if (online) {
+        performSync(data.length === 0);
+      }
     } catch {
       // Non-fatal
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [performSync]);
 
   useFocusEffect(
     useCallback(() => {
@@ -62,7 +86,7 @@ export default function InspectionsScreen({ navigation }: any) {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await pullDeltaSync(true);
+      await pullDeltaSync(true, false);
       await loadData();
     } catch (err: any) {
       Alert.alert("Sync Error", err?.message || "Failed to sync delta updates.");
@@ -169,10 +193,26 @@ export default function InspectionsScreen({ navigation }: any) {
       
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Statutory Inspections</Text>
-        <Text style={styles.headerSubtitle}>
-          Assigned field inspection lifecycle & offline outbox
-        </Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle}>Statutory Inspections</Text>
+            <Text style={styles.headerSubtitle}>
+              Assigned field inspection lifecycle & offline outbox
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.headerSyncBtn}
+            onPress={() => performSync(false)}
+            disabled={syncingHeader}
+            activeOpacity={0.7}
+          >
+            {syncingHeader ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Ionicons name="sync-outline" size={20} color={colors.primary} />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Filter Tabs */}
@@ -204,8 +244,23 @@ export default function InspectionsScreen({ navigation }: any) {
           <Ionicons name="clipboard-outline" size={48} color="#94A3B8" style={{ marginBottom: 12 }} />
           <Text style={styles.emptyTitle}>No Inspections Found</Text>
           <Text style={styles.emptySubtitle}>
-            Pull down to sync assigned inspections from server
+            No statutory inspections assigned to your account or mine sector yet.
           </Text>
+          <TouchableOpacity
+            style={[styles.emptySyncBtn, shadows.sm]}
+            onPress={() => performSync(true)}
+            disabled={syncingHeader}
+            activeOpacity={0.8}
+          >
+            {syncingHeader ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons name="refresh" size={15} color="#FFFFFF" style={{ marginRight: 6 }} />
+                <Text style={styles.emptySyncBtnText}>Sync Inspections Now</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -626,5 +681,27 @@ const styles = StyleSheet.create({
   },
   disabledBtn: {
     opacity: 0.5,
+  },
+  headerSyncBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptySyncBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginTop: 16,
+  },
+  emptySyncBtnText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 13,
   },
 });

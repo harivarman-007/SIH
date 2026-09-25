@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.authz.deps import require_permission
+from app.authz.deps import require_permission, authenticate
 from app.authz.errors import forbidden
 from app.authz.permissions import Permission
 from app.authz.scope import apply_inspection_scope, assert_can_access_inspection
@@ -30,6 +30,7 @@ from app.models import (
     UserRole,
     Zone,
 )
+from app.schemas.admin import ZoneOut
 from app.schemas.inspections import (
     InspectionCreate,
     InspectionDetailOut,
@@ -38,6 +39,27 @@ from app.schemas.inspections import (
 )
 
 router = APIRouter(prefix="/inspections", tags=["inspections"])
+
+
+@router.get("/zones", response_model=List[ZoneOut])
+async def list_inspection_zones(
+    mine_site_id: Optional[UUID] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(authenticate),
+):
+    """
+    GET /inspections/zones
+    List zones for the active mine site (or specified mine_site_id) for inspection scheduling.
+    """
+    target_site_id = mine_site_id or current_user.mine_site_id
+    stmt = select(Zone)
+    if target_site_id:
+        stmt = stmt.where(Zone.mine_site_id == target_site_id)
+    stmt = stmt.order_by(Zone.name.asc())
+    res = await db.execute(stmt)
+    zones = res.scalars().all()
+    return [ZoneOut.model_validate(z) for z in zones]
+
 
 
 async def _generate_inspection_code(db: AsyncSession) -> str:

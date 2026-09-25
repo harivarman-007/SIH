@@ -1,11 +1,11 @@
 /**
  * useConnectivity.ts
  * Zustand store for simulating offline/online state during demos.
- * When `simulateOffline` is true, sync operations will fail with a "no network" error
- * regardless of the real device network state.
+ * Supports Web and Native LAN networks properly.
  */
 
 import { create } from "zustand";
+import { Platform } from "react-native";
 import * as Network from "expo-network";
 
 interface ConnectivityState {
@@ -22,7 +22,14 @@ export const useConnectivityStore = create<ConnectivityState>((set, get) => ({
 
   getIsOnline: async () => {
     if (get().simulateOffline) return false;
-    const state = await Network.getNetworkStateAsync();
-    return Boolean(state.isInternetReachable);
+    if (Platform.OS === "web") {
+      return typeof navigator !== "undefined" ? navigator.onLine : true;
+    }
+    try {
+      const state = await Network.getNetworkStateAsync();
+      return Boolean(state.isConnected && state.isInternetReachable !== false);
+    } catch {
+      return true;
+    }
   },
 }));

@@ -75,26 +75,42 @@ export async function flushInspectionOutbox(): Promise<{ attempted: number; succ
   return { attempted: pending.length, succeeded, failed };
 }
 
+export async function resetSyncWatermark(): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync("DELETE FROM sync_meta WHERE key = 'watermark';");
+  _lastPullTime = 0;
+}
+
 /**
  * Pulls two-way delta sync from server and updates local SQLite tables.
  * Advances watermark ONLY after the entire delta is applied.
  */
-export async function pullDeltaSync(force: boolean = false): Promise<{ inspections: number; actions: number; watermark: string | null }> {
+export async function pullDeltaSync(
+  force: boolean = false,
+  resetWatermark: boolean = false
+): Promise<{ inspections: number; actions: number; watermark: string | null }> {
   const now = Date.now();
-  if (!force && now - _lastPullTime < RECONNECT_DEBOUNCE_MS) {
+  if (!force && !resetWatermark && now - _lastPullTime < RECONNECT_DEBOUNCE_MS) {
     return { inspections: 0, actions: 0, watermark: null };
   }
 
   const db = await getDatabase();
 
+  if (resetWatermark) {
+    await db.runAsync("DELETE FROM sync_meta WHERE key = 'watermark';");
+  }
+
   // 1. Read current watermark
-  const metaRow = await db.getFirstAsync<{ value: string }>(
-    "SELECT value FROM sync_meta WHERE key = 'watermark';"
-  );
-  const currentWatermark = metaRow?.value || null;
+  let currentWatermark: string | null = null;
+  if (!resetWatermark) {
+    const metaRow = await db.getFirstAsync<{ value: string }>(
+      "SELECT value FROM sync_meta WHERE key = 'watermark';"
+    );
+    currentWatermark = metaRow?.value || null;
+  }
 
   // 2. Fetch delta from server
-  const response = await fetchSyncPull(currentWatermark);
+  const response = await fetchSyncPull(currentWatermark, resetWatermark);
 
   // 3. Atomically apply all delta items, then advance watermark
   await db.withTransactionAsync(async () => {
@@ -184,7 +200,10 @@ export async function syncPending(): Promise<{ attempted: number; succeeded: num
  * 2. Pushes pending observations
  * 3. Pulls inbound delta updates from server
  */
-export async function syncAll(forcePull: boolean = true): Promise<SyncResult> {
+export async function syncAll(
+  forcePull: boolean = true,
+  resetWatermark: boolean = false
+): Promise<SyncResult> {
   // 1. Flush inspection outbox
   const outboxRes = await flushInspectionOutbox();
 
@@ -194,9 +213,9 @@ export async function syncAll(forcePull: boolean = true): Promise<SyncResult> {
   // 3. Pull delta updates
   let pullRes = { inspections: 0, actions: 0, watermark: null as string | null };
   try {
-    pullRes = await pullDeltaSync(forcePull);
-  } catch {
-    // Non-fatal if pull encounters transient failure
+    pullRes = await pullDeltaSync(forcePull, resetWatermark);
+  } catch (err) {
+    console.warn("pullDeltaSync failed in syncAll:", err);
   }
 
   return {

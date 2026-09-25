@@ -1,13 +1,13 @@
 /**
  * auth.ts
- * Login / logout helpers.
+ * Login / logout helpers using cross-platform appStorage.
  * Phase 24: logout() calls POST /auth/logout best-effort (SHOULD #12).
  *   - Best-effort: network failure does NOT prevent local sign-out.
  *   - 401 on other requests does NOT clear the local SQLite outbox queue.
  */
 
-import * as SecureStore from "expo-secure-store";
-import { getApiClient, TOKEN_KEY, resetApiClient } from "./client";
+import { getApiClient, TOKEN_KEY, resetApiClient, setAuthToken } from "./client";
+import { appStorage } from "../utils/storage";
 
 export interface UserProfile {
   id: string;
@@ -33,7 +33,8 @@ export async function login(email: string, password: string): Promise<LoginRespo
     password,
   });
   const token = response.data.access_token;
-  await SecureStore.setItemAsync(TOKEN_KEY, token);
+  setAuthToken(token);
+  await appStorage.setItem(TOKEN_KEY, token);
   return response.data;
 }
 
@@ -52,12 +53,18 @@ export async function logout(): Promise<void> {
     // Network failure is acceptable — local sign-out still proceeds
   }
   // Clear local credentials
-  await SecureStore.deleteItemAsync(TOKEN_KEY);
+  setAuthToken(null);
+  await appStorage.deleteItem(TOKEN_KEY);
   resetApiClient();
 }
 
 export async function getStoredToken(): Promise<string | null> {
-  return SecureStore.getItemAsync(TOKEN_KEY);
+  return appStorage.getItem(TOKEN_KEY);
+}
+
+export async function saveStoredToken(token: string): Promise<void> {
+  setAuthToken(token);
+  await appStorage.setItem(TOKEN_KEY, token);
 }
 
 export async function getMe(): Promise<UserProfile> {

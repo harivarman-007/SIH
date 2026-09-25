@@ -237,6 +237,27 @@ export default function LabourAttendanceScreen() {
     return w.name.toLowerCase().includes(q) || w.badge_number.toLowerCase().includes(q) || w.role.toLowerCase().includes(q);
   });
 
+  if (!isMineOfficial) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center", padding: 24 }]}>
+        <Ionicons name="lock-closed-outline" size={54} color={colors.danger} style={{ marginBottom: 16 }} />
+        <Text style={{ fontSize: 20, fontWeight: "800", color: colors.text, marginBottom: 8, textAlign: "center" }}>
+          Access Restricted
+        </Text>
+        <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: "center", lineHeight: 20, marginBottom: 24 }}>
+          The Statutory Labour Attendance Register is strictly restricted to certified Mine Officials under Mines Act 1952. Field Inspectors do not have clearance to view or edit worker muster records.
+        </Text>
+        <TouchableOpacity
+          style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.8}
+        >
+          <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 14 }}>Return to Dashboard</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Header Bar */}
