@@ -25,7 +25,12 @@ import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/AppNavigator";
-import { RiskScoringEngine, ObservationInput } from "../models/RiskScoringEngine";
+import {
+  RiskScoringEngine,
+  ObservationInput,
+  checkCriticalRules,
+  RiskScoringResult,
+} from "../models/RiskScoringEngine";
 import { observationRepository } from "../db/ObservationRepository";
 import modelData from "../../assets/model/model.json";
 import { colors, shadows } from "../theme";
@@ -52,6 +57,13 @@ const CATEGORY_OPTIONS: {
   { key: "production", label: "Production", iconName: "cog-outline", color: "#2563EB", bgLight: "#EFF6FF" },
 ];
 
+const MANUAL_RISK_TIERS = [
+  { key: "low", label: "Low", defaultScore: 0.25, flag: "low" as const, color: "#16A34A", bgLight: "#F0FDF4", desc: "Routine hazard / minor advisory" },
+  { key: "medium", label: "Medium", defaultScore: 0.50, flag: "medium" as const, color: "#D97706", bgLight: "#FFFBEB", desc: "Statutory remediation required" },
+  { key: "high", label: "High", defaultScore: 0.80, flag: "high" as const, color: "#DC2626", bgLight: "#FEF2F2", desc: "Urgent safety risk / restricted" },
+  { key: "critical", label: "Critical", defaultScore: 0.95, flag: "high" as const, color: "#991B1B", bgLight: "#FEF2F2", desc: "Severe emergency danger" },
+] as const;
+
 export default function NewObservationScreen({ navigation, route }: Props) {
   const [category, setCategory] = useState<Category>("safety");
   const [description, setDescription] = useState("");
@@ -63,6 +75,15 @@ export default function NewObservationScreen({ navigation, route }: Props) {
   const [beaconId, setBeaconId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeoLoading, setIsGeoLoading] = useState(false);
+
+  // Scoring Mode & Manual Override State
+  const [scoringMode, setScoringMode] = useState<"ai_auto" | "manual">("ai_auto");
+  const [manualLevel, setManualLevel] = useState<"low" | "medium" | "high" | "critical">("medium");
+  const [manualScore, setManualScore] = useState<number>(0.50);
+  const [manualReason, setManualReason] = useState<string>("");
+
+  // Real-time DGMS Critical Hazard Keyword Check
+  const criticalCheck = checkCriticalRules(description.trim());
 
   useEffect(() => {
     if (useGps) {
@@ -126,24 +147,77 @@ export default function NewObservationScreen({ navigation, route }: Props) {
     ]);
   };
 
+  const handleSelectManualTier = (tier: typeof MANUAL_RISK_TIERS[number]) => {
+    setManualLevel(tier.key);
+    setManualScore(tier.defaultScore);
+  };
+
+  const adjustManualScore = (delta: number) => {
+    setManualScore((prev) => {
+      const next = Math.round((prev + delta) * 100) / 100;
+      return Math.min(1.0, Math.max(0.05, next));
+    });
+  };
+
   const handleSubmit = async () => {
     if (!description.trim()) {
       Alert.alert("Missing description", "Please describe the observation.");
       return;
     }
 
+    // Require justification if manual override is selected and no critical keyword auto-tripped
+    if (scoringMode === "manual" && !criticalCheck.matched && !manualReason.trim()) {
+      Alert.alert(
+        "Justification Required",
+        "Please provide a statutory justification explaining why automatic AI scoring is being overridden."
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const obsInput: ObservationInput = {
-        category,
-        description: description.trim(),
-        created_at: new Date().toISOString(),
-        zone_risk_baseline: 0.4,
-        inspector_historical_high_rate: 0.25,
-        days_since_last_zone_inspection: 7,
-        has_photo: Boolean(photoUri),
-      };
-      const riskResult = engine.scoreObservation(obsInput);
+      let riskResult: RiskScoringResult;
+      let riskScoreSource: "ai_auto" | "manual" | "dgms_override" = "ai_auto";
+
+      // RULE: DGMS Critical Hazard Keyword Override ALWAYS wins, even in manual mode
+      if (criticalCheck.matched) {
+        riskScoreSource = "dgms_override";
+        riskResult = {
+          score: 0.95,
+          flag: "high",
+          reasons: {
+            rule_override: criticalCheck.ruleId,
+            rationale: criticalCheck.rationale,
+            top_contributors: ["critical_hazard_trigger", "dgms_statutory_override"],
+          },
+          rule_triggered: true,
+        };
+      } else if (scoringMode === "manual") {
+        riskScoreSource = "manual";
+        const tier = MANUAL_RISK_TIERS.find((t) => t.key === manualLevel) || MANUAL_RISK_TIERS[1];
+        riskResult = {
+          score: manualScore,
+          flag: tier.flag,
+          reasons: {
+            rule_override: "MANUAL_INSPECTOR_OVERRIDE",
+            rationale: manualReason.trim(),
+            top_contributors: ["manual_inspector_judgment"],
+          },
+          rule_triggered: false,
+        };
+      } else {
+        const obsInput: ObservationInput = {
+          category,
+          description: description.trim(),
+          created_at: new Date().toISOString(),
+          zone_risk_baseline: 0.4,
+          inspector_historical_high_rate: 0.25,
+          days_since_last_zone_inspection: 7,
+          has_photo: Boolean(photoUri),
+        };
+        riskResult = engine.scoreObservation(obsInput);
+        riskScoreSource = riskResult.rule_triggered ? "dgms_override" : "ai_auto";
+      }
 
       const numericGas = gasReading.trim() ? parseFloat(gasReading.trim()) : null;
       const validGas = numericGas !== null && !isNaN(numericGas) ? numericGas : null;
@@ -163,9 +237,16 @@ export default function NewObservationScreen({ navigation, route }: Props) {
         edge_score: riskResult.score,
         edge_flag: riskResult.flag,
         edge_reasons_json: JSON.stringify(riskResult.reasons),
+        risk_score_source: riskScoreSource,
+        manual_score_reason: scoringMode === "manual" ? manualReason.trim() : null,
       });
 
-      navigation.replace("RiskCard", { localId, riskResult });
+      navigation.replace("RiskCard", {
+        localId,
+        riskResult,
+        riskScoreSource,
+        manualScoreReason: scoringMode === "manual" ? manualReason.trim() : null,
+      });
     } catch (err: any) {
       console.error("Save observation failed:", err);
       Alert.alert(
@@ -334,6 +415,151 @@ export default function NewObservationScreen({ navigation, route }: Props) {
             testID="beacon-input"
           />
         </View>
+      </View>
+
+      {/* Risk Assessment Scoring Mode (Auto vs Manual) */}
+      <View style={[styles.card, shadows.sm]}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <Text style={styles.sectionLabel}>RISK SCORING MODE</Text>
+          {criticalCheck.matched && (
+            <View style={styles.dgmsLockedBadge}>
+              <Ionicons name="lock-closed" size={10} color="#DC2626" style={{ marginRight: 3 }} />
+              <Text style={styles.dgmsLockedText}>DGMS Locked</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Segmented Mode Selector: Auto (AI) vs Manual */}
+        <View style={styles.modeToggleRow}>
+          <TouchableOpacity
+            style={[styles.modeToggleBtn, scoringMode === "ai_auto" && styles.modeToggleBtnActive]}
+            onPress={() => setScoringMode("ai_auto")}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="hardware-chip-outline"
+              size={15}
+              color={scoringMode === "ai_auto" ? colors.primary : "#64748B"}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.modeToggleText, scoringMode === "ai_auto" && styles.modeToggleTextActive]}>
+              Auto (AI Model)
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.modeToggleBtn, scoringMode === "manual" && styles.modeToggleBtnActive]}
+            onPress={() => setScoringMode("manual")}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="create-outline"
+              size={15}
+              color={scoringMode === "manual" ? colors.primary : "#64748B"}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.modeToggleText, scoringMode === "manual" && styles.modeToggleTextActive]}>
+              Manual Override
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Real-Time DGMS Critical Keyword Notice Banner */}
+        {criticalCheck.matched && (
+          <View style={styles.criticalNoticeBox}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+              <Text style={styles.criticalNoticeTitle}>DGMS Critical Safety Floor Triggered</Text>
+            </View>
+            <Text style={styles.criticalNoticeDesc}>
+              Pattern detected: "{criticalCheck.matchText}". Per statutory safety regulations, risk is locked to 0.95 (HIGH) and cannot be suppressed by manual override.
+            </Text>
+          </View>
+        )}
+
+        {/* Auto (AI) Mode Explanation */}
+        {scoringMode === "ai_auto" && !criticalCheck.matched && (
+          <View style={styles.infoBox}>
+            <Ionicons name="sparkles-outline" size={15} color={colors.primary} style={{ marginTop: 1 }} />
+            <Text style={styles.infoBoxText}>
+              Risk is evaluated instantly offline via 50-tree on-device Isolation Forest calibrated against DGMS hazard metrics.
+            </Text>
+          </View>
+        )}
+
+        {/* Manual Mode Input Controls */}
+        {scoringMode === "manual" && (
+          <View style={{ marginTop: 12 }}>
+            <Text style={[styles.sectionLabel, { fontSize: 10, marginBottom: 6 }]}>STATUTORY RISK LEVEL</Text>
+            <View style={styles.tierGrid}>
+              {MANUAL_RISK_TIERS.map((tier) => {
+                const isSelected = manualLevel === tier.key;
+                return (
+                  <TouchableOpacity
+                    key={tier.key}
+                    style={[
+                      styles.tierChip,
+                      isSelected && { borderColor: tier.color, backgroundColor: tier.bgLight },
+                    ]}
+                    onPress={() => handleSelectManualTier(tier)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.tierTitle, isSelected && { color: tier.color, fontWeight: "700" }]}>
+                      {tier.label}
+                    </Text>
+                    <Text style={[styles.tierScore, isSelected && { color: tier.color }]}>
+                      {(tier.defaultScore * 100).toFixed(0)}%
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Stepper Fine-Tuning */}
+            <View style={styles.stepperContainer}>
+              <Text style={styles.stepperLabel}>Calibrated Score:</Text>
+              <View style={styles.stepperControls}>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => adjustManualScore(-0.05)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="remove" size={16} color="#334155" />
+                </TouchableOpacity>
+                <Text style={styles.stepperValueText}>
+                  {manualScore.toFixed(2)} <Text style={{ fontSize: 11, color: "#94A3B8" }}>({Math.round(manualScore * 100)}%)</Text>
+                </Text>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => adjustManualScore(0.05)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="add" size={16} color="#334155" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Mandatory Override Justification Field */}
+            <View style={{ marginTop: 12 }}>
+              <Text style={[styles.sectionLabel, { fontSize: 10, marginBottom: 4 }]}>
+                OVERRIDE JUSTIFICATION <Text style={{ color: "#DC2626" }}>*</Text>
+              </Text>
+              <TextInput
+                style={styles.justificationInput}
+                placeholder="Statutory reason for overriding AI scoring (e.g. Visual strata delamination observed with timber deflection)..."
+                placeholderTextColor="#94A3B8"
+                value={manualReason}
+                onChangeText={setManualReason}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+              <Text style={styles.justificationHint}>
+                Required for statutory audit trail. Recorded permanently in tamper-evident ledger.
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Submit Button */}
@@ -545,5 +771,166 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: "700",
     fontSize: 12,
+  },
+  modeToggleRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 8,
+  },
+  modeToggleBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modeToggleBtnActive: {
+    backgroundColor: "#EFF6FF",
+    borderColor: colors.primary,
+  },
+  modeToggleText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  modeToggleTextActive: {
+    color: colors.primary,
+    fontWeight: "700",
+  },
+  dgmsLockedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FEE2E2",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+  },
+  dgmsLockedText: {
+    color: "#DC2626",
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  criticalNoticeBox: {
+    backgroundColor: "#FEF2F2",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    padding: 10,
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  criticalNoticeTitle: {
+    color: "#DC2626",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  criticalNoticeDesc: {
+    color: "#991B1B",
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  infoBox: {
+    flexDirection: "row",
+    gap: 8,
+    backgroundColor: "#F8FAFC",
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginTop: 4,
+  },
+  infoBoxText: {
+    color: "#64748B",
+    fontSize: 11,
+    lineHeight: 16,
+    flex: 1,
+  },
+  tierGrid: {
+    flexDirection: "row",
+    gap: 6,
+    marginBottom: 10,
+  },
+  tierChip: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  tierTitle: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#475569",
+    marginBottom: 2,
+  },
+  tierScore: {
+    fontSize: 11,
+    fontFamily: "monospace",
+    fontWeight: "700",
+    color: "#64748B",
+  },
+  stepperContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 4,
+  },
+  stepperLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.text,
+  },
+  stepperControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  stepperBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: "#E2E8F0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepperValueText: {
+    fontSize: 13,
+    fontWeight: "700",
+    fontFamily: "monospace",
+    color: colors.text,
+    minWidth: 70,
+    textAlign: "center",
+  },
+  justificationInput: {
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 10,
+    color: colors.text,
+    fontSize: 12,
+    minHeight: 65,
+  },
+  justificationHint: {
+    fontSize: 10,
+    color: "#64748B",
+    marginTop: 4,
+    fontStyle: "italic",
   },
 });

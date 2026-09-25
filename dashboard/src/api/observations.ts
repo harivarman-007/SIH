@@ -40,6 +40,8 @@ export interface ObservationOut {
   escalated_at: string | null;
   compliance_status?: string | null;
   threshold_breach_detail?: string | null;
+  risk_score_source?: 'ai_auto' | 'manual' | 'dgms_override' | string;
+  manual_score_reason?: string | null;
   version: number;
 }
 
@@ -67,6 +69,8 @@ export interface ObservationCreatePayload {
   edge_score?: number;
   gas_reading_value?: number;
   gas_reading_unit?: string;
+  risk_score_source?: 'ai_auto' | 'manual' | 'dgms_override' | string;
+  manual_score_reason?: string;
 }
 
 export async function createObservation(

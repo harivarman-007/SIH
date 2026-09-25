@@ -20,6 +20,8 @@ export interface NewObservationInput {
   edge_flag?: RiskFlag | null;
   edge_reasons_json?: string | null;
   inspection_id?: string | null;
+  risk_score_source?: string | null;
+  manual_score_reason?: string | null;
 }
 
 export class ObservationRepository {
@@ -34,8 +36,9 @@ export class ObservationRepository {
           lat, lng, beacon_id,
           mine_site_id, zone_id, inspection_id,
           edge_score, edge_flag, edge_reasons_json,
+          risk_score_source, manual_score_reason,
           created_at, queued_at, sync_status, retry_count
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
         [
           input.category,
           input.description,
@@ -51,6 +54,8 @@ export class ObservationRepository {
           input.edge_score ?? null,
           input.edge_flag ?? null,
           input.edge_reasons_json ?? null,
+          input.risk_score_source ?? "ai_auto",
+          input.manual_score_reason ?? null,
           now,
           now,
         ]
@@ -72,6 +77,8 @@ export class ObservationRepository {
         "ALTER TABLE local_observations ADD COLUMN edge_score REAL DEFAULT NULL;",
         "ALTER TABLE local_observations ADD COLUMN edge_flag TEXT DEFAULT NULL;",
         "ALTER TABLE local_observations ADD COLUMN edge_reasons_json TEXT DEFAULT NULL;",
+        "ALTER TABLE local_observations ADD COLUMN risk_score_source TEXT DEFAULT 'ai_auto';",
+        "ALTER TABLE local_observations ADD COLUMN manual_score_reason TEXT DEFAULT NULL;",
       ];
       for (const sql of cols) {
         try {

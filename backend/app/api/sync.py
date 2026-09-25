@@ -7,13 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.audit import append_audit_entry
 from app.database import get_db
 from app.enrichment.service import enrich_observation
-from app.models import CorrectiveAction, Inspection, MineSite, Observation, ObservationStatus, User, UserRole, Zone
+from app.models import CorrectiveAction, Inspection, MineSite, Observation, ObservationStatus, RiskFlag, User, UserRole, Zone
 from app.schemas.sync import SyncBatchRequest, SyncBatchResponse, SyncPullResponse, SyncStatusResponse
 from app.schemas.inspections import InspectionOut
 from app.schemas.observation import ObservationOut
 from app.schemas.actions import ActionOut
 from app.services.auth import get_current_user
 from app.services.threshold_evaluator import evaluate_observation_compliance
+from app.services.dgms_rules import apply_dgms_safety_floor
 
 router = APIRouter(prefix="/sync", tags=["sync"])
 
@@ -38,6 +39,17 @@ async def sync_batch(
         if not zone_id:
             zone_id = (await db.execute(select(Zone.id).where(Zone.mine_site_id == site_id).limit(1))).scalar()
 
+        # Enforce DGMS Critical Safety Floor (roof fall, explosion, gas leak, etc.)
+        source, score, flag_str, reasons, manual_reason = apply_dgms_safety_floor(
+            description=item.description,
+            requested_source=item.risk_score_source,
+            requested_score=item.edge_score,
+            requested_flag=item.edge_flag,
+            requested_reasons=item.edge_reasons,
+            manual_reason=item.manual_score_reason,
+        )
+        edge_flag_enum = RiskFlag(flag_str) if flag_str in ("low", "medium", "high") else None
+
         obs = Observation(
             created_at=client_ts,
             synced_at=now_utc,
@@ -54,9 +66,11 @@ async def sync_batch(
             lat=item.lat,
             lng=item.lng,
             beacon_id=item.beacon_id,
-            edge_score=item.edge_score,
-            edge_flag=item.edge_flag,
-            edge_reasons=item.edge_reasons,
+            edge_score=score,
+            edge_flag=edge_flag_enum,
+            edge_reasons=reasons,
+            risk_score_source=source,
+            manual_score_reason=manual_reason,
             status=ObservationStatus.open,
         )
 
@@ -82,6 +96,8 @@ async def sync_batch(
                 "mine_site_id": str(obs.mine_site_id),
                 "edge_score": obs.edge_score,
                 "edge_flag": obs.edge_flag.value if obs.edge_flag else None,
+                "risk_score_source": obs.risk_score_source,
+                "manual_score_reason": obs.manual_score_reason,
                 "client_created_at": client_ts.isoformat(),
             },
             actor_id=current_user.id,

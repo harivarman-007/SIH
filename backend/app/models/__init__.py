@@ -224,6 +224,8 @@ class Observation(Base):
     edge_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     edge_flag: Mapped[RiskFlag | None] = mapped_column(Enum(RiskFlag), nullable=True)
     edge_reasons: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    risk_score_source: Mapped[str] = mapped_column(String(50), default="ai_auto", server_default="ai_auto", nullable=False)
+    manual_score_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Cloud enrichment
     cloud_score: Mapped[float | None] = mapped_column(Float, nullable=True)

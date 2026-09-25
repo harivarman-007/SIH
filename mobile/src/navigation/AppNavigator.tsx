@@ -25,7 +25,12 @@ export type RootStackParamList = {
   Inspections: undefined;
   Actions: undefined;
   NewObservation: { inspectionId?: string; inspectionCode?: string } | undefined;
-  RiskCard: { localId: number; riskResult: RiskScoringResult };
+  RiskCard: {
+    localId: number;
+    riskResult: RiskScoringResult;
+    riskScoreSource?: "ai_auto" | "manual" | "dgms_override";
+    manualScoreReason?: string | null;
+  };
   Queue: undefined;
   LabourAttendance: undefined;
 };

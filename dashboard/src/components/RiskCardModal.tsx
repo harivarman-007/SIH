@@ -34,6 +34,8 @@ export interface ObservationData {
   status: 'open' | 'in-progress' | 'completed';
   complianceStatus?: string | null;
   thresholdBreachDetail?: string | null;
+  riskScoreSource?: 'ai_auto' | 'manual' | 'dgms_override' | string;
+  manualScoreReason?: string | null;
 }
 
 export interface RiskCardModalProps {
@@ -284,12 +286,40 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
                 </div>
               </div>
 
-              {/* Right Column: AI Risk Diagnostic Engine */}
+              {/* Right Column: Risk Diagnostic Engine */}
               <div className="md:col-span-5 flex flex-col justify-between bg-slate-50/80 border border-slate-200/80 rounded-xl p-4.5">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                    AI Diagnostic Result
-                  </span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Risk Diagnostic
+                    </span>
+                    {/* Scoring Source Badge */}
+                    {observation.riskScoreSource === 'manual' ? (
+                      <span
+                        className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 border border-blue-200 text-blue-700 flex items-center gap-1 cursor-help"
+                        title={observation.manualScoreReason ? `Justification: ${observation.manualScoreReason}` : 'Manual entry'}
+                      >
+                        <User className="size-3 text-blue-600" />
+                        <span>Manual</span>
+                      </span>
+                    ) : observation.riskScoreSource === 'dgms_override' ? (
+                      <span
+                        className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 border border-rose-200 text-rose-700 flex items-center gap-1"
+                        title="Statutory critical hazard floor triggered (0.95 HIGH)"
+                      >
+                        <ShieldAlert className="size-3 text-rose-600" />
+                        <span>DGMS Override</span>
+                      </span>
+                    ) : (
+                      <span
+                        className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 border border-slate-200 text-slate-600 flex items-center gap-1"
+                        title="Edge AI Isolation Forest inference"
+                      >
+                        <Activity className="size-3 text-slate-500" />
+                        <span>AI Auto</span>
+                      </span>
+                    )}
+                  </div>
 
                   {/* Main Metric Score */}
                   <div className="mt-2">
@@ -304,7 +334,11 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
                       </span>
                     </div>
                     <span className="text-xs font-semibold text-slate-700 block mt-0.5">
-                      AI Anomaly Risk Index
+                      {observation.riskScoreSource === 'manual'
+                        ? 'Manual Statutory Risk Score'
+                        : observation.riskScoreSource === 'dgms_override'
+                        ? 'DGMS Critical Hazard Floor'
+                        : 'AI Anomaly Risk Index'}
                     </span>
                   </div>
 
@@ -317,6 +351,31 @@ export const RiskCardModal: React.FC<RiskCardModalProps> = ({
                       style={{ width: `${scorePercent}%` }}
                     />
                   </div>
+
+                  {/* Manual Override Justification Callout */}
+                  {observation.riskScoreSource === 'manual' && observation.manualScoreReason && (
+                    <div className="mt-3 p-3 rounded-xl bg-blue-50/70 border border-blue-200 text-xs">
+                      <div className="font-bold text-blue-900 text-[11px] uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                        <span>Inspector Override Justification</span>
+                      </div>
+                      <p className="text-slate-700 italic leading-relaxed text-[11px]">
+                        "{observation.manualScoreReason}"
+                      </p>
+                    </div>
+                  )}
+
+                  {/* DGMS Override Notice Callout */}
+                  {observation.riskScoreSource === 'dgms_override' && (
+                    <div className="mt-3 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs">
+                      <div className="font-bold text-rose-800 text-[11px] uppercase tracking-wide flex items-center gap-1.5 mb-0.5">
+                        <AlertTriangle className="size-3 text-rose-600" />
+                        <span>Statutory Floor Enforced</span>
+                      </div>
+                      <p className="text-rose-700 leading-snug text-[11px]">
+                        Critical hazard keyword match locked score to 0.95 (HIGH) per DGMS guidelines.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Contributing Diagnostic Rules */}
                   <div className="mt-5 space-y-2">

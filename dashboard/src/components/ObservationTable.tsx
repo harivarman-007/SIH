@@ -595,15 +595,41 @@ function HealthDisplayComponent({ project }: { project: Project }) {
    );
 }
 
-function PriorityDisplayComponent({ priority }: { priority: Priority }) {
+function PriorityDisplayComponent({ priority, raw }: { priority: Priority; raw?: ObservationOut }) {
    const Icon = priority.icon || NoPriorityIcon;
    const isUrgent = priority.id === 'urgent';
    const isHigh = priority.id === 'high';
+   const source = raw?.risk_score_source || 'ai_auto';
+   const manualReason = raw?.manual_score_reason;
 
    return (
-      <div className="flex items-center gap-2 py-1 text-slate-700" title={priority.name}>
-         <Icon className={`size-4 shrink-0 ${isUrgent ? 'text-rose-600' : isHigh ? 'text-amber-600' : 'text-slate-600'}`} />
-         <span className="text-xs font-medium text-slate-700 truncate">{priority.name}</span>
+      <div className="flex items-center gap-1.5 py-1 text-slate-700 flex-wrap">
+         <div className="flex items-center gap-1.5" title={priority.name}>
+            <Icon className={`size-4 shrink-0 ${isUrgent ? 'text-rose-600' : isHigh ? 'text-amber-600' : 'text-slate-600'}`} />
+            <span className="text-xs font-medium text-slate-700 truncate">{priority.name}</span>
+         </div>
+         {source === 'manual' ? (
+            <span
+               className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200 cursor-help"
+               title={`Manual Override Justification: ${manualReason || 'No justification entered'}`}
+            >
+               Manual
+            </span>
+         ) : source === 'dgms_override' ? (
+            <span
+               className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200"
+               title="Statutory critical hazard floor triggered (0.95 HIGH)"
+            >
+               DGMS
+            </span>
+         ) : (
+            <span
+               className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"
+               title="Evaluated via AI Isolation Forest inference"
+            >
+               AI
+            </span>
+         )}
       </div>
    );
 }
@@ -701,6 +727,8 @@ function ProjectLineComponent({ project, onOpenCard }: ProjectLineComponentProps
             status: raw.status === 'closed' ? 'completed' : 'in-progress',
             complianceStatus: raw.compliance_status,
             thresholdBreachDetail: raw.threshold_breach_detail,
+            riskScoreSource: raw.risk_score_source || 'ai_auto',
+            manualScoreReason: raw.manual_score_reason,
          });
          return;
       }
@@ -726,6 +754,8 @@ function ProjectLineComponent({ project, onOpenCard }: ProjectLineComponentProps
             ? 'IMMEDIATE ACTION REQUIRED: Evacuate all personnel from the affected area. Suspend operations. Notify DGMS inspector and mine manager within 1 hour. Erect barricades and deploy rescue team.'
             : 'CORRECTIVE ACTION WITHIN 24 HRS: Assign safety officer to document and clear hazard. Conduct crew toolbox talk and log entry in statutory register.',
          status: project.percentComplete === 100 ? 'completed' : 'in-progress',
+         riskScoreSource: 'ai_auto',
+         manualScoreReason: null,
       });
    };
 
@@ -765,7 +795,7 @@ function ProjectLineComponent({ project, onOpenCard }: ProjectLineComponentProps
          </div>
 
          <div className="min-w-0">
-            <PriorityDisplayComponent priority={project.priority} />
+            <PriorityDisplayComponent priority={project.priority} raw={project._raw} />
          </div>
 
          <div className="min-w-0">

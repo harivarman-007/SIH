@@ -28,6 +28,8 @@ export const CreateObservationModal: React.FC<CreateObservationModalProps> = ({
 }) => {
   const [category, setCategory] = useState<ObsCategory>('safety');
   const [edgeFlag, setEdgeFlag] = useState<RiskFlag>('high');
+  const [scoringMode, setScoringMode] = useState<'ai_auto' | 'manual'>('ai_auto');
+  const [manualReason, setManualReason] = useState('');
   const [description, setDescription] = useState('');
   const [gasReading, setGasReading] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -50,6 +52,11 @@ export const CreateObservationModal: React.FC<CreateObservationModalProps> = ({
       return;
     }
 
+    if (scoringMode === 'manual' && !manualReason.trim()) {
+      setError('Statutory justification reason is required when using manual scoring mode.');
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -59,6 +66,8 @@ export const CreateObservationModal: React.FC<CreateObservationModalProps> = ({
         description: description.trim(),
         edge_flag: edgeFlag,
         edge_score: edgeFlag === 'high' ? 0.92 : edgeFlag === 'medium' ? 0.65 : 0.32,
+        risk_score_source: scoringMode,
+        manual_score_reason: scoringMode === 'manual' ? manualReason.trim() : undefined,
       };
 
       if (observedAt) {
@@ -161,10 +170,59 @@ export const CreateObservationModal: React.FC<CreateObservationModalProps> = ({
             </div>
           </div>
 
+          {/* Scoring Mode Toggle */}
+          <div>
+            <label className="block text-xs font-semibold text-zinc-700 mb-1.5 uppercase tracking-wide">
+              Risk Scoring Mode
+            </label>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <button
+                type="button"
+                onClick={() => setScoringMode('ai_auto')}
+                className={`px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                  scoringMode === 'ai_auto'
+                    ? 'border-blue-700 bg-blue-50 text-blue-800'
+                    : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300'
+                }`}
+              >
+                Auto (AI Model)
+              </button>
+              <button
+                type="button"
+                onClick={() => setScoringMode('manual')}
+                className={`px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                  scoringMode === 'manual'
+                    ? 'border-blue-700 bg-blue-50 text-blue-800'
+                    : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300'
+                }`}
+              >
+                Manual Override
+              </button>
+            </div>
+            {scoringMode === 'ai_auto' ? (
+              <p className="text-[11px] text-zinc-500 italic">
+                Risk score and contributing factors will be calculated by the on-device / cloud AI inference engine.
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-semibold text-zinc-600 uppercase tracking-wide">
+                  Override Justification <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={manualReason}
+                  onChange={(e) => setManualReason(e.target.value)}
+                  placeholder="Statutory reason for manual risk override (required for audit trail)..."
+                  className="w-full text-xs px-3 py-2 border border-zinc-200 rounded-xl bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 resize-none"
+                />
+              </div>
+            )}
+          </div>
+
           {/* Risk Severity */}
           <div>
             <label className="block text-xs font-semibold text-zinc-700 mb-2 uppercase tracking-wide">
-              Risk Severity
+              {scoringMode === 'manual' ? 'Inspector Assigned Severity' : 'Initial Target Severity'}
             </label>
             <div className="space-y-1.5">
               {RISK_LEVELS.map((risk) => (

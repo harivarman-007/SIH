@@ -24,6 +24,8 @@ export interface SyncObservationPayload {
   edge_reasons?: Record<string, unknown> | null;
   created_at: string;
   has_photo: boolean;
+  risk_score_source?: string;
+  manual_score_reason?: string | null;
 }
 
 export interface SyncBatchResponse {
@@ -67,6 +69,8 @@ export function localObsToPayload(obs: LocalObservation): SyncObservationPayload
     edge_score: obs.edge_score ?? null,
     edge_flag: obs.edge_flag ?? null,
     edge_reasons: edgeReasons,
+    risk_score_source: obs.risk_score_source || "ai_auto",
+    manual_score_reason: obs.manual_score_reason ?? null,
     created_at: obs.created_at,
     has_photo: Boolean(obs.photo_uri),
   };

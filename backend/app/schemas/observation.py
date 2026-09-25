@@ -23,6 +23,8 @@ class ObservationCreate(BaseModel):
     gas_reading_unit: Optional[str] = None
     compliance_status: Optional[str] = None
     threshold_breach_detail: Optional[str] = None
+    risk_score_source: Optional[str] = "ai_auto"
+    manual_score_reason: Optional[str] = None
     created_at: Optional[datetime] = None  # Client capture timestamp
 
 
@@ -54,6 +56,8 @@ class ObservationOut(BaseModel):
     cloud_score: Optional[float] = None
     cloud_flag: Optional[RiskFlag] = None
     cloud_reasons: Optional[Dict[str, Any]] = None
+    risk_score_source: str = "ai_auto"
+    manual_score_reason: Optional[str] = None
     suggested_action: Optional[str] = None
     enriched_at: Optional[datetime] = None
     status: ObservationStatus
@@ -85,6 +89,8 @@ class RiskCardOut(BaseModel):
     cloud_score: Optional[float] = None
     cloud_flag: Optional[RiskFlag] = None
     cloud_reasons: Optional[Dict[str, Any]] = None
+    risk_score_source: str = "ai_auto"
+    manual_score_reason: Optional[str] = None
     suggested_action: Optional[str] = None
     created_at: datetime
     synced_at: Optional[datetime] = None

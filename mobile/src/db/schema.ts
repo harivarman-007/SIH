@@ -36,6 +36,9 @@ export interface LocalObservation {
   edge_reasons_json: string | null; // JSON string
   compliance_status?: string | null;
   threshold_breach_detail?: string | null;
+  // Scoring source tracking
+  risk_score_source?: "ai_auto" | "manual" | "dgms_override" | string;
+  manual_score_reason?: string | null;
   // Timestamps
   created_at: string;
 }
@@ -163,6 +166,8 @@ export async function initSchema(db: SQLite.SQLiteDatabase): Promise<void> {
       edge_reasons_json TEXT    DEFAULT NULL,
       compliance_status TEXT    DEFAULT NULL,
       threshold_breach_detail TEXT DEFAULT NULL,
+      risk_score_source TEXT    DEFAULT 'ai_auto',
+      manual_score_reason TEXT  DEFAULT NULL,
 
       created_at        TEXT    NOT NULL
     );
@@ -298,6 +303,8 @@ export async function initSchema(db: SQLite.SQLiteDatabase): Promise<void> {
     "ALTER TABLE cached_inspections ADD COLUMN observation_count INTEGER DEFAULT 0;",
     "ALTER TABLE local_labour_attendance ADD COLUMN worker_badge_number TEXT DEFAULT NULL;",
     "ALTER TABLE local_labour_attendance ADD COLUMN worker_role TEXT DEFAULT NULL;",
+    "ALTER TABLE local_observations ADD COLUMN risk_score_source TEXT DEFAULT 'ai_auto';",
+    "ALTER TABLE local_observations ADD COLUMN manual_score_reason TEXT DEFAULT NULL;",
   ];
 
   for (const sql of safeMigrations) {

@@ -88,14 +88,16 @@ function ContributorBadge({ name }: { name: string }) {
 }
 
 export default function RiskCardScreen({ navigation, route }: Props) {
-  const { localId, riskResult } = route.params as {
+  const { localId, riskResult, riskScoreSource, manualScoreReason } = route.params as {
     localId: number;
     riskResult: RiskScoringResult;
+    riskScoreSource?: "ai_auto" | "manual" | "dgms_override";
+    manualScoreReason?: string | null;
   };
 
   const flag = riskResult.flag;
   const cfg = FLAG_CONFIG[flag] || FLAG_CONFIG.low;
-  const isRuleTrigger = riskResult.rule_triggered;
+  const isRuleTrigger = riskResult.rule_triggered || riskScoreSource === "dgms_override";
 
   const handleGoToQueue = () => {
     navigation.navigate("Queue");
@@ -113,8 +115,33 @@ export default function RiskCardScreen({ navigation, route }: Props) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Risk Assessment</Text>
-        <Text style={styles.headerSubtitle}>On-device edge AI isolation forest inference</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Text style={styles.headerTitle}>Risk Assessment</Text>
+          {/* Scoring Source Pill Tag */}
+          {riskScoreSource === "manual" ? (
+            <View style={[styles.sourceBadge, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
+              <Ionicons name="create-outline" size={12} color="#1E40AF" style={{ marginRight: 4 }} />
+              <Text style={[styles.sourceBadgeText, { color: "#1E40AF" }]}>Manual Entry</Text>
+            </View>
+          ) : riskScoreSource === "dgms_override" ? (
+            <View style={[styles.sourceBadge, { backgroundColor: "#FEF2F2", borderColor: "#FECACA" }]}>
+              <Ionicons name="warning-outline" size={12} color="#DC2626" style={{ marginRight: 4 }} />
+              <Text style={[styles.sourceBadgeText, { color: "#DC2626" }]}>DGMS Override</Text>
+            </View>
+          ) : (
+            <View style={[styles.sourceBadge, { backgroundColor: "#F1F5F9", borderColor: "#CBD5E1" }]}>
+              <Ionicons name="sparkles-outline" size={12} color="#475569" style={{ marginRight: 4 }} />
+              <Text style={[styles.sourceBadgeText, { color: "#475569" }]}>AI Auto-Scored</Text>
+            </View>
+          )}
+        </View>
+        <Text style={styles.headerSubtitle}>
+          {riskScoreSource === "manual"
+            ? "Inspector statutory manual risk evaluation"
+            : riskScoreSource === "dgms_override"
+            ? "Statutory critical hazard rule override applied"
+            : "On-device edge AI isolation forest inference"}
+        </Text>
       </View>
 
       {/* Score Card */}
@@ -127,10 +154,23 @@ export default function RiskCardScreen({ navigation, route }: Props) {
               <Ionicons name="flash" size={14} color="#DC2626" />
               <Text style={styles.ruleBannerTitle}>CRITICAL DGMS RULE TRIGGERED</Text>
             </View>
-            <Text style={styles.ruleBannerRule}>{riskResult.reasons.rule_override}</Text>
+            <Text style={styles.ruleBannerRule}>
+              {riskResult.reasons.rule_override || "Statutory hazard floor enforced (0.95 HIGH)"}
+            </Text>
           </View>
         )}
       </View>
+
+      {/* Manual Justification Reason Card */}
+      {riskScoreSource === "manual" && manualScoreReason ? (
+        <View style={styles.manualJustificationCard}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <Ionicons name="document-text-outline" size={14} color="#1E40AF" />
+            <Text style={styles.manualJustificationLabel}>STATUTORY OVERRIDE JUSTIFICATION</Text>
+          </View>
+          <Text style={styles.manualJustificationText}>{manualScoreReason}</Text>
+        </View>
+      ) : null}
 
       {/* Rationale */}
       {riskResult.reasons.rationale ? (
@@ -454,5 +494,38 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 13,
     fontWeight: "700",
+  },
+  sourceBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  sourceBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  manualJustificationCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    padding: 14,
+  },
+  manualJustificationLabel: {
+    color: "#1E40AF",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.6,
+  },
+  manualJustificationText: {
+    color: "#334155",
+    fontSize: 13,
+    lineHeight: 18,
+    fontStyle: "italic",
+    marginTop: 2,
   },
 });

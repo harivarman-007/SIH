@@ -81,6 +81,27 @@ const CRITICAL_RULES: [string, RegExp, string][] = [
   ],
 ];
 
+export function checkCriticalRules(description: string): {
+  matched: boolean;
+  ruleId?: string;
+  rationale?: string;
+  matchText?: string;
+} {
+  const desc = description || "";
+  for (const [ruleId, regex, rationale] of CRITICAL_RULES) {
+    const match = desc.match(regex);
+    if (match) {
+      return {
+        matched: true,
+        ruleId,
+        rationale: `${rationale} (trigger: '${match[0]}')`,
+        matchText: match[0],
+      };
+    }
+  }
+  return { matched: false };
+}
+
 const SAFETY_KEYWORDS = [
   "crack", "spall", "fall", "leak", "methane", "gas", "fire", "smoke",
   "blasting", "explosive", "failure", "collapse", "inundation", "flyrock",

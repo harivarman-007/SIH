@@ -34,6 +34,7 @@ from app.schemas.observation import (
 )
 from app.services.auth import get_current_user, require_roles
 from app.services.threshold_evaluator import evaluate_observation_compliance
+from app.services.dgms_rules import apply_dgms_safety_floor
 
 router = APIRouter(prefix="/observations", tags=["observations"])
 
@@ -134,6 +135,17 @@ async def create_observation(
                 detail="No zone found for this mine site. Please configure zones first.",
             )
 
+    # Enforce DGMS Critical Safety Floor (roof fall, explosion, gas leak, etc.)
+    source, score, flag_str, reasons, manual_reason = apply_dgms_safety_floor(
+        description=req.description,
+        requested_source=req.risk_score_source,
+        requested_score=req.edge_score,
+        requested_flag=req.edge_flag,
+        requested_reasons=req.edge_reasons,
+        manual_reason=req.manual_score_reason,
+    )
+    edge_flag_enum = RiskFlag(flag_str) if flag_str in ("low", "medium", "high") else None
+
     new_obs = Observation(
         created_at=obs_created_at,
         synced_at=now_utc,
@@ -150,9 +162,11 @@ async def create_observation(
         lat=req.lat,
         lng=req.lng,
         beacon_id=req.beacon_id,
-        edge_score=req.edge_score,
-        edge_flag=req.edge_flag,
-        edge_reasons=req.edge_reasons,
+        edge_score=score,
+        edge_flag=edge_flag_enum,
+        edge_reasons=reasons,
+        risk_score_source=source,
+        manual_score_reason=manual_reason,
         status=ObservationStatus.open,
     )
 
@@ -174,6 +188,8 @@ async def create_observation(
             "inspection_id": str(new_obs.inspection_id) if new_obs.inspection_id else None,
             "edge_flag": new_obs.edge_flag.value if new_obs.edge_flag else None,
             "edge_score": new_obs.edge_score,
+            "risk_score_source": new_obs.risk_score_source,
+            "manual_score_reason": new_obs.manual_score_reason,
             "compliance_status": new_obs.compliance_status,
             "threshold_breach_detail": new_obs.threshold_breach_detail,
         },
