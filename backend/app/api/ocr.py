@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.audit import append_audit_entry
 from app.config import settings
 from app.database import get_db
-from app.models import OcrReviewQueue, OcrReviewStatus, User, UserRole
+from app.models import MineSite, OcrReviewQueue, OcrReviewStatus, User, UserRole
 from app.ocr.engine import process_ocr_image
 from app.schemas.ocr import (
     OcrQueueItemOut,
