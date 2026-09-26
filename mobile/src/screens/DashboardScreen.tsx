@@ -87,9 +87,9 @@ export default function DashboardScreen({ navigation }: Props) {
     todayStart.setHours(0, 0, 0, 0);
 
     const todayObs = all.filter(
-      (o) => new Date(o.created_at) >= todayStart
+      (o: any) => new Date(o.created_at) >= todayStart
     );
-    const highRiskCount = all.filter((o) => o.edge_flag === "high").length;
+    const highRiskCount = all.filter((o: any) => o.edge_flag === "high").length;
 
     setStats({
       totalToday: todayObs.length,
@@ -263,7 +263,7 @@ export default function DashboardScreen({ navigation }: Props) {
               </Text>
             </View>
           ) : (
-            stats?.recentObservations.map((obs) => {
+            stats?.recentObservations.map((obs: any) => {
               const flagCfg = FLAG_CONFIG[obs.edge_flag ?? "low"] || FLAG_CONFIG.low;
               return (
                 <View

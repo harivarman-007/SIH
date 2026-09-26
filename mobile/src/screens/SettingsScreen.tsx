@@ -99,8 +99,8 @@ export default function SettingsScreen({ navigation }: Props) {
     ]);
   };
 
-  const systemLangs = supportedLanguages.filter((l) => l.category === "system");
-  const regionalLangs = supportedLanguages.filter((l) => l.category === "regional");
+  const systemLangs = supportedLanguages.filter((l: any) => l.category === "system");
+  const regionalLangs = supportedLanguages.filter((l: any) => l.category === "regional");
 
   const renderLanguageItem = (meta: LanguageMeta) => {
     const isSelected = language === meta.code;

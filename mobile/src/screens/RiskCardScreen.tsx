@@ -78,7 +78,7 @@ function ScoreArc({ score }: { score: number }) {
   );
 }
 
-function ContributorBadge({ name }: { name: string }) {
+function ContributorBadge({ name }: { name: string; key?: any }) {
   const displayName = name.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   return (
     <View style={styles.contributorBadge}>

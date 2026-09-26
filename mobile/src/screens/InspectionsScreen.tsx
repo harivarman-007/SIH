@@ -169,7 +169,7 @@ export default function InspectionsScreen({ navigation }: any) {
     }
   };
 
-  const filtered = inspections.filter((i) => {
+  const filtered = inspections.filter((i: any) => {
     if (filter === "ALL") return true;
     return i.status.toUpperCase() === filter;
   });
@@ -276,7 +276,7 @@ export default function InspectionsScreen({ navigation }: any) {
       ) : (
         <FlatList
           data={filtered}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item: any) => item.id}
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
@@ -285,7 +285,7 @@ export default function InspectionsScreen({ navigation }: any) {
               tintColor={colors.primary}
             />
           }
-          renderItem={({ item }) => {
+          renderItem={({ item }: { item: any }) => {
             const st = getStatusStyle(item.status);
             const isScheduled = item.status.toLowerCase() === "scheduled";
             const isInProgress = item.status.toLowerCase() === "in_progress";

@@ -150,7 +150,7 @@ interface I18nContextValue {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
-export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const I18nProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<LanguageCode>(currentGlobalLanguage);
   const [explicitOverride, setExplicitOverride] = useState<LanguageCode | null>(null);
   const [userMineState, setUserMineState] = useState<string | null>(null);
@@ -256,8 +256,8 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 };
 
-export function useTranslation() {
-  const context = useContext(I18nContext);
+export function useTranslation(): I18nContextValue {
+  const context = useContext(I18nContext) as I18nContextValue | null;
   if (!context) {
     // Fallback if rendered outside provider
     return {

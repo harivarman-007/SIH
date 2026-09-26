@@ -26,7 +26,7 @@ interface AuthState {
   clearError: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => {
+export const useAuthStore = create<AuthState>((set: any) => {
   // Listen for global 401 events from Axios
   onUnauthorized(() => {
     set({ token: null, user: null, isAuthenticated: false, error: "Session expired. Please sign in again." });
@@ -39,7 +39,7 @@ export const useAuthStore = create<AuthState>((set) => {
     isLoading: false,
     error: null,
 
-    login: async (email, password) => {
+    login: async (email: string, password: string) => {
       set({ isLoading: true, error: null });
       try {
         const resp = await apiLogin(email, password);
@@ -96,7 +96,7 @@ export const useAuthStore = create<AuthState>((set) => {
     updateUserLanguagePreference: async (lang: string | null) => {
       try {
         const updated = await updatePreferredLanguage(lang);
-        set((state) => ({
+        set((state: any) => ({
           user: state.user ? { ...state.user, preferred_language: updated.preferred_language, resolved_language: updated.resolved_language } : null,
         }));
       } catch (err) {

@@ -18,7 +18,7 @@ interface Props {
   navigation: any;
 }
 
-export const BottomNavBar: React.FC<Props> = ({ currentRoute, navigation }) => {
+export const BottomNavBar: React.FC<Props> = ({ currentRoute, navigation }: Props) => {
   const { t } = useTranslation();
   const [activeInspections, setActiveInspections] = useState(0);
   const [pendingSync, setPendingSync] = useState(0);

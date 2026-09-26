@@ -15,7 +15,7 @@ import AppNavigator from "./src/navigation/AppNavigator";
 
 export default function App() {
   const [appReady, setAppReady] = useState(false);
-  const restoreSession = useAuthStore((s) => s.restoreSession);
+  const restoreSession = useAuthStore((s: any) => s.restoreSession);
 
   useEffect(() => {
     async function bootstrap() {

@@ -239,7 +239,7 @@ export default function LoginScreen({ navigation }: Props) {
                 <Text style={styles.modalTitle}>{t("settings.language_title")}</Text>
               </View>
               <ScrollView style={{ maxHeight: 360 }}>
-                {supportedLanguages.map((l) => (
+                {supportedLanguages.map((l: any) => (
                   <TouchableOpacity
                     key={l.code}
                     style={[styles.modalLangItem, language === l.code && styles.modalLangItemActive]}

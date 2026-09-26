@@ -124,7 +124,7 @@ export default function ActionsScreen({ navigation }: any) {
       ) : (
         <FlatList
           data={actions}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item: any) => item.id}
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
@@ -133,7 +133,7 @@ export default function ActionsScreen({ navigation }: any) {
               tintColor={colors.primary}
             />
           }
-          renderItem={({ item }) => {
+          renderItem={({ item }: { item: any }) => {
             const st = getStatusBadge(item.status);
             const priStyle = getPriorityStyle(item.priority);
             const isRejected = item.status.toLowerCase() === "rejected" || Boolean(item.rejection_reason);

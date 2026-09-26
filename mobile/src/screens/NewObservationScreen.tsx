@@ -155,7 +155,7 @@ export default function NewObservationScreen({ navigation, route }: Props) {
   };
 
   const adjustManualScore = (delta: number) => {
-    setManualScore((prev) => {
+    setManualScore((prev: number) => {
       const next = Math.round((prev + delta) * 100) / 100;
       return Math.min(1.0, Math.max(0.05, next));
     });
@@ -196,7 +196,7 @@ export default function NewObservationScreen({ navigation, route }: Props) {
         };
       } else if (scoringMode === "manual") {
         riskScoreSource = "manual";
-        const tier = MANUAL_RISK_TIERS.find((t) => t.key === manualLevel) || MANUAL_RISK_TIERS[1];
+        const tier = (MANUAL_RISK_TIERS as readonly any[]).find((t: any) => t.key === manualLevel) || MANUAL_RISK_TIERS[1];
         riskResult = {
           score: manualScore,
           flag: tier.flag,
