@@ -347,4 +347,4 @@ python backend/scripts/verify_sync_enrichment_e2e.py
 - **Team**: Intellifusion
 - **Target Event**: Smart India Hackathon (SIH) 2026
 - **Problem Statement**: SIH26024 — AI-Based Smart Governance & Compliance Monitoring System for Coal Mines
-- Built with focus on industrial safety, statutory compliance, and zero-compromise offline resilience.
+- Built with focus on industrial safety, statutory compliance, and zero-compromise offline 
