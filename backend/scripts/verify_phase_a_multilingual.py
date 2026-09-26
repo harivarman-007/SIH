@@ -114,7 +114,6 @@ def test_models_and_migration():
 
 def test_schemas():
     print("\n--- 3. Testing Pydantic Schemas ---")
-    from pydantic import ValidationError
     from app.schemas.auth import LanguageUpdateRequest, UserOut
     from app.schemas.admin import MineSiteCreate, MineSiteUpdate, MineSiteOut
     from app.models import UserRole
@@ -129,11 +128,11 @@ def test_schemas():
     req_null = LanguageUpdateRequest(language=None)
     assert req_null.language is None
 
-    # Invalid language should raise ValidationError
+    # Invalid language should raise ValidationError / ValueError
     try:
         LanguageUpdateRequest(language="klingon")
         assert False, "Should have raised ValidationError for invalid language"
-    except (ValidationError, ValueError):
+    except ValueError:
         pass
     print("[PASS] LanguageUpdateRequest validation verified (accepts 8 valid languages or null, rejects invalid)")
 
