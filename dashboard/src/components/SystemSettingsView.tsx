@@ -9,7 +9,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Hash,
+  Globe,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   fetchSystemSettings,
   updateSystemSettings,
@@ -17,6 +19,8 @@ import {
   SystemSettings,
   SystemHealthData,
 } from '../api/admin';
+import { LANGUAGES } from '../i18n';
+import { useAuthStore } from '../store/authStore';
 
 export const SystemSettingsView: React.FC = () => {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
@@ -30,6 +34,23 @@ export const SystemSettingsView: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [langFeedback, setLangFeedback] = useState<string | null>(null);
+
+  const { t, i18n } = useTranslation();
+  const { user, updateUserLanguagePreference } = useAuthStore();
+
+  const handleLanguageSelect = async (code: string | null) => {
+    try {
+      await updateUserLanguagePreference(code);
+      setLangFeedback(t('settings.language_saved', 'Language preference updated successfully.'));
+      setTimeout(() => setLangFeedback(null), 4000);
+    } catch (err: any) {
+      setFeedback({
+        type: 'error',
+        message: err?.message || 'Failed to update language preference',
+      });
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -281,6 +302,121 @@ export const SystemSettingsView: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Multilingual Interface & Statutory Language Configuration */}
+        <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <Globe className="size-4 text-blue-700 shrink-0" />
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  {t('settings.language_title', 'Interface & Reporting Language')}
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  {t('settings.language_desc', 'Select your operational language. The system defaults to the regional jurisdiction of your assigned mine site.')}
+                </p>
+              </div>
+            </div>
+            {langFeedback && (
+              <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 flex items-center gap-1.5 self-start sm:self-auto">
+                <CheckCircle2 className="size-3.5" />
+                {langFeedback}
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* System-wide languages */}
+            <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                {t('settings.system_languages', 'System Languages')}
+              </span>
+              <div className="space-y-2">
+                {LANGUAGES.filter((l) => l.category === 'system').map((lang) => {
+                  const isActive = i18n.language === lang.code;
+                  return (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => handleLanguageSelect(lang.code)}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                        isActive
+                          ? 'border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/20 shadow-xs'
+                          : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-900">{lang.nativeLabel}</span>
+                          <span className="text-[11px] text-slate-500 font-medium">({lang.label})</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">{lang.region}</span>
+                      </div>
+                      {isActive && (
+                        <span className="text-[10px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                          Active
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Regional coalfield languages */}
+            <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                {t('settings.regional_languages', 'Coal Mining Regional Languages')}
+              </span>
+              <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                {LANGUAGES.filter((l) => l.category === 'regional').map((lang) => {
+                  const isActive = i18n.language === lang.code;
+                  return (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => handleLanguageSelect(lang.code)}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                        isActive
+                          ? 'border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/20 shadow-xs'
+                          : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-900">{lang.nativeLabel}</span>
+                          <span className="text-[11px] text-slate-500 font-medium">({lang.label})</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">{lang.region}</span>
+                      </div>
+                      {isActive && (
+                        <span className="text-[10px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                          Active
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
+            <span className="text-[11px] text-slate-500">
+              {user?.preferred_language
+                ? `Custom user preference: ${user.preferred_language.toUpperCase()}`
+                : `Mine-site auto-derived: ${(user?.resolved_language || 'en').toUpperCase()}`}
+            </span>
+            <button
+              type="button"
+              onClick={() => handleLanguageSelect(null)}
+              className="text-[11px] font-semibold text-blue-700 hover:text-blue-900 underline cursor-pointer text-left sm:text-right"
+            >
+              {t('settings.reset_to_default', 'Reset to Mine Site Default')}
+            </button>
+          </div>
+        </div>
+
 
         {/* Operational Health & Cryptographic State */}
         {health && (

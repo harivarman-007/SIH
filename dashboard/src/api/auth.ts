@@ -15,7 +15,10 @@ export interface UserInfo {
   is_active: boolean;
   permissions?: string[];
   scope?: Record<string, any>;
+  preferred_language?: string | null;
+  resolved_language?: string;
 }
+
 
 interface LoginApiResponse {
   access_token: string;
@@ -74,11 +77,18 @@ export interface MineSiteOption {
   id: string;
   name: string;
   location_name: string;
+  state?: string | null;
 }
 
 export async function fetchMineSites(): Promise<MineSiteOption[]> {
   const res = await apiClient.get<MineSiteOption[]>('/auth/mine-sites');
   return res.data;
 }
+
+export async function updateUserLanguage(language: string | null): Promise<UserInfo> {
+  const res = await apiClient.patch<UserInfo>('/users/me/language', { language });
+  return res.data;
+}
+
 
 

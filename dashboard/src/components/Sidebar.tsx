@@ -34,7 +34,9 @@ import {
   LogOut,
   User as UserIcon,
   Sparkles,
+  Globe,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 import { usePermissions } from './providers/PermissionProvider';
 import { getNavItemsForRole, NavItem } from '../config/navRegistry';
@@ -42,6 +44,7 @@ import { isDemoMode, DEMO_CREDENTIALS } from '../config/demoCredentials';
 import { AuthRole } from '../api/auth';
 import { ROLE_LABELS, ROLE_HOME_PATHS } from '../types/permissions';
 import { KPISummary } from '../api/kpi';
+import { LANGUAGES } from '../i18n';
 
 // Icon map for registry keys
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -94,6 +97,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
 
   const [showPersonaMenu, setShowPersonaMenu] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const { t, i18n } = useTranslation();
+  const { updateUserLanguagePreference } = useAuthStore();
+  const currentLangOption = LANGUAGES.find((l) => l.code === i18n.language) || LANGUAGES[0];
 
   // Auto-collapse responsive listener (SHOULD #8)
   useEffect(() => {
@@ -314,6 +321,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
+          {/* Multilingual Quick Switcher */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowLangMenu((prev) => !prev)}
+              title={isCollapsed ? `Language: ${currentLangOption?.label}` : undefined}
+              className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors ${
+                isCollapsed ? 'justify-center' : ''
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              {!isCollapsed && (
+                <div className="flex-1 flex items-center justify-between truncate text-[11px]">
+                  <span className="truncate">{currentLangOption?.nativeLabel || 'Language'}</span>
+                  <span className="text-[10px] text-zinc-400 uppercase font-mono px-1.5 py-0.5 bg-zinc-800 rounded">
+                    {i18n.language}
+                  </span>
+                </div>
+              )}
+            </button>
+
+            {showLangMenu && (
+              <div
+                className={`absolute bottom-full mb-2 bg-zinc-900 border border-zinc-800 rounded-xl p-1.5 shadow-2xl z-50 w-56 ${
+                  isCollapsed ? 'left-14' : 'left-2 right-2 w-auto'
+                }`}
+              >
+                <div className="px-2 py-1 text-[10px] text-zinc-400 uppercase font-semibold border-b border-zinc-800 mb-1 flex items-center justify-between">
+                  <span>Language</span>
+                  <span className="text-[9px] text-zinc-500 font-mono">8 Available</span>
+                </div>
+                <div className="space-y-0.5 max-h-56 overflow-y-auto">
+                  {LANGUAGES.map((lang) => (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={async () => {
+                        await updateUserLanguagePreference(lang.code);
+                        setShowLangMenu(false);
+                      }}
+                      className={`w-full text-left px-2 py-1.5 rounded-md text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                        i18n.language === lang.code ? 'bg-blue-600 text-white font-semibold' : 'text-zinc-300 hover:bg-zinc-800'
+                      }`}
+                    >
+                      <div className="truncate">
+                        <span className="font-medium mr-1.5">{lang.nativeLabel}</span>
+                        <span className="text-[10px] text-zinc-400 font-normal">({lang.label})</span>
+                      </div>
+                      {i18n.language === lang.code && <span className="w-1.5 h-1.5 rounded-full bg-white ml-2" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* User Profile / Logout */}
           <div className="pt-1">
             {!isCollapsed && user && (
@@ -325,13 +388,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             <button
               onClick={handleLogout}
-              title={isCollapsed ? 'Sign Out' : undefined}
+              title={isCollapsed ? t('auth.logout', 'Sign Out') : undefined}
               className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors
                 ${isCollapsed ? 'justify-center' : ''}
               `}
             >
               <LogOut className="w-3.5 h-3.5 shrink-0" />
-              {!isCollapsed && <span>Sign Out</span>}
+              {!isCollapsed && <span>{t('auth.logout', 'Sign Out')}</span>}
             </button>
           </div>
         </div>

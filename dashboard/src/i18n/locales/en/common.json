@@ -1,0 +1,58 @@
+{
+  "brand": {
+    "title": "Intellifusion",
+    "subtitle": "AI-Powered Coal Mine Smart Governance & Compliance",
+    "gov_label": "Ministry of Coal • DGMS Compliant"
+  },
+  "nav": {
+    "dashboard": "Command Center",
+    "observations": "Digital Logbook",
+    "analytics": "Live Analytics",
+    "reports": "Statutory Reports",
+    "inspections": "Inspections",
+    "actions": "Corrective Actions",
+    "workers": "Worker Registry",
+    "labour": "Labour & Attendance",
+    "rules": "Governance Rules",
+    "settings": "System Settings",
+    "audit": "Immutable Audit Trail",
+    "ocr_queue": "OCR Review Queue"
+  },
+  "settings": {
+    "title": "System Settings",
+    "language_title": "Interface & Reporting Language",
+    "language_desc": "Select your operational language. The system defaults to the regional jurisdiction of your assigned mine site.",
+    "current_language": "Active Language",
+    "system_languages": "System Languages",
+    "regional_languages": "Coal Mining Regional Languages",
+    "save_language": "Update Language Preference",
+    "saving": "Updating...",
+    "language_saved": "Language preference updated successfully.",
+    "auto_derived": "Derived from Mine Site Location",
+    "reset_to_default": "Reset to Mine Site Default"
+  },
+  "auth": {
+    "login_title": "Intellifusion Portal",
+    "login_subtitle": "Sign in to access statutory governance and compliance monitoring",
+    "email_label": "Official Email Address",
+    "password_label": "Security Password",
+    "sign_in": "Sign In",
+    "logging_in": "Authenticating...",
+    "logout": "Sign Out"
+  },
+  "common": {
+    "status": "Status",
+    "actions": "Actions",
+    "compliant": "Compliant",
+    "violation": "Statutory Breach",
+    "warning": "Advisory Warning",
+    "loading": "Loading...",
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "filter": "Filter",
+    "search": "Search records...",
+    "all": "All",
+    "mine_site": "Mine Site",
+    "role": "Role"
+  }
+}

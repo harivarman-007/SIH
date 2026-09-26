@@ -11,6 +11,8 @@ import {
   Route,
   Navigate,
 } from 'react-router-dom';
+import { I18nextProvider } from 'react-i18next';
+import i18n from './i18n';
 import { AuthProvider } from './components/providers/AuthProvider';
 import { PermissionProvider } from './components/providers/PermissionProvider';
 import { ProtectedRoute } from './components/guards/ProtectedRoute';
@@ -63,10 +65,11 @@ const RootRedirect: React.FC = () => {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <PermissionProvider>
-          <Routes>
+    <I18nextProvider i18n={i18n}>
+      <BrowserRouter>
+        <AuthProvider>
+          <PermissionProvider>
+            <Routes>
             {/* Public Auth Route */}
             <Route path="/login" element={<LoginForm />} />
 
@@ -221,5 +224,6 @@ export default function App() {
         </PermissionProvider>
       </AuthProvider>
     </BrowserRouter>
+    </I18nextProvider>
   );
 }

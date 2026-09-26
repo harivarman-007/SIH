@@ -74,6 +74,20 @@ def test_constants_and_resolution():
     assert infer_state_from_location("Talcher, Odisha") == "Odisha"
     print("[PASS] Location string state inference works for abbreviations and full state names")
 
+    # Test OCR Tesseract language mapping
+    from app.i18n.constants import map_lang_to_tesseract
+    assert map_lang_to_tesseract("en") == "eng"
+    assert map_lang_to_tesseract("hi") == "eng+hin"
+    assert map_lang_to_tesseract("bn") == "eng+ben"
+    assert map_lang_to_tesseract("or") == "eng+ori"
+    assert map_lang_to_tesseract("te") == "eng+tel"
+    assert map_lang_to_tesseract("mr") == "eng+mar"
+    assert map_lang_to_tesseract("sat") == "eng+sat"
+    assert map_lang_to_tesseract("sa") == "eng+san"
+    assert map_lang_to_tesseract("hin", include_english=False) == "hin"
+    print("[PASS] OCR Tesseract language code resolution verified for all 8 languages")
+
+
 
 def test_models_and_migration():
     print("\n--- 2. Testing Models and Alembic Migration ---")

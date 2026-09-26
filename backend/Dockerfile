@@ -6,7 +6,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     tesseract-ocr \
     tesseract-ocr-hin \
+    tesseract-ocr-ben \
+    tesseract-ocr-ori \
+    tesseract-ocr-tel \
+    tesseract-ocr-mar \
+    tesseract-ocr-san \
     fonts-deva \
+    fonts-beng \
+    fonts-orya \
+    fonts-telu \
     libtesseract-dev \
     libleptonica-dev \
     libgdal-dev \

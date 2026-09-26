@@ -5,7 +5,10 @@ from app.i18n.constants import (
     STATE_ALIAS_MAP,
     STATE_LANGUAGE_MAP,
     SUPPORTED_LANGUAGES,
+    TESSERACT_SUPPORTED_LANGS,
+    UI_TO_TESSERACT_LANG_MAP,
     infer_state_from_location,
+    map_lang_to_tesseract,
     resolve_user_language,
 )
 
@@ -16,6 +19,10 @@ __all__ = [
     "FORMAL_REGISTER_LANGUAGE",
     "LANGUAGE_METADATA",
     "STATE_ALIAS_MAP",
+    "UI_TO_TESSERACT_LANG_MAP",
+    "TESSERACT_SUPPORTED_LANGS",
+    "map_lang_to_tesseract",
     "infer_state_from_location",
     "resolve_user_language",
 ]
+

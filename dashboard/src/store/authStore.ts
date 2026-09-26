@@ -5,9 +5,10 @@
  * MUST #5: Loads permissions[] and scope from /auth/me
  */
 import { create } from 'zustand';
-import { login, logout as logoutApi, UserInfo, AuthRole } from '../api/auth';
+import { login, logout as logoutApi, UserInfo, AuthRole, updateUserLanguage } from '../api/auth';
 import apiClient, { registerAuthErrorHandler } from '../api/client';
 import { DEMO_CREDENTIALS } from '../config/demoCredentials';
+import i18n from '../i18n';
 
 const getStorageItem = (key: string): string | null => {
   try {
@@ -53,6 +54,7 @@ export interface AuthState {
   clearSessionExpired: () => void;
   setAccountDisabled: (val: boolean) => void;
   setSessionExpired: (val: boolean) => void;
+  updateUserLanguagePreference: (language: string | null) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -78,6 +80,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         headers: { Authorization: `Bearer ${existingToken}` },
       });
       const userData = res.data;
+      if (userData.resolved_language) {
+        i18n.changeLanguage(userData.resolved_language);
+      }
       set({
         user: userData,
         permissions: userData.permissions || [],
@@ -124,9 +129,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Fallback to user object from login
       }
 
+      const finalUser = {
+        ...user,
+        permissions,
+        scope,
+      };
+
+      if (finalUser.resolved_language) {
+        i18n.changeLanguage(finalUser.resolved_language);
+      }
+
       set({
         token,
-        user,
+        user: finalUser,
         permissions,
         scope,
         isLoading: false,
@@ -209,6 +224,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   clearSessionExpired: () => set({ sessionExpired: false }),
   setAccountDisabled: (val: boolean) => set({ accountDisabled: val }),
   setSessionExpired: (val: boolean) => set({ sessionExpired: val }),
+  updateUserLanguagePreference: async (language: string | null) => {
+    const updated = await updateUserLanguage(language);
+    set((state) => ({
+      user: state.user ? { ...state.user, ...updated } : updated,
+    }));
+    if (updated.resolved_language) {
+      await i18n.changeLanguage(updated.resolved_language);
+    }
+  },
 }));
 
 // Register client interceptor handler

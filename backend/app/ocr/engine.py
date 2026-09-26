@@ -1,7 +1,8 @@
 """
 engine.py
 Core OCR processing using pytesseract with word-level confidence extraction.
-Supports English ('eng') and Hindi ('hin').
+Supports English ('eng'), Hindi ('hin'), Bengali ('ben'), Odia ('ori'),
+Telugu ('tel'), Marathi ('mar'), Santali ('sat'), and Sanskrit ('san').
 """
 
 import io
@@ -9,6 +10,7 @@ import logging
 from typing import Any, Dict, List, Tuple
 from PIL import Image
 import pytesseract
+from app.i18n.constants import map_lang_to_tesseract
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +27,9 @@ def process_ocr_image(
 
     Args:
         image_bytes: Raw bytes of the image file.
-        lang: Language string for Tesseract ('eng', 'hin', 'eng+hin').
+        lang: Language string for Tesseract or UI code ('en', 'hi', 'bn', 'or', 'te', 'mr', 'sat', 'sa',
+              or Tesseract codes 'eng', 'hin', 'ben', 'ori', 'tel', 'mar', 'sat', 'san',
+              or combos like 'eng+hin', 'eng+ben').
         threshold: Confidence cutoff below which a word is marked low confidence.
 
     Returns:
@@ -37,6 +41,9 @@ def process_ocr_image(
           - low_confidence_words: list of words with conf < threshold
           - requires_review: bool (True if any valid word conf < threshold or no text extracted)
     """
+    # Normalize language code to Tesseract-compatible language string
+    tess_lang = map_lang_to_tesseract(lang)
+
     try:
         image = Image.open(io.BytesIO(image_bytes))
         # Convert paletted or RGBA to RGB for consistent OCR
@@ -48,7 +55,7 @@ def process_ocr_image(
 
     # Extract detailed word-level data
     try:
-        data = pytesseract.image_to_data(image, lang=lang, output_type=pytesseract.Output.DICT)
+        data = pytesseract.image_to_data(image, lang=tess_lang, output_type=pytesseract.Output.DICT)
     except Exception as exc:
         log.error("pytesseract image_to_data failed: %s", exc)
         raise RuntimeError(f"OCR execution failed: {exc}")
@@ -88,7 +95,7 @@ def process_ocr_image(
 
     # Also extract full clean text using image_to_string for natural line breaks
     try:
-        raw_text = pytesseract.image_to_string(image, lang=lang).strip()
+        raw_text = pytesseract.image_to_string(image, lang=tess_lang).strip()
     except Exception:
         raw_text = " ".join([w["word"] for w in words_info])
 

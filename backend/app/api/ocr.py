@@ -100,8 +100,19 @@ async def submit_ocr(
         saved_path = None
         logging.getLogger(__name__).warning("OCR image save failed: %s", io_err)
 
+    # Derive OCR language if auto or unspecified: use uploading user's resolved language
+    target_lang = lang
+    if not lang or lang.strip().lower() in ("auto", "default"):
+        site_state = None
+        if current_user.mine_site_id:
+            s_stmt = select(MineSite.state).where(MineSite.id == current_user.mine_site_id)
+            s_res = await db.execute(s_stmt)
+            site_state = s_res.scalar_one_or_none()
+        from app.i18n.constants import resolve_user_language
+        target_lang = resolve_user_language(current_user.preferred_language, site_state)
+
     try:
-        ocr_result = process_ocr_image(content, lang=lang)
+        ocr_result = process_ocr_image(content, lang=target_lang)
     except ValueError as val_err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(val_err))
     except Exception as err:

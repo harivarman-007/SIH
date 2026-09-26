@@ -137,3 +137,50 @@ def resolve_user_language(preferred_language: Optional[str], mine_site_state: Op
             return STATE_LANGUAGE_MAP[canonical]
 
     return DEFAULT_LANGUAGE
+
+
+UI_TO_TESSERACT_LANG_MAP: Dict[str, str] = {
+    "en": "eng",
+    "sa": "san",
+    "hi": "hin",
+    "bn": "ben",
+    "or": "ori",
+    "te": "tel",
+    "mr": "mar",
+    "sat": "sat",
+}
+
+TESSERACT_SUPPORTED_LANGS: List[str] = [
+    "eng", "san", "hin", "ben", "ori", "tel", "mar", "sat"
+]
+
+
+def map_lang_to_tesseract(lang: Optional[str], include_english: bool = True) -> str:
+    """
+    Maps UI language code or Tesseract code into a valid Tesseract lang spec.
+    If include_english is True and the primary language is not English,
+    returns 'eng+<lang>' to ensure numerals and alphanumeric headers parse accurately.
+    """
+    if not lang or lang.strip().lower() in ("auto", "none"):
+        return "eng"
+
+    parts = [p.strip().lower() for p in lang.split("+") if p.strip()]
+    resolved: List[str] = []
+
+    for part in parts:
+        if part in UI_TO_TESSERACT_LANG_MAP:
+            resolved.append(UI_TO_TESSERACT_LANG_MAP[part])
+        elif part in TESSERACT_SUPPORTED_LANGS:
+            resolved.append(part)
+        else:
+            resolved.append("eng")
+
+    # Deduplicate while preserving order
+    seen = set()
+    deduped = [x for x in resolved if not (x in seen or seen.add(x))]
+
+    if include_english and "eng" not in deduped:
+        deduped = ["eng"] + deduped
+
+    return "+".join(deduped) if deduped else "eng"
+
