@@ -24,9 +24,11 @@ import { actionRepository } from "../db/ActionRepository";
 import { pullDeltaSync } from "../sync/SyncWorker";
 import { CachedAction } from "../db/schema";
 import { BottomNavBar } from "../components/BottomNavBar";
+import { useTranslation } from "../i18n";
 import { colors, shadows } from "../theme";
 
 export default function ActionsScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const [actions, setActions] = useState<CachedAction[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -100,7 +102,7 @@ export default function ActionsScreen({ navigation }: any) {
       
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Corrective Actions</Text>
+        <Text style={styles.headerTitle}>{t("actions.title")}</Text>
         <Text style={styles.headerSubtitle}>
           Remediation tracking linked to your statutory observations
         </Text>
@@ -114,7 +116,7 @@ export default function ActionsScreen({ navigation }: any) {
       ) : actions.length === 0 ? (
         <View style={styles.centerContainer}>
           <Ionicons name="construct-outline" size={48} color="#94A3B8" style={{ marginBottom: 12 }} />
-          <Text style={styles.emptyTitle}>No Corrective Actions</Text>
+          <Text style={styles.emptyTitle}>{t("actions.no_actions")}</Text>
           <Text style={styles.emptySubtitle}>
             Corrective actions assigned by mine management will appear here
           </Text>

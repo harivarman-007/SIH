@@ -10,6 +10,7 @@ import { StatusBar } from "expo-status-bar";
 import { openDatabase } from "./src/db/schema";
 import { registerBackgroundSync } from "./src/sync/TaskManager";
 import { useAuthStore } from "./src/store/authStore";
+import { I18nProvider } from "./src/i18n";
 import AppNavigator from "./src/navigation/AppNavigator";
 
 export default function App() {
@@ -47,10 +48,10 @@ export default function App() {
   }
 
   return (
-    <>
+    <I18nProvider>
       <StatusBar style="light" />
       <AppNavigator />
-    </>
+    </I18nProvider>
   );
 }
 

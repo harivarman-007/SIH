@@ -17,6 +17,7 @@ import NewObservationScreen from "../screens/NewObservationScreen";
 import RiskCardScreen from "../screens/RiskCardScreen";
 import QueueScreen from "../screens/QueueScreen";
 import LabourAttendanceScreen from "../screens/LabourAttendanceScreen";
+import SettingsScreen from "../screens/SettingsScreen";
 import { colors } from "../theme";
 
 export type RootStackParamList = {
@@ -33,6 +34,7 @@ export type RootStackParamList = {
   };
   Queue: undefined;
   LabourAttendance: undefined;
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -109,6 +111,15 @@ export default function AppNavigator() {
           component={LabourAttendanceScreen}
           options={{
             headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{
+            title: "Settings & Language",
+            headerLeft: () => null,
+            gestureEnabled: false,
           }}
         />
       </Stack.Navigator>

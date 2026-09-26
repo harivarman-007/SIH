@@ -10,6 +10,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native
 import { Ionicons } from "@expo/vector-icons";
 import { inspectionRepository } from "../db/InspectionRepository";
 import { observationRepository } from "../db/ObservationRepository";
+import { useTranslation } from "../i18n";
 import { colors, shadows } from "../theme";
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export const BottomNavBar: React.FC<Props> = ({ currentRoute, navigation }) => {
+  const { t } = useTranslation();
   const [activeInspections, setActiveInspections] = useState(0);
   const [pendingSync, setPendingSync] = useState(0);
 
@@ -49,22 +51,28 @@ export const BottomNavBar: React.FC<Props> = ({ currentRoute, navigation }) => {
     badge?: number;
     isFab?: boolean;
   }> = [
-    { name: "Dashboard", label: "Home", icon: "home-outline", activeIcon: "home" },
+    { name: "Dashboard", label: t("nav.home"), icon: "home-outline", activeIcon: "home" },
     {
       name: "Inspections",
-      label: "Inspections",
+      label: t("nav.inspections"),
       icon: "clipboard-outline",
       activeIcon: "clipboard",
       badge: activeInspections,
     },
-    { name: "NewObservation", label: "New Obs", icon: "add", activeIcon: "add", isFab: true },
-    { name: "Actions", label: "Actions", icon: "construct-outline", activeIcon: "construct" },
+    { name: "NewObservation", label: t("nav.new_obs"), icon: "add", activeIcon: "add", isFab: true },
+    { name: "Actions", label: t("nav.actions"), icon: "construct-outline", activeIcon: "construct" },
     {
       name: "Queue",
-      label: "Sync",
+      label: t("nav.sync"),
       icon: "sync-outline",
       activeIcon: "sync",
       badge: pendingSync,
+    },
+    {
+      name: "Settings",
+      label: t("nav.settings"),
+      icon: "settings-outline",
+      activeIcon: "settings",
     },
   ];
 

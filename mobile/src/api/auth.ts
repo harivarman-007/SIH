@@ -15,9 +15,12 @@ export interface UserProfile {
   full_name: string;
   role: "inspector" | "contractor" | "mine_official" | "regulator" | "super_admin" | "corporate_management";
   mine_site_id: string | null;
+  mine_site_state?: string | null;
   is_active: boolean;
   permissions?: string[];
   scope?: { mine_ids: string[] };
+  preferred_language?: string | null;
+  resolved_language?: string;
 }
 
 export interface LoginResponse {
@@ -72,3 +75,12 @@ export async function getMe(): Promise<UserProfile> {
   const response = await client.get<UserProfile>("/auth/me");
   return response.data;
 }
+
+export async function updatePreferredLanguage(language: string | null): Promise<UserProfile> {
+  const client = getApiClient();
+  const response = await client.patch<UserProfile>("/users/me/language", {
+    preferred_language: language,
+  });
+  return response.data;
+}
+

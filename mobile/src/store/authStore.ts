@@ -5,10 +5,11 @@
  */
 
 import { create } from "zustand";
-import { login as apiLogin, logout as apiLogout, getMe, getStoredToken, UserProfile } from "../api/auth";
+import { login as apiLogin, logout as apiLogout, getMe, getStoredToken, updatePreferredLanguage, UserProfile } from "../api/auth";
 import { onUnauthorized, setAuthToken, initBackendUrl } from "../api/client";
 import { appStorage } from "../utils/storage";
 import { TOKEN_KEY } from "../api/client";
+import { i18n, LanguageCode } from "../i18n";
 
 interface AuthState {
   token: string | null;
@@ -21,6 +22,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   restoreSession: () => Promise<void>;
+  updateUserLanguagePreference: (lang: string | null) => Promise<void>;
   clearError: () => void;
 }
 
@@ -49,6 +51,12 @@ export const useAuthStore = create<AuthState>((set) => {
           isLoading: false,
           error: null,
         });
+
+        // Sync i18n with user language if available
+        const preferred = resp.user.preferred_language || resp.user.resolved_language;
+        if (preferred) {
+          i18n.setLanguage(preferred as LanguageCode);
+        }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Login failed. Check your credentials.";
         set({ isLoading: false, error: message, isAuthenticated: false });
@@ -70,6 +78,11 @@ export const useAuthStore = create<AuthState>((set) => {
           setAuthToken(token);
           const user = await getMe();
           set({ token, user, isAuthenticated: true });
+
+          const preferred = user.preferred_language || user.resolved_language;
+          if (preferred) {
+            i18n.setLanguage(preferred as LanguageCode);
+          }
         }
       } catch (err) {
         // Token expired or invalid — clear stale credentials so we don't loop on 401
@@ -77,6 +90,17 @@ export const useAuthStore = create<AuthState>((set) => {
         setAuthToken(null);
         await appStorage.deleteItem(TOKEN_KEY).catch(() => {});
         set({ token: null, user: null, isAuthenticated: false });
+      }
+    },
+
+    updateUserLanguagePreference: async (lang: string | null) => {
+      try {
+        const updated = await updatePreferredLanguage(lang);
+        set((state) => ({
+          user: state.user ? { ...state.user, preferred_language: updated.preferred_language, resolved_language: updated.resolved_language } : null,
+        }));
+      } catch (err) {
+        console.warn("Could not update language on remote backend (might be offline):", err);
       }
     },
 

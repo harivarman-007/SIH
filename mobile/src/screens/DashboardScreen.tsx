@@ -24,6 +24,7 @@ import { isOnline } from "../sync/TaskManager";
 import { useAuthStore } from "../store/authStore";
 import { LocalObservation } from "../db/schema";
 import { BottomNavBar } from "../components/BottomNavBar";
+import { useTranslation } from "../i18n";
 import { colors, shadows } from "../theme";
 
 type Props = {
@@ -70,6 +71,7 @@ function StatCard({
 }
 
 export default function DashboardScreen({ navigation }: Props) {
+  const { t, language } = useTranslation();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { user, logout } = useAuthStore();
@@ -116,6 +118,14 @@ export default function DashboardScreen({ navigation }: Props) {
     navigation.replace("Login");
   };
 
+  const getTimeGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return t("dashboard.greeting_morning");
+    if (h < 17) return t("dashboard.greeting_afternoon");
+    if (h < 21) return t("dashboard.greeting_evening");
+    return t("dashboard.greeting_night");
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -130,23 +140,33 @@ export default function DashboardScreen({ navigation }: Props) {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.greeting}>
-              Good {getTimeOfDay()}, Inspector
+              {getTimeGreeting()}, {t("dashboard.inspector")}
             </Text>
             <Text style={styles.userName}>{user?.full_name ?? user?.email ?? "Field Inspector"}</Text>
             <View style={styles.roleBadge}>
               <Text style={styles.roleText}>{(user?.role ?? "inspector").replace(/_/g, " ").toUpperCase()}</Text>
             </View>
           </View>
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={handleLogout}
-            testID="logout-button"
-          >
-            <Ionicons name="log-out-outline" size={16} color={colors.textMuted} />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.langPill}
+              onPress={() => navigation.navigate("Settings")}
+              testID="language-button"
+            >
+              <Ionicons name="globe-outline" size={14} color={colors.primary} />
+              <Text style={styles.langPillText}>{language.toUpperCase()}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+              testID="logout-button"
+            >
+              <Ionicons name="log-out-outline" size={16} color={colors.textMuted} />
+              <Text style={styles.logoutText}>{t("dashboard.logout")}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Network / Sync status banner */}
@@ -165,8 +185,8 @@ export default function DashboardScreen({ navigation }: Props) {
             />
             <Text style={styles.networkBannerText}>
               {stats?.online
-                ? `Online · ${stats.pendingCount} observation(s) ready to sync`
-                : `Offline · ${stats?.pendingCount ?? 0} observation(s) queued`}
+                ? t("dashboard.online_status", { count: stats.pendingCount })
+                : t("dashboard.offline_status", { count: stats?.pendingCount ?? 0 })}
             </Text>
           </View>
           {stats && !stats.online && stats.pendingCount > 0 && (
@@ -174,7 +194,7 @@ export default function DashboardScreen({ navigation }: Props) {
               onPress={() => navigation.navigate("Queue")}
               style={styles.viewQueueLink}
             >
-              <Text style={styles.viewQueueText}>View Queue →</Text>
+              <Text style={styles.viewQueueText}>{t("dashboard.view_queue")}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -183,21 +203,21 @@ export default function DashboardScreen({ navigation }: Props) {
         <View style={styles.kpiGrid}>
           <StatCard
             value={stats?.totalToday ?? 0}
-            label="Today's Logs"
+            label={t("dashboard.today_logs")}
             icon="document-text"
             iconColor={colors.primary}
             iconBg={colors.primaryLight}
           />
           <StatCard
             value={stats?.highRiskCount ?? 0}
-            label="High Risk"
+            label={t("dashboard.high_risk")}
             icon="alert-circle"
             iconColor={colors.dangerText}
             iconBg={colors.dangerLight}
           />
           <StatCard
             value={`${stats?.syncPct ?? 0}%`}
-            label="Sync Rate"
+            label={t("dashboard.sync_rate")}
             icon="cloud-done"
             iconColor={colors.successText}
             iconBg={colors.successLight}
@@ -229,9 +249,9 @@ export default function DashboardScreen({ navigation }: Props) {
         {/* Recent Observations */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Observations</Text>
+            <Text style={styles.sectionTitle}>{t("dashboard.recent_observations")}</Text>
             <TouchableOpacity onPress={() => navigation.navigate("Queue")}>
-              <Text style={styles.seeAllLink}>View All →</Text>
+              <Text style={styles.seeAllLink}>{t("dashboard.view_all")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -239,7 +259,7 @@ export default function DashboardScreen({ navigation }: Props) {
             <View style={styles.emptyRecent}>
               <Ionicons name="document-outline" size={28} color={colors.textLight} />
               <Text style={styles.emptyRecentText}>
-                No observations logged yet. Tap + to start.
+                {t("dashboard.no_recent_observations")}
               </Text>
             </View>
           ) : (
@@ -366,6 +386,27 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "700",
     letterSpacing: 1,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  langPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.primaryLight,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+  },
+  langPillText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.primary,
   },
   logoutButton: {
     flexDirection: "row",

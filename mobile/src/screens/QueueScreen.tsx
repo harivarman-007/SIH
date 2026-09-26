@@ -31,6 +31,7 @@ import { getActiveBackendUrl, setActiveBackendUrl, DEFAULT_BACKEND_URL } from ".
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import { BottomNavBar } from "../components/BottomNavBar";
+import { useTranslation } from "../i18n";
 import { colors, shadows } from "../theme";
 
 type Props = {
@@ -167,6 +168,7 @@ function ObservationCard({ obs }: { obs: LocalObservation }) {
 }
 
 export default function QueueScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const [observations, setObservations] = useState<LocalObservation[]>([]);
   const [stats, setStats] = useState<SyncStats | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -310,7 +312,7 @@ export default function QueueScreen({ navigation }: Props) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Offline Sync Outbox</Text>
+        <Text style={styles.headerTitle}>{t("queue.title")}</Text>
         <Text style={styles.headerSubtitle}>
           Local SQLite mutations queued for cloud reconciliation
         </Text>

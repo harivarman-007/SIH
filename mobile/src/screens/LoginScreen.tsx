@@ -23,6 +23,7 @@ import { useAuthStore } from "../store/authStore";
 import { getActiveBackendUrl, setActiveBackendUrl } from "../api/client";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
+import { useTranslation, LanguageCode } from "../i18n";
 import { colors, shadows } from "../theme";
 
 type Props = {
@@ -30,10 +31,12 @@ type Props = {
 };
 
 export default function LoginScreen({ navigation }: Props) {
+  const { t, language, changeLanguage, supportedLanguages } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [serverUrl, setServerUrl] = useState<string>(getActiveBackendUrl());
   const [serverModalVisible, setServerModalVisible] = useState(false);
+  const [langModalVisible, setLangModalVisible] = useState(false);
   const [customServerInput, setCustomServerInput] = useState("");
   const [isTestingServer, setIsTestingServer] = useState(false);
 
@@ -45,7 +48,7 @@ export default function LoginScreen({ navigation }: Props) {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert("Missing fields", "Please enter both email and password.");
+      Alert.alert(t("common.error"), t("auth.missing_fields"));
       return;
     }
     clearError();
@@ -116,23 +119,34 @@ export default function LoginScreen({ navigation }: Props) {
           <Text style={styles.tagline}>Directorate General of Mines Safety (DGMS)</Text>
         </View>
 
-        {/* Server Badge */}
-        <TouchableOpacity
-          style={styles.serverBadge}
-          onPress={handleOpenServerModal}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="server-outline" size={13} color={colors.primary} />
-          <Text style={styles.serverBadgeText} numberOfLines={1}>
-            Server: {serverUrl}
-          </Text>
-          <Text style={styles.serverChangeLink}>Change</Text>
-        </TouchableOpacity>
+        {/* Server & Language Control Row */}
+        <View style={styles.topControlRow}>
+          <TouchableOpacity
+            style={styles.serverBadge}
+            onPress={handleOpenServerModal}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="server-outline" size={13} color={colors.primary} />
+            <Text style={styles.serverBadgeText} numberOfLines={1}>
+              Server: {serverUrl}
+            </Text>
+            <Text style={styles.serverChangeLink}>Change</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.langSelectorBtn}
+            onPress={() => setLangModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="globe-outline" size={13} color={colors.primary} />
+            <Text style={styles.langSelectorText}>{language.toUpperCase()}</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Field Mobility Console</Text>
-          <Text style={styles.cardSubtitle}>Sign in to your inspector account</Text>
+          <Text style={styles.cardTitle}>{t("auth.login_title")}</Text>
+          <Text style={styles.cardSubtitle}>{t("auth.login_subtitle")}</Text>
 
           {error ? (
             <View style={styles.errorBanner}>
@@ -142,7 +156,7 @@ export default function LoginScreen({ navigation }: Props) {
           ) : null}
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Email Address</Text>
+            <Text style={styles.label}>{t("auth.email")}</Text>
             <TextInput
               style={styles.input}
               placeholder="inspector1@mine.in"
@@ -157,7 +171,7 @@ export default function LoginScreen({ navigation }: Props) {
           </View>
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>{t("auth.password")}</Text>
             <TextInput
               style={styles.input}
               placeholder="••••••••"
@@ -180,7 +194,7 @@ export default function LoginScreen({ navigation }: Props) {
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
               <View style={styles.btnRow}>
-                <Text style={styles.loginButtonText}>Sign In</Text>
+                <Text style={styles.loginButtonText}>{t("auth.sign_in")}</Text>
                 <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
               </View>
             )}
@@ -189,7 +203,7 @@ export default function LoginScreen({ navigation }: Props) {
 
         {/* Quick Demo Fill Buttons */}
         <View style={styles.demoSection}>
-          <Text style={styles.demoSectionTitle}>QUICK DEMO ACCOUNTS</Text>
+          <Text style={styles.demoSectionTitle}>{t("auth.quick_demo")}</Text>
           <View style={styles.demoButtonsRow}>
             <TouchableOpacity
               style={styles.demoChip}
@@ -210,6 +224,51 @@ export default function LoginScreen({ navigation }: Props) {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Modal: Language Selection */}
+        <Modal
+          visible={langModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setLangModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Ionicons name="globe-outline" size={20} color={colors.primary} />
+                <Text style={styles.modalTitle}>{t("settings.language_title")}</Text>
+              </View>
+              <ScrollView style={{ maxHeight: 360 }}>
+                {supportedLanguages.map((l) => (
+                  <TouchableOpacity
+                    key={l.code}
+                    style={[styles.modalLangItem, language === l.code && styles.modalLangItemActive]}
+                    onPress={async () => {
+                      await changeLanguage(l.code);
+                      setLangModalVisible(false);
+                    }}
+                  >
+                    <View>
+                      <Text style={styles.modalLangNative}>{l.nativeName}</Text>
+                      <Text style={styles.modalLangDesc}>
+                        {l.name} {l.regionalState ? `• ${l.regionalState}` : ""}
+                      </Text>
+                    </View>
+                    {language === l.code && (
+                      <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity
+                style={styles.modalCloseBtn}
+                onPress={() => setLangModalVisible(false)}
+              >
+                <Text style={styles.modalCloseBtnText}>{t("common.close")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         {/* Modal: Change Server */}
         <Modal
@@ -569,5 +628,81 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "800",
     fontSize: 12,
+  },
+  topControlRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 20,
+    width: "100%",
+  },
+  langSelectorBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  langSelectorText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.primary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  modalLangItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 8,
+    backgroundColor: colors.surface,
+  },
+  modalLangItemActive: {
+    borderColor: colors.primary,
+    backgroundColor: "#F0F7FF",
+  },
+  modalLangNative: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  modalLangDesc: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  modalCloseBtn: {
+    marginTop: 14,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1F5F9",
+    borderRadius: 8,
+  },
+  modalCloseBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.textSecondary,
   },
 });

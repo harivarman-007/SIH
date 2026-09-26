@@ -33,6 +33,7 @@ import {
 } from "../models/RiskScoringEngine";
 import { observationRepository } from "../db/ObservationRepository";
 import modelData from "../../assets/model/model.json";
+import { useTranslation } from "../i18n";
 import { colors, shadows } from "../theme";
 
 type Props = {
@@ -65,6 +66,7 @@ const MANUAL_RISK_TIERS = [
 ] as const;
 
 export default function NewObservationScreen({ navigation, route }: Props) {
+  const { t } = useTranslation();
   const [category, setCategory] = useState<Category>("safety");
   const [description, setDescription] = useState("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -262,7 +264,7 @@ export default function NewObservationScreen({ navigation, route }: Props) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.screenTitle}>New Observation</Text>
+        <Text style={styles.screenTitle}>{t("new_obs.title")}</Text>
         <Text style={styles.screenSubtitle}>Field inspection hazard report — edge AI enabled</Text>
       </View>
 
@@ -277,7 +279,7 @@ export default function NewObservationScreen({ navigation, route }: Props) {
 
       {/* Category Selector */}
       <View style={[styles.card, shadows.sm]}>
-        <Text style={styles.sectionLabel}>CATEGORY</Text>
+        <Text style={styles.sectionLabel}>{t("new_obs.category").toUpperCase()}</Text>
         <View style={styles.categoryRow}>
           {CATEGORY_OPTIONS.map((opt) => {
             const isSelected = category === opt.key;
@@ -317,10 +319,10 @@ export default function NewObservationScreen({ navigation, route }: Props) {
 
       {/* Description */}
       <View style={[styles.card, shadows.sm]}>
-        <Text style={styles.sectionLabel}>OBSERVATION DESCRIPTION</Text>
+        <Text style={styles.sectionLabel}>{t("new_obs.description_label").toUpperCase()}</Text>
         <TextInput
           style={styles.descriptionInput}
-          placeholder="Describe condition, location specifics, hazard signs..."
+          placeholder={t("new_obs.description_placeholder")}
           placeholderTextColor="#94A3B8"
           value={description}
           onChangeText={setDescription}
@@ -575,7 +577,7 @@ export default function NewObservationScreen({ navigation, route }: Props) {
         ) : (
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
             <Ionicons name="flash" size={17} color="#FFFFFF" style={{ marginRight: 6 }} />
-            <Text style={styles.submitButtonText}>Score & Save Offline</Text>
+            <Text style={styles.submitButtonText}>{t("new_obs.submit_observation")}</Text>
           </View>
         )}
       </TouchableOpacity>

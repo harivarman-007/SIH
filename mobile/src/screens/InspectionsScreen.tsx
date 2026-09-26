@@ -27,11 +27,13 @@ import { pullDeltaSync } from "../sync/SyncWorker";
 import { isOnline } from "../sync/TaskManager";
 import { CachedInspection } from "../db/schema";
 import { BottomNavBar } from "../components/BottomNavBar";
+import { useTranslation } from "../i18n";
 import { colors, shadows } from "../theme";
 
 type StatusFilter = "ALL" | "SCHEDULED" | "IN_PROGRESS" | "SUBMITTED" | "CLOSED";
 
 export default function InspectionsScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const [inspections, setInspections] = useState<CachedInspection[]>([]);
   const [filter, setFilter] = useState<StatusFilter>("ALL");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -195,7 +197,7 @@ export default function InspectionsScreen({ navigation }: any) {
       <View style={styles.header}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Statutory Inspections</Text>
+            <Text style={styles.headerTitle}>{t("inspections.title")}</Text>
             <Text style={styles.headerSubtitle}>
               Assigned field inspection lifecycle & offline outbox
             </Text>
@@ -219,6 +221,15 @@ export default function InspectionsScreen({ navigation }: any) {
       <View style={styles.filterRow}>
         {(["ALL", "SCHEDULED", "IN_PROGRESS", "SUBMITTED", "CLOSED"] as StatusFilter[]).map((f) => {
           const isActive = filter === f;
+          const label =
+            f === "ALL"
+              ? t("inspections.all")
+              : f === "SCHEDULED"
+              ? t("inspections.scheduled")
+              : f === "IN_PROGRESS"
+              ? t("inspections.active")
+              : t("inspections.completed");
+
           return (
             <TouchableOpacity
               key={f}
@@ -227,7 +238,7 @@ export default function InspectionsScreen({ navigation }: any) {
               activeOpacity={0.7}
             >
               <Text style={[styles.filterText, isActive && styles.activeFilterText]}>
-                {f.replace("_", " ")}
+                {label}
               </Text>
             </TouchableOpacity>
           );
@@ -242,7 +253,7 @@ export default function InspectionsScreen({ navigation }: any) {
       ) : filtered.length === 0 ? (
         <View style={styles.centerContainer}>
           <Ionicons name="clipboard-outline" size={48} color="#94A3B8" style={{ marginBottom: 12 }} />
-          <Text style={styles.emptyTitle}>No Inspections Found</Text>
+          <Text style={styles.emptyTitle}>{t("inspections.no_inspections")}</Text>
           <Text style={styles.emptySubtitle}>
             No statutory inspections assigned to your account or mine sector yet.
           </Text>
