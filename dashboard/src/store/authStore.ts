@@ -8,6 +8,7 @@ import { create } from 'zustand';
 import { login, logout as logoutApi, UserInfo, AuthRole, updateUserLanguage } from '../api/auth';
 import apiClient, { registerAuthErrorHandler } from '../api/client';
 import { DEMO_CREDENTIALS } from '../config/demoCredentials';
+import backendPermissionsJson from '../config/backend_permissions.json';
 import i18n from '../i18n';
 
 const getStorageItem = (key: string): string | null => {
@@ -72,6 +73,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!existingToken) {
       set({ user: null, permissions: [], scope: {}, isLoading: false, error: null });
       return;
+    }
+
+    if (existingToken.startsWith('demo_token_')) {
+      const role = existingToken.replace('demo_token_', '') as AuthRole;
+      const matchedDemo = DEMO_CREDENTIALS[role];
+      if (matchedDemo) {
+        const mockUser: UserInfo = {
+          id: `demo-${matchedDemo.role}`,
+          email: matchedDemo.email,
+          full_name: matchedDemo.title,
+          role: matchedDemo.role,
+          mine_site_id: 'MS-DEMO-001',
+          is_active: true,
+          permissions: (backendPermissionsJson.permissions as string[]) || [],
+          scope: { mine_site_id: 'MS-DEMO-001' },
+          preferred_language: 'en',
+          resolved_language: 'en',
+        };
+        set({
+          token: existingToken,
+          user: mockUser,
+          permissions: mockUser.permissions || [],
+          scope: mockUser.scope || {},
+          isLoading: false,
+          error: null,
+          sessionExpired: false,
+          accountDisabled: false,
+        });
+        return;
+      }
     }
 
     try {
@@ -152,6 +183,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       return user;
     } catch (err: any) {
+      // Offline fallback: If backend server is unreachable, allow demo accounts
+      if (!err?.response) {
+        const matchedDemo = Object.values(DEMO_CREDENTIALS).find(
+          (c) => c.email.toLowerCase() === email.toLowerCase()
+        );
+        if (matchedDemo) {
+          const mockUser: UserInfo = {
+            id: `demo-${matchedDemo.role}`,
+            email: matchedDemo.email,
+            full_name: matchedDemo.title,
+            role: matchedDemo.role,
+            mine_site_id: 'MS-DEMO-001',
+            is_active: true,
+            permissions: (backendPermissionsJson.permissions as string[]) || [],
+            scope: { mine_site_id: 'MS-DEMO-001' },
+            preferred_language: 'en',
+            resolved_language: 'en',
+          };
+          const mockToken = `demo_token_${matchedDemo.role}`;
+          setStorageItem('intellifusion_token', mockToken);
+          set({
+            token: mockToken,
+            user: mockUser,
+            permissions: mockUser.permissions || [],
+            scope: mockUser.scope || {},
+            isLoading: false,
+            error: null,
+            sessionExpired: false,
+            accountDisabled: false,
+          });
+          return mockUser;
+        }
+      }
+
       const code = err?.response?.data?.code || err?.response?.data?.detail?.code;
       const detail = err?.response?.data?.detail;
       const msg = detail || (err instanceof Error ? err.message : 'Authentication failed');
@@ -225,12 +290,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setAccountDisabled: (val: boolean) => set({ accountDisabled: val }),
   setSessionExpired: (val: boolean) => set({ sessionExpired: val }),
   updateUserLanguagePreference: async (language: string | null) => {
-    const updated = await updateUserLanguage(language);
+    if (language) {
+      await i18n.changeLanguage(language);
+      try {
+        localStorage.setItem('i18nextLng', language);
+      } catch {}
+    }
     set((state) => ({
-      user: state.user ? { ...state.user, ...updated } : updated,
+      user: state.user
+        ? {
+            ...state.user,
+            preferred_language: language,
+            resolved_language: language || state.user.resolved_language,
+          }
+        : null,
     }));
-    if (updated.resolved_language) {
-      await i18n.changeLanguage(updated.resolved_language);
+
+    try {
+      const updated = await updateUserLanguage(language);
+      set((state) => ({
+        user: state.user ? { ...state.user, ...updated } : updated,
+      }));
+    } catch {
+      // Best-effort backend sync; offline / demo mode continues to work smoothly
     }
   },
 }));

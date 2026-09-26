@@ -19,14 +19,26 @@ export default defineConfig({
     port: 3000,
     host: true,
     proxy: {
-      '/auth': 'http://localhost:8000',
+      '/auth': {
+        target: 'http://localhost:8000',
+        bypass: (req) => (req.headers.accept?.includes('text/html') ? '/index.html' : null),
+      },
       '/observations': 'http://localhost:8000',
       '/actions': 'http://localhost:8000',
       '/inspections': 'http://localhost:8000',
       '/kpi': 'http://localhost:8000',
-      '/admin': 'http://localhost:8000',
-      '/reports': 'http://localhost:8000',
-      '/audit': 'http://localhost:8000',
+      '/admin': {
+        target: 'http://localhost:8000',
+        bypass: (req) => (req.headers.accept?.includes('text/html') ? '/index.html' : null),
+      },
+      '/reports': {
+        target: 'http://localhost:8000',
+        bypass: (req) => (req.headers.accept?.includes('text/html') ? '/index.html' : null),
+      },
+      '/audit': {
+        target: 'http://localhost:8000',
+        bypass: (req) => (req.headers.accept?.includes('text/html') ? '/index.html' : null),
+      },
       '/alerts': 'http://localhost:8000',
       '/ocr': 'http://localhost:8000',
       '/sync': 'http://localhost:8000',
