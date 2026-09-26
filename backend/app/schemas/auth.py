@@ -48,6 +48,9 @@ class UserOut(BaseModel):
     # Phase 24 additions (additive, non-breaking)
     permissions: List[str] = Field(default_factory=list)
     scope: Dict[str, Any] = Field(default_factory=dict)
+    # Multilingual Phase A additions
+    preferred_language: Optional[str] = None
+    resolved_language: str = "en"
 
     class Config:
         from_attributes = True
@@ -66,7 +69,29 @@ class AdminUserCreateRequest(BaseModel):
     role: UserRole = Field(..., description="Any of the 6 valid roles")
     mine_site_id: Optional[UUID] = None
     corporate_mine_ids: Optional[list[UUID]] = None
+    preferred_language: Optional[str] = None
 
 
 class AccessDeniedReportRequest(BaseModel):
     path: str = Field(..., max_length=200, description="Client route path where access was denied")
+
+
+class LanguageUpdateRequest(BaseModel):
+    language: Optional[str] = Field(
+        None,
+        description="Target language code (en, sa, hi, bn, or, te, mr, sat), or null to revert to mine-site default",
+    )
+
+    @field_validator("language")
+    @classmethod
+    def validate_language(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        cleaned = v.strip().lower()
+        from app.i18n.constants import SUPPORTED_LANGUAGES
+        if cleaned not in SUPPORTED_LANGUAGES:
+            raise ValueError(
+                f"Unsupported language '{v}'. Must be one of: {SUPPORTED_LANGUAGES}"
+            )
+        return cleaned
+

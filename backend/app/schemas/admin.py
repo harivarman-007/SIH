@@ -129,6 +129,7 @@ class MineSiteCreate(BaseModel):
     location_name: str = Field(min_length=2, max_length=255)
     lat: Optional[float] = None
     lng: Optional[float] = None
+    state: Optional[str] = None
 
 
 class MineSiteUpdate(BaseModel):
@@ -136,6 +137,7 @@ class MineSiteUpdate(BaseModel):
     location_name: Optional[str] = None
     lat: Optional[float] = None
     lng: Optional[float] = None
+    state: Optional[str] = None
     is_active: Optional[bool] = None
 
 
@@ -147,9 +149,11 @@ class MineSiteOut(BaseModel):
     location_name: str
     lat: Optional[float] = None
     lng: Optional[float] = None
+    state: Optional[str] = None
     is_active: bool = True
     created_at: datetime
     zones_count: Optional[int] = 0
+
 
 
 class ZoneOut(BaseModel):

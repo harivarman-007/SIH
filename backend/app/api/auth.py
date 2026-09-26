@@ -29,9 +29,11 @@ from app.authz.scope import visible_mine_ids
 from app.config import settings
 from app.database import get_db
 from app.models import CorporateMineAccess, MineSite, User, UserRole, UserSession
+from app.i18n.constants import resolve_user_language
 from app.schemas.auth import (
     AccessDeniedReportRequest,
     AdminUserCreateRequest,
+    LanguageUpdateRequest,
     LoginRequest,
     RegisterRequest,
     TokenResponse,
@@ -82,6 +84,15 @@ async def _build_user_out(user: User, db: AsyncSession) -> UserOut:
     mine_ids = await visible_mine_ids(db, user)
     scope: Dict[str, Any] = {"mine_ids": [str(m) for m in mine_ids]}
 
+    # Derive user language: preferred_language -> site state mapping -> DEFAULT_LANGUAGE ('en')
+    site_state = None
+    if user.mine_site_id:
+        s_stmt = select(MineSite.state).where(MineSite.id == user.mine_site_id)
+        s_res = await db.execute(s_stmt)
+        site_state = s_res.scalar_one_or_none()
+
+    resolved_lang = resolve_user_language(user.preferred_language, site_state)
+
     return UserOut(
         id=user.id,
         email=user.email,
@@ -92,6 +103,8 @@ async def _build_user_out(user: User, db: AsyncSession) -> UserOut:
         created_at=user.created_at,
         permissions=perms,
         scope=scope,
+        preferred_language=user.preferred_language,
+        resolved_language=resolved_lang,
     )
 
 
@@ -218,6 +231,34 @@ async def get_me(
     MUST #2: Returns all original UserOut fields at top level + permissions + scope.
     Backward-compatible — existing dashboard/mobile code reading any top-level field still works.
     """
+    return await _build_user_out(current_user, db)
+
+
+@router.patch("/me/language", response_model=UserOut)
+async def update_my_language(
+    req: LanguageUpdateRequest,
+    current_user: User = Depends(authenticate),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    PATCH /auth/me/language
+    Update current user's preferred UI / OCR language (en, sa, hi, bn, or, te, mr, sat),
+    or pass null to revert to the mine site's state-derived language.
+    """
+    current_user.preferred_language = req.language
+    db.add(current_user)
+    await db.commit()
+    await db.refresh(current_user)
+
+    await append_audit_entry(
+        db=db,
+        action="USER_LANGUAGE_UPDATED",
+        payload={
+            "preferred_language": current_user.preferred_language,
+        },
+        actor_id=current_user.id,
+    )
+
     return await _build_user_out(current_user, db)
 
 
@@ -387,6 +428,7 @@ async def admin_create_user(
         full_name=req.full_name.strip(),
         role=req.role,
         mine_site_id=req.mine_site_id,
+        preferred_language=req.preferred_language,
         is_active=True,
     )
     db.add(new_user)
@@ -431,6 +473,7 @@ async def list_mine_sites(
             "id": str(s.id),
             "name": s.name,
             "location_name": s.location_name,
+            "state": s.state,
         }
         for s in sites
     ]

@@ -64,22 +64,27 @@ async def reset_demo(force: bool = False) -> None:
             # 1. Baseline Mine Sites (Natural key: name)
             # -------------------------------------------------------------
             site_defs = [
-                ("Dhanbad Colliery No. 5", "Jharia Coalfield, Dhanbad, Jharkhand", 23.7957, 86.4304),
-                ("Raniganj Coalfield Sector 3", "Raniganj Basin, West Bengal", 23.6200, 86.9800),
-                ("Jharia Block II Pit", "Jharia Basin, Dhanbad, Jharkhand", 23.7500, 86.4100),
+                ("Dhanbad Colliery No. 5", "Jharia Coalfield, Dhanbad, Jharkhand", 23.7957, 86.4304, "Jharkhand"),
+                ("Raniganj Coalfield Sector 3", "Raniganj Basin, West Bengal", 23.6200, 86.9800, "West Bengal"),
+                ("Jharia Block II Pit", "Jharia Basin, Dhanbad, Jharkhand", 23.7500, 86.4100, "Jharkhand"),
             ]
             sites = {}
-            for name, loc, lat, lng in site_defs:
+            for name, loc, lat, lng, state in site_defs:
                 stmt = select(MineSite).where(MineSite.name == name)
                 res = await db.execute(stmt)
                 site = res.scalar_one_or_none()
                 if not site:
-                    site = MineSite(name=name, location_name=loc, lat=lat, lng=lng)
+                    site = MineSite(name=name, location_name=loc, lat=lat, lng=lng, state=state)
                     db.add(site)
                     await db.flush()
+                else:
+                    if site.state != state:
+                        site.state = state
+                        db.add(site)
+                        await db.flush()
                 sites[name] = site
             primary_site = sites["Dhanbad Colliery No. 5"]
-            print(f"[OK] 3 Mine Sites verified (Primary: {primary_site.name})")
+            print(f"[OK] 3 Mine Sites verified (Primary: {primary_site.name}, State: {primary_site.state})")
 
             # -------------------------------------------------------------
             # 2. Baseline Underground Zones

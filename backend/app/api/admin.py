@@ -119,6 +119,7 @@ async def list_mine_sites(
                 location_name=s.location_name,
                 lat=s.lat,
                 lng=s.lng,
+                state=s.state,
                 is_active=s.is_active if hasattr(s, "is_active") and s.is_active is not None else True,
                 created_at=s.created_at,
                 zones_count=zone_cnt,
@@ -137,11 +138,15 @@ async def create_mine_site(
     POST /admin/mine-sites
     Provision a new mine site with name, location, and GPS coordinates.
     """
+    from app.i18n.constants import infer_state_from_location
+    site_state = req.state.strip() if req.state else infer_state_from_location(req.location_name)
+
     new_site = MineSite(
         name=req.name.strip(),
         location_name=req.location_name.strip(),
         lat=req.lat,
         lng=req.lng,
+        state=site_state,
         is_active=True,
     )
     db.add(new_site)
@@ -167,6 +172,7 @@ async def create_mine_site(
             "location_name": new_site.location_name,
             "lat": new_site.lat,
             "lng": new_site.lng,
+            "state": new_site.state,
         },
     )
 
@@ -176,6 +182,7 @@ async def create_mine_site(
         location_name=new_site.location_name,
         lat=new_site.lat,
         lng=new_site.lng,
+        state=new_site.state,
         is_active=new_site.is_active,
         created_at=new_site.created_at,
         zones_count=1,
@@ -205,6 +212,8 @@ async def update_mine_site(
         site.lat = req.lat
     if req.lng is not None:
         site.lng = req.lng
+    if req.state is not None:
+        site.state = req.state.strip() if req.state else None
     if req.is_active is not None:
         site.is_active = req.is_active
 
@@ -223,6 +232,7 @@ async def update_mine_site(
             "site_id": str(site.id),
             "name": site.name,
             "location_name": site.location_name,
+            "state": site.state,
             "is_active": site.is_active,
         },
     )
@@ -233,7 +243,39 @@ async def update_mine_site(
         location_name=site.location_name,
         lat=site.lat,
         lng=site.lng,
+        state=site.state,
         is_active=site.is_active,
+        created_at=site.created_at,
+        zones_count=zone_cnt,
+    )
+
+
+@router.get("/mine-sites/{site_id}", response_model=MineSiteOut)
+async def get_mine_site(
+    site_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(authenticate),
+):
+    """
+    GET /admin/mine-sites/{site_id}
+    Retrieve details of a single mine site including state and coordinates.
+    """
+    site = await db.get(MineSite, site_id)
+    if not site:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mine site not found.")
+
+    z_stmt = select(func.count(Zone.id)).where(Zone.mine_site_id == site.id)
+    z_res = await db.execute(z_stmt)
+    zone_cnt = z_res.scalar() or 0
+
+    return MineSiteOut(
+        id=site.id,
+        name=site.name,
+        location_name=site.location_name,
+        lat=site.lat,
+        lng=site.lng,
+        state=site.state,
+        is_active=site.is_active if hasattr(site, "is_active") and site.is_active is not None else True,
         created_at=site.created_at,
         zones_count=zone_cnt,
     )

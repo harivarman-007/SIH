@@ -25,6 +25,8 @@ from app.api import (
     labour_router,
     analytics_router,
     workers_router,
+    users_router,
+    mine_sites_router,
 )
 from app.config import settings
 from app.scheduler import generate_weekly_compliance_reports, run_escalation_and_alert
@@ -101,6 +103,8 @@ app.include_router(reports_router)
 app.include_router(labour_router)
 app.include_router(analytics_router)
 app.include_router(workers_router)
+app.include_router(users_router)
+app.include_router(mine_sites_router)
 
 
 @app.get("/health", tags=["system"])

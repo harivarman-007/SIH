@@ -27,3 +27,12 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Multilingual configuration (Phase A)
+from app.i18n.constants import (
+    DEFAULT_LANGUAGE,
+    FORMAL_REGISTER_LANGUAGE,
+    STATE_LANGUAGE_MAP,
+    SUPPORTED_LANGUAGES,
+)
+

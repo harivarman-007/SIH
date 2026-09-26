@@ -12,6 +12,8 @@ from app.api.reports import router as reports_router
 from app.api.labour import router as labour_router
 from app.api.analytics import router as analytics_router
 from app.api.workers import router as workers_router
+from app.api.users import router as users_router
+from app.api.mine_sites import router as mine_sites_router
 
 __all__ = [
     "auth_router",
@@ -28,5 +30,8 @@ __all__ = [
     "labour_router",
     "analytics_router",
     "workers_router",
+    "users_router",
+    "mine_sites_router",
 ]
+
 
