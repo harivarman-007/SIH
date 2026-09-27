@@ -169,10 +169,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-semibold text-white tracking-tight leading-none truncate">
-                  INTELLIFUSION
+                  {t('brand.title', 'INTELLIFUSION')}
                 </span>
                 <span className="text-[10px] text-zinc-400 font-mono tracking-wider uppercase mt-1">
-                  Mine Safety OS
+                  {t('brand.subtitle', 'Mine Safety OS')}
                 </span>
               </div>
             )}
@@ -192,18 +192,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {!isCollapsed ? (
           <div className="px-4 py-3 border-b border-zinc-800/40 bg-zinc-900/30">
             <div className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold mb-1">
-              Active Persona
+              {t('common.active_persona', 'Active Persona')}
             </div>
             <div className="text-xs font-medium text-zinc-200 flex items-center gap-1.5 truncate">
               <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-              <span className="truncate">{ROLE_LABELS[currentRole]}</span>
+              <span className="truncate">{t(`roles.${currentRole}`, ROLE_LABELS[currentRole])}</span>
             </div>
           </div>
         ) : (
           <div className="py-2.5 flex justify-center border-b border-zinc-800/40">
             <span
               className="w-2 h-2 rounded-full bg-emerald-500"
-              title={`Role: ${ROLE_LABELS[currentRole]}`}
+              title={`${t('common.role', 'Role')}: ${t(`roles.${currentRole}`, ROLE_LABELS[currentRole])}`}
             />
           </div>
         )}
@@ -213,13 +213,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {navItems.map((item) => {
             const Icon = ICON_MAP[item.icon] || LayoutDashboard;
             const badgeCount = item.badge ? item.badge(kpis) : undefined;
+            const translatedLabel = t(`nav.${item.id}`, item.label);
 
             return (
               <NavLink
                 key={item.id}
                 to={item.path}
                 onClick={onCloseMobile}
-                title={isCollapsed ? `${item.label}${item.isStubbed ? ` (Phase ${item.stubTargetPhase})` : ''}` : undefined}
+                title={isCollapsed ? `${translatedLabel}${item.isStubbed ? ` (Phase ${item.stubTargetPhase})` : ''}` : undefined}
                 className={({ isActive }) => `
                   group relative flex items-center gap-3 px-2.5 py-2 rounded-lg text-xs font-medium transition-all duration-150 outline-hidden
                   ${
@@ -236,7 +237,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                     {!isCollapsed && (
                       <span className="flex-1 truncate tracking-tight">
-                        {item.label}
+                        {translatedLabel}
                       </span>
                     )}
 
@@ -260,7 +261,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {/* Tooltip for collapsed rail */}
                     {isCollapsed && (
                       <span className="absolute left-full ml-2 px-2.5 py-1 bg-zinc-900 text-zinc-100 text-xs rounded-md shadow-lg border border-zinc-800 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
-                        {item.label}
+                        {translatedLabel}
                         {item.isStubbed && ` (Phase ${item.stubTargetPhase})`}
                       </span>
                     )}
