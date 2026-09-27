@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from app.models import UserRole
 
 
@@ -81,6 +81,22 @@ class LanguageUpdateRequest(BaseModel):
         None,
         description="Target language code (en, sa, hi, bn, or, te, mr, sat), or null to revert to mine-site default",
     )
+    # Alias field accepted from mobile clients that send 'preferred_language' instead of 'language'
+    preferred_language: Optional[str] = Field(
+        None,
+        exclude=True,
+        description="Alias for 'language' (accepted for mobile client compatibility)",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def coerce_preferred_language_alias(cls, values: Any) -> Any:
+        """Allow mobile clients that send 'preferred_language' instead of 'language'."""
+        if isinstance(values, dict):
+            if values.get("language") is None and values.get("preferred_language") is not None:
+                values = dict(values)
+                values["language"] = values["preferred_language"]
+        return values
 
     @field_validator("language")
     @classmethod

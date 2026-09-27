@@ -1,4 +1,4 @@
-# Commit: 0e464bad504e7c503917ef4bacf2e3bc8065119c | Timestamp: 2026-09-22T15:12:38+05:30
+# Commit: d64662c2a41d4cc1e608066c625cc563b1aa1d84 | Timestamp: 2026-09-27T03:17:46.429946+00:00
 
 ==============================================================================
 INTELLIFUSION MASTER VERIFICATION SUITE (ALL PHASES)
@@ -195,7 +195,7 @@ Phase 20 Real Gas Telemetry Verification
 .  [PASS] generate_mock_data.py updated with real gas reading simulation
 .
 ----------------------------------------------------------------------
-Ran 5 tests in 0.319s
+Ran 5 tests in 0.131s
 
 OK
 ============================================================
@@ -292,10 +292,10 @@ PASS: 34/34 Phase 22 checks PASSED  [0 SKIPPED]
 [PASS] 5. authz/scope.py all helpers importable
 [PASS] 6. MUST #3 â€” {code, message, detail} where detail==message â€” detail={'code': 'FORBIDDEN', 'message': 'test message', 'detail': 'test message'}
 [PASS] 7. MUST #2 â€” UserOut has permissions, scope, and original fields â€” permissions=True, scope=True, missing_original=set()
-[PASS] 8a. Migration 006 file exists â€” C:\projects\SIH\backend\scripts\..\alembic\versions\006_authz_and_sessions.py
+[PASS] 8a. Migration 006 file exists â€” C:\Users\MANIKANDAN\OneDrive\Pictures\Desktop\SIH\backend\scripts\..\alembic\versions\006_authz_and_sessions.py
 [PASS] 8b. Migration 006 valid Python syntax
-[PASS] 9a. docs/RBAC_SPEC.md exists â€” C:\projects\SIH\backend\scripts\..\..\docs\RBAC_SPEC.md
-[PASS] 9b. docs/UNIFIED_FLOW_PROMPT.md exists â€” C:\projects\SIH\backend\scripts\..\..\docs\UNIFIED_FLOW_PROMPT.md
+[PASS] 9a. docs/RBAC_SPEC.md exists â€” C:\Users\MANIKANDAN\OneDrive\Pictures\Desktop\SIH\backend\scripts\..\..\docs\RBAC_SPEC.md
+[PASS] 9b. docs/UNIFIED_FLOW_PROMPT.md exists â€” C:\Users\MANIKANDAN\OneDrive\Pictures\Desktop\SIH\backend\scripts\..\..\docs\UNIFIED_FLOW_PROMPT.md
 [PASS] 10. SHOULD #12 â€” mobile logout is best-effort with POST /auth/logout â€” best_effort=True, post_logout=True
 [PASS] 11. D9 â€” super_admin removed from close/assign-contractor â€” close_has_super=False, assign_has_super=False
 [PASS] 12. SHOULD #6 â€” Migration 006 has no app.* imports (frozen) â€” No app.* imports
@@ -322,7 +322,7 @@ Phase 25 Workflow Engine + Inspections Verification Suite
 [PASS] 2c. Legal observation transitions accepted
 [PASS] 2d. Illegal observation transition (closed -> under_review) rejected
 [PASS] 3. D12 Human-in-the-loop protection blocks system actor from closing
-[PASS] 4a. Inspection code generated in INS-xxxx format â€” INS-0023
+[PASS] 4a. Inspection code generated in INS-xxxx format â€” INS-0011
 [PASS] 4b. Workflow transition record written to database
 [PASS] 4c. Inspector inspection scope includes assigned inspection
 [PASS] 4d. Observation created with linked inspection_id
@@ -380,9 +380,9 @@ Phase 27 Auth Endpoint Verification Suite
 ============================================================
 [PASS] 1a. AccessDeniedReportRequest valid path
 [PASS] 1b. AccessDeniedReportRequest rejects >200 chars
-[PASS] 1c. Control characters stripped from path â€” Logged: /admin/evilpath-adacb3
-[PASS] 2. POST /auth/access-denied writes ACCESS_DENIED audit entry â€” Logged path: /admin/super-secret-07a9c0a6
-[PASS] 3. Deduplication: repeated denial with same path within 30s is dropped â€” Count before: 18, after: 18
+[PASS] 1c. Control characters stripped from path â€” Logged: /admin/evilpath-adb2dd
+[PASS] 2. POST /auth/access-denied writes ACCESS_DENIED audit entry â€” Logged path: /admin/super-secret-17359882
+[PASS] 3. Deduplication: repeated denial with same path within 30s is dropped â€” Count before: 2, after: 2
 [PASS] 4. Per-user rate limit: 25 varying-path requests capped at exactly 20 audit entries â€” Expected 20, recorded: 20 (excess 5 dropped silently with 204)
 ============================================================
 PHASE 27 BACKEND AUTH VERIFICATION SUMMARY
@@ -436,7 +436,7 @@ Results: 5 PASSED, 0 FAILED
 ============================================================
 Phase 29 Mobile Two-Way Delta Sync Verification Suite
 ============================================================
-[PASS] 1a. Baseline pull returns assigned inspection â€” Found: ['INS-c4edae-01']
+[PASS] 1a. Baseline pull returns assigned inspection â€” Found: ['INS-e3b0eb-01']
 [PASS] 1b. Baseline pull scopes out other inspector
 [PASS] 1c. Baseline pull returns caller's observation
 [PASS] 1d. Baseline pull returns linked action with rejection reason

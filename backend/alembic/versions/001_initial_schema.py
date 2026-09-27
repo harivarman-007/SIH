@@ -17,12 +17,17 @@ depends_on = None
 def upgrade() -> None:
     # Enable UUID extension
     op.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
-    op.execute('CREATE EXTENSION IF NOT EXISTS "postgis"')
+    conn = op.get_bind()
+    has_postgis = conn.execute(
+        sa.text("SELECT 1 FROM pg_available_extensions WHERE name = 'postgis'")
+    ).scalar()
+    if has_postgis:
+        op.execute('CREATE EXTENSION IF NOT EXISTS "postgis"')
 
     # Enums
     op.execute("""
         DO $$ BEGIN
-            CREATE TYPE userrole AS ENUM ('inspector', 'contractor', 'mine_official', 'regulator');
+            CREATE TYPE userrole AS ENUM ('super_admin', 'corporate_management', 'inspector', 'contractor', 'mine_official', 'regulator');
         EXCEPTION WHEN duplicate_object THEN null; END $$;
     """)
     op.execute("""
@@ -46,7 +51,7 @@ def upgrade() -> None:
         EXCEPTION WHEN duplicate_object THEN null; END $$;
     """)
 
-    userrole_enum = postgresql.ENUM("inspector", "contractor", "mine_official", "regulator", name="userrole", create_type=False)
+    userrole_enum = postgresql.ENUM("super_admin", "corporate_management", "inspector", "contractor", "mine_official", "regulator", name="userrole", create_type=False)
     category_enum = postgresql.ENUM("safety", "environment", "labour", name="observationcategory", create_type=False)
     riskflag_enum = postgresql.ENUM("low", "medium", "high", name="riskflag", create_type=False)
     status_enum = postgresql.ENUM("open", "in_progress", "closed", "escalated", name="observationstatus", create_type=False)

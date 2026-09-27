@@ -59,6 +59,7 @@ def _alert_filter_for_user(stmt, user: User):
     return stmt.where(Alert.id.is_(None))
 
 
+@router.get("", response_model=List[AlertOut], include_in_schema=False)
 @router.get("/", response_model=List[AlertOut])
 async def list_alerts(
     unread_only: bool = Query(False, description="If true, only return unread alerts"),
@@ -116,3 +117,41 @@ async def mark_alert_read(
     await db.commit()
     await db.refresh(alert)
     return alert
+
+
+@router.delete("/{alert_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_alert(
+    alert_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    DELETE /alerts/{id}
+    Dismisses/deletes an alert. Only deletes alerts that are in scope for the current user.
+    """
+    alert = await db.get(Alert, alert_id)
+    if not alert:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found"
+        )
+
+    # Verify the alert is scoped to this user's role / mine
+    role_val = current_user.role.value
+    if current_user.role not in (UserRole.super_admin, UserRole.regulator):
+        if alert.recipient_role != role_val:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Alert is not in your scope",
+            )
+        if (
+            alert.mine_site_id is not None
+            and current_user.mine_site_id != alert.mine_site_id
+            and current_user.role != UserRole.corporate_management
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Alert is not in your scope",
+            )
+
+    await db.delete(alert)
+    await db.commit()

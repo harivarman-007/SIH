@@ -177,21 +177,7 @@ async def sync_pull(
     # 1. Assigned Inspections
     insp_stmt = select(Inspection)
     if current_user.role == UserRole.inspector:
-        if current_user.mine_site_id:
-            insp_stmt = insp_stmt.where(
-                or_(
-                    Inspection.assigned_inspector_id == current_user.id,
-                    and_(
-                        Inspection.mine_site_id == current_user.mine_site_id,
-                        Inspection.status.in_([
-                            InspectionStatus.scheduled,
-                            InspectionStatus.in_progress,
-                        ]),
-                    ),
-                )
-            )
-        else:
-            insp_stmt = insp_stmt.where(Inspection.assigned_inspector_id == current_user.id)
+        insp_stmt = insp_stmt.where(Inspection.assigned_inspector_id == current_user.id)
     elif current_user.role == UserRole.mine_official and current_user.mine_site_id:
         insp_stmt = insp_stmt.where(Inspection.mine_site_id == current_user.mine_site_id)
     elif current_user.role == UserRole.super_admin:

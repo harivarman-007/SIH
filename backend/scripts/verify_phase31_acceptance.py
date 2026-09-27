@@ -85,7 +85,7 @@ async def main():
             if not ctr2:
                 ctr2 = User(
                     email="contractor2@contractor.in",
-                    hashed_password=hash_password("password123"),
+                    password_hash=hash_password("password123"),
                     full_name="Second Remediation Contractor",
                     role=UserRole.contractor,
                     is_active=True,
@@ -100,7 +100,7 @@ async def main():
             if not mgr2:
                 mgr2 = User(
                     email="official2@mine.in",
-                    hashed_password=hash_password("password123"),
+                    password_hash=hash_password("password123"),
                     full_name="Korba Mine Manager",
                     role=UserRole.mine_official,
                     mine_site_id=korba_site.id,
@@ -290,7 +290,7 @@ async def main():
             insp_user = (await db.execute(select(User).where(User.email == "inspector1@mine.in"))).scalar_one()
             zone_korba = (await db.execute(select(Zone).where(Zone.mine_site_id == korba_site.id))).scalars().first()
             if not zone_korba:
-                zone_korba = Zone(mine_site_id=korba_site.id, name="Korba Haul Road 1", risk_baseline=0.35)
+                zone_korba = Zone(mine_site_id=korba_site.id, name="Korba Haul Road 1", zone_type="surface", risk_baseline=0.35)
                 db.add(zone_korba)
                 await db.flush()
 
