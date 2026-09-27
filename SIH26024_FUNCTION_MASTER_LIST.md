@@ -2,7 +2,7 @@
 ## AI-Based Smart Governance and Compliance Monitoring System for Coal Mines
 
 **Organization:** Ministry of Coal | **Department:** Coal India Limited | **Category:** Software | **Theme:** Smart Automation
-**Project (this repo):** Intellifusion — `harivarman-007/SIH`
+**Project (this repo):** MINEGOV-AI — `harivarman-007/SIH`
 
 This document lists **every function the solution must include**, organized exactly the way a SIH submission (PPT/report) needs it: what the problem statement asks for (**Proposed Solution**), what makes this build different from a generic compliance tool (**Unique Value Proposition**), and what's been added **beyond** the minimum ask (**Extra Propositions**). Each function is checked against what's already implemented in the current codebase.
 

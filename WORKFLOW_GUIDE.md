@@ -1,6 +1,6 @@
-# Intellifusion SafeMine — Comprehensive Project Workflow Guide
+# MINEGOV-AI SafeMine — Comprehensive Project Workflow Guide
 
-> **Intellifusion SafeMine (SIH26024)**  
+> **MINEGOV-AI SafeMine (SIH26024)**  
 > **AI-Based Smart Governance & Compliance Monitoring System for Coal Mines**  
 > *Under the statutory framework of Directorate General of Mines Safety (DGMS) & Coal Mines Regulations (CMR 2017)*
 
@@ -26,7 +26,7 @@
 
 ## 1. Project Overview & Architecture
 
-Intellifusion SafeMine solves the critical safety and compliance communication breakdown in underground and opencast coal mines. It addresses the lack of connectivity in deep galleries, delayed regulatory filings, unstandardized risk judgments, and contract labour compliance gaps.
+MINEGOV-AI SafeMine solves the critical safety and compliance communication breakdown in underground and opencast coal mines. It addresses the lack of connectivity in deep galleries, delayed regulatory filings, unstandardized risk judgments, and contract labour compliance gaps.
 
 ```mermaid
 graph TD

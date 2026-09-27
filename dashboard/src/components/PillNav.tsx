@@ -91,9 +91,9 @@ export const PillNav: React.FC<PillNavProps> = ({
         {/* Brand Pill */}
         <div className="flex items-center gap-2 px-3 py-1.5 text-xs tracking-wider uppercase font-semibold text-black border-r border-zinc-200 mr-1">
           <div className="flex items-center justify-center w-5 h-5 rounded-full bg-black text-white text-[10px] font-bold">
-            IF
+            MG
           </div>
-          <span className="hidden md:inline tracking-wider font-bold">INTELLIFUSION</span>
+          <span className="hidden md:inline tracking-wider font-bold">MINEGOV-AI</span>
         </div>
 
         {/* Navigation Tabs (Pills with sliding indicator) */}

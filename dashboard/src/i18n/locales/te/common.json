@@ -1,6 +1,6 @@
 {
   "brand": {
-    "title": "ఇంటెలిఫ్యూజన్ (Intellifusion)",
+    "title": "మైన్‌గవ్-ఎఐ (MINEGOV-AI)",
     "subtitle": "బొగ్గు గనుల స్మార్ట్ పాలన మరియు సమ్మతి పర్యవేక్షణ",
     "gov_label": "బొగ్గు మంత్రిత్వ శాఖ • DGMS ప్రమాణాలు"
   },
@@ -75,7 +75,7 @@
     "reset_to_default": "డిఫాల్ట్ భాషకు రీసెట్ చేయండి"
   },
   "auth": {
-    "login_title": "ఇంటెలిఫ్యూజన్ పోర్టల్",
+    "login_title": "మైన్‌గవ్-ఎఐ పోర్టల్ (MINEGOV-AI Portal)",
     "login_subtitle": "లాగిన్ అవ్వండి",
     "email_label": "అధికారిక ఇమెయిల్",
     "password_label": "పాస్‌వర్డ్",

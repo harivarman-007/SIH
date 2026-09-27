@@ -141,7 +141,7 @@ def main():
         python_bin = str(venv_python_nix)
 
     print("\n" + "=" * 78)
-    print("INTELLIFUSION MASTER VERIFICATION SUITE (ALL PHASES)")
+    print("MINEGOV-AI MASTER VERIFICATION SUITE (ALL PHASES)")
     print("=" * 78 + "\n")
 
     summary = []

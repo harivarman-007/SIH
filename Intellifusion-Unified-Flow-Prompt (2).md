@@ -1,6 +1,6 @@
 # Antigravity Continuation Prompt — Unified Governance Flow & Real RBAC
 
-**Project:** Intellifusion — SIH26024 | **This is a continuation, not a restart.**
+**Project:** MINEGOV-AI — SIH26024 | **This is a continuation, not a restart.**
 Repo: `github.com/harivarman-007/SIH` (`backend/`, `dashboard/`, `mobile/`, `plan.md`, `task.md`). Last completed phase in `task.md` is **Phase 23**; this work is **Phases 24–31**.
 Read the existing code before writing anything. Do not scaffold from zero.
 

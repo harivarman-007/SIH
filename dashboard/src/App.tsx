@@ -1,5 +1,5 @@
 /**
- * Intellifusion Dashboard — Application Entry & Router Tree
+ * MINEGOV-AI Dashboard — Application Entry & Router Tree
  * Phase 27: Whole-prefix role guards, dynamic sidebar shell, authenticated route hierarchy.
  * MUST #3: Whole-prefix RoleGuard for all 6 roles (/admin/*, /manager/*, etc.)
  * All 6 role domain routes fully wired with real views and tracked stubs.

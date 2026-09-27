@@ -26,7 +26,7 @@ from app.models import (
 
 async def clean():
     print("=" * 60)
-    print("INTELLIFUSION — FULL TEST DATA CLEANUP")
+    print("MINEGOV-AI — FULL TEST DATA CLEANUP")
     print("=" * 60)
 
     async with AsyncSessionLocal() as db:

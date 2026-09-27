@@ -117,11 +117,11 @@ export const LoginForm: React.FC = () => {
         {/* Team & System Branding (No Government Emblem) */}
         <div className="flex justify-center mb-4">
           <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-black text-white shadow-md font-mono font-bold text-lg tracking-wider">
-            IF
+            MG
           </div>
         </div>
         <h1 className="text-center text-2xl font-bold tracking-tight text-zinc-900 uppercase">
-          {t('brand.title', 'INTELLIFUSION')}
+          {t('brand.title', 'MINEGOV-AI')}
         </h1>
         <p className="mt-1 text-center text-xs text-zinc-500 font-mono tracking-wide px-4">
           {t('brand.subtitle', 'Smart Governance & Compliance Monitoring System • SIH26024')}

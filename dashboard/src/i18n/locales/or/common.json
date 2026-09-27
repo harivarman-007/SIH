@@ -1,6 +1,6 @@
 {
   "brand": {
-    "title": "ଇଣ୍ଟେଲିଫ୍ୟୁଜନ (Intellifusion)",
+    "title": "ମାଇନଗଭ-ଏଆଇ (MINEGOV-AI)",
     "subtitle": "କୋଇଲା ଖଣି ସ୍ମାର୍ଟ ଶାସନ ଓ ଅନୁପାଳନ ତଦାରଖ ପ୍ରଣାଳୀ",
     "gov_label": "କୋଇଲା ମନ୍ତ୍ରଣାଳୟ • DGMS ଅନୁପାଳିତ"
   },
@@ -75,7 +75,7 @@
     "reset_to_default": "ପୂର୍ବନିର୍ଦ୍ଧାରିତ ଭାଷାକୁ ଫେରନ୍ତୁ"
   },
   "auth": {
-    "login_title": "ଇଣ୍ଟେଲିଫ୍ୟୁଜନ ପୋର୍ଟାଲ",
+    "login_title": "ମାଇନଗଭ-ଏଆଇ ପୋର୍ଟାଲ (MINEGOV-AI Portal)",
     "login_subtitle": "ପ୍ରବେଶ କରିବାକୁ ଲଗଇନ କରନ୍ତୁ",
     "email_label": "ଇମେଲ ଠିକଣା",
     "password_label": "ପାସୱାର୍ଡ",

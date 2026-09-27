@@ -1,6 +1,6 @@
 # Antigravity Continuation Prompt — RBAC Correction & Problem-Statement Alignment
 
-**Project:** Intellifusion — SIH26024 | **This is a continuation, not a restart.**
+**Project:** MINEGOV-AI — SIH26024 | **This is a continuation, not a restart.**
 The repo already exists (`plan.md`, `task.md`, `backend/`, `mobile/`, `dashboard/`). Do not scaffold from zero. Read the existing code before writing anything.
 
 ---

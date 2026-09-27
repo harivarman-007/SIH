@@ -1,6 +1,6 @@
 /**
  * theme/index.ts
- * Executive Light Theme design tokens for Intellifusion Mobile.
+ * Executive Light Theme design tokens for MINEGOV-AI Mobile.
  */
 
 export const colors = {

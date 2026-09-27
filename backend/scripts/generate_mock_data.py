@@ -1,6 +1,6 @@
 """
 generate_mock_data.py
-Generates and seeds realistic synthetic data into the Intellifusion database.
+Generates and seeds realistic synthetic data into the MINEGOV-AI database.
 
 Data generated:
   - 5 mine sites across major Indian coal belt regions

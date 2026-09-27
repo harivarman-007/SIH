@@ -49,7 +49,7 @@ async def reset_demo(force: bool = False) -> None:
         sys.exit(1)
 
     print("============================================================")
-    print("INTELLIFUSION — IDEMPOTENT DEMO STORY DATASET RESET")
+    print("MINEGOV-AI — IDEMPOTENT DEMO STORY DATASET RESET")
     print("============================================================")
     print(f"Environment : {settings.environment}")
     print(f"DEMO_MODE   : {settings.demo_mode} (Force override: {force})")

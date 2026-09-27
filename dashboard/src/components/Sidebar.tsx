@@ -164,12 +164,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="h-16 flex items-center justify-between px-3.5 border-b border-zinc-800/80">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0 text-zinc-950 font-bold tracking-wider text-sm shadow-sm">
-              IF
+              MG
             </div>
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-semibold text-white tracking-tight leading-none truncate">
-                  {t('brand.title', 'INTELLIFUSION')}
+                  {t('brand.title', 'MINEGOV-AI')}
                 </span>
                 <span className="text-[10px] text-zinc-400 font-mono tracking-wider uppercase mt-1">
                   {t('brand.subtitle', 'Mine Safety OS')}

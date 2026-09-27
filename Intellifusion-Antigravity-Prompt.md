@@ -1,7 +1,7 @@
-# Antigravity Build Prompt — Intellifusion (SIH26024)
+# Antigravity Build Prompt — MINEGOV-AI (SIH26024)
 
 **Project:** AI-Based Smart Governance & Compliance Monitoring System for Coal Mines
-**Team:** Intellifusion | **Problem Statement:** SIH26024 | **Theme:** Smart Automation
+**Team:** MINEGOV-AI | **Problem Statement:** SIH26024 | **Theme:** Smart Automation
 **Target:** Smart India Hackathon 2026 — shortlisting + Grand Finale demoable MVP
 
 ---
@@ -35,7 +35,7 @@
 
 ## 1. Project Context
 
-Intellifusion is a compliance and governance platform for coal mines. It unifies compliance monitoring, inspection tracking, contractor management, operational reporting, and field-level governance into one system, for three user roles: mine officials, corporate management, and regulatory authorities.
+MINEGOV-AI is a compliance and governance platform for coal mines. It unifies compliance monitoring, inspection tracking, contractor management, operational reporting, and field-level governance into one system, for three user roles: mine officials, corporate management, and regulatory authorities.
 
 **Why this exists:** Existing Coal India Limited systems (ICCC / AI video analytics, DigiCOAL, Safety AI Analytics Dashboard, NRSC satellite MoU, NCMSR portal, ERP layers) are strong on real-time surveillance and operational visibility, but weak on turning fragmented compliance, contractor, and inspection data into **predictive, auditable, closed-loop statutory intelligence** that works **offline** and scales paperlessly. That gap is what this system closes — position and build accordingly.
 

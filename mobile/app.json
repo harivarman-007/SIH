@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Intellifusion",
+    "name": "MINEGOV-AI",
     "slug": "intellifusion-mobile",
     "version": "1.0.0",
     "sdkVersion": "57.0.0",
@@ -43,14 +43,14 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Intellifusion to use your location for geo-tagging inspections."
+          "locationAlwaysAndWhenInUsePermission": "Allow MINEGOV-AI to use your location for geo-tagging inspections."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Intellifusion to access photos for attaching evidence.",
-          "cameraPermission": "Allow Intellifusion to use the camera to capture inspection evidence."
+          "photosPermission": "Allow MINEGOV-AI to access photos for attaching evidence.",
+          "cameraPermission": "Allow MINEGOV-AI to use the camera to capture inspection evidence."
         }
       ],
       "expo-status-bar"

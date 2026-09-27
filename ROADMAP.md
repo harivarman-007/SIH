@@ -1,4 +1,4 @@
-# Intellifusion — Product Roadmap & Problem-Statement Alignment
+# MINEGOV-AI — Product Roadmap & Problem-Statement Alignment
 
 *Last updated: Phase 12 — Statutory Escalation & Production Category Hardening*
 

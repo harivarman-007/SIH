@@ -1,4 +1,4 @@
-# Intellifusion — AI-Based Smart Governance & Compliance Monitoring System for Coal Mines
+# MINEGOV-AI — AI-Based Smart Governance & Compliance Monitoring System for Coal Mines
 
 [![Smart India Hackathon 2026](https://img.shields.io/badge/SIH-2026-orange.svg)](https://www.sih.gov.in/)
 [![Problem Statement](https://img.shields.io/badge/Problem%20Statement-SIH26024-blue.svg)](https://www.sih.gov.in/)
@@ -8,7 +8,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%20PostGIS-336791.svg?logo=postgresql&logoColor=white)](https://postgis.net/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> **Intellifusion** is an intelligent, offline-first compliance monitoring and risk management platform engineered specifically for harsh, underground, and remote industrial environments such as coal mines. Combining edge AI, store-and-forward synchronization, cloud anomaly explainability, multilingual OCR, and a cryptographic audit trail, Intellifusion ensures zero data loss and uncompromised safety compliance.
+> **MINEGOV-AI** is an intelligent, offline-first compliance monitoring and risk management platform engineered specifically for harsh, underground, and remote industrial environments such as coal mines. Combining edge AI, store-and-forward synchronization, cloud anomaly explainability, multilingual OCR, and a cryptographic audit trail, MINEGOV-AI ensures zero data loss and uncompromised safety compliance.
 
 ---
 
@@ -228,7 +228,7 @@ npx expo start
 ## Core Capabilities
 
 ### Offline-First Mobile App & Edge AI
-Inspectors working underground face complete cellular blackouts. Intellifusion stores observations, photos, and hazard metadata in a local SQLite database (`expo-sqlite`). A portable Isolation Forest model (`mobile/assets/model/model.json`) scores safety risk directly on the device using 12 extracted features (historical violation density, shift duration, zone risk index, hazard keywords) with zero cloud dependency.
+Inspectors working underground face complete cellular blackouts. MINEGOV-AI stores observations, photos, and hazard metadata in a local SQLite database (`expo-sqlite`). A portable Isolation Forest model (`mobile/assets/model/model.json`) scores safety risk directly on the device using 12 extracted features (historical violation density, shift duration, zone risk index, hazard keywords) with zero cloud dependency.
 
 ### Cloud Risk Enrichment & Explainability
 When network connectivity is restored, the mobile app transmits stored observations in batches. The backend's cloud enrichment engine:
@@ -256,7 +256,7 @@ The web dashboard provides specialized views based on user roles:
 
 ## Canonical Governance Flow & Live Demonstration
 
-Intellifusion enforces a strict 14-step statutory compliance life cycle (DGMS CMR 2017 compliant) connecting all 6 platform roles with human-in-the-loop sign-offs and cryptographic verification.
+MINEGOV-AI enforces a strict 14-step statutory compliance life cycle (DGMS CMR 2017 compliant) connecting all 6 platform roles with human-in-the-loop sign-offs and cryptographic verification.
 
 For complete architectural diagrams, state machine specifications, and negative boundary documentation, see [docs/FLOW.md](docs/FLOW.md).
 
@@ -344,7 +344,7 @@ python backend/scripts/verify_sync_enrichment_e2e.py
 
 ## Team & Acknowledgments
 
-- **Team**: Intellifusion
+- **Team**: MINEGOV-AI
 - **Target Event**: Smart India Hackathon (SIH) 2026
 - **Problem Statement**: SIH26024 — AI-Based Smart Governance & Compliance Monitoring System for Coal Mines
 - Built with focus on industrial safety, statutory compliance, and zero-compromise offline 

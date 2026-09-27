@@ -1,6 +1,6 @@
 /**
  * storage.ts
- * Cross-platform persistence layer for Intellifusion Mobile:
+ * Cross-platform persistence layer for MINEGOV-AI Mobile:
  * - Native: expo-secure-store
  * - Web: window.localStorage
  * - Memory fallback: in-memory map

@@ -1,5 +1,5 @@
 /**
- * Intellifusion API Client
+ * MINEGOV-AI API Client
  * Axios instance with JWT interceptor and unified error handling.
  * MUST #1: Error code branching (ACCOUNT_DISABLED, SESSION_EXPIRED, UNAUTHENTICATED)
  * SHOULD #9: Triggers Section 25 Access Restricted toast on 403.

@@ -1,1 +1,1 @@
-# Intellifusion backend package
+# MINEGOV-AI backend package

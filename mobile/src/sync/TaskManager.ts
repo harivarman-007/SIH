@@ -11,7 +11,7 @@ import * as Network from "expo-network";
 import { syncAll, SyncResult } from "./SyncWorker";
 import { useConnectivityStore } from "../store/useConnectivity";
 
-export const SYNC_TASK_NAME = "INTELLIFUSION_SYNC_TASK";
+export const SYNC_TASK_NAME = "MINEGOV_AI_SYNC_TASK";
 
 // Define the background task
 TaskManager.defineTask(SYNC_TASK_NAME, async () => {

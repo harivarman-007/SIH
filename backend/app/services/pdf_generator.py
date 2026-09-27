@@ -120,7 +120,7 @@ def generate_compliance_pdf(
     elements.append(Paragraph("MINISTRY OF COAL &bull; DGMS STATUTORY COMPLIANCE RETURN", title_style))
     elements.append(
         Paragraph(
-            "Intellifusion SafeMine &mdash; AI-Based Smart Governance & Compliance Monitoring System (SIH26024)",
+            "MINEGOV-AI &mdash; AI-Based Smart Governance & Compliance Monitoring System (SIH26024)",
             subtitle_style,
         )
     )
@@ -322,7 +322,7 @@ def generate_compliance_pdf(
         "<b>OFFICIAL STATUTORY CERTIFICATION:</b> This document constitutes an authenticated "
         "statutory return generated under the governance framework of the Mines Act 1952, "
         "Coal Mines Regulations (CMR) 2017, and CPCB Environmental Protection Standards. "
-        "Every event is anchored to the Intellifusion cryptographic audit trail with SHA-256 integrity verification."
+        "Every event is anchored to the MINEGOV-AI cryptographic audit trail with SHA-256 integrity verification."
     )
     elements.append(Paragraph(cert_text, subtitle_style))
 

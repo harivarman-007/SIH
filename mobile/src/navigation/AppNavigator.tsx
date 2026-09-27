@@ -60,7 +60,7 @@ export default function AppNavigator() {
           name="Dashboard"
           component={DashboardScreen}
           options={{
-            title: "Intellifusion SafeMine",
+            title: "MINEGOV-AI SafeMine",
             headerLeft: () => null,
             gestureEnabled: false,
           }}

@@ -1,5 +1,5 @@
 """
-Intellifusion Authorization Package (RBAC Foundation).
+MINEGOV-AI Authorization Package (RBAC Foundation).
 """
 from app.authz.permissions import (
     DEFAULT_ROLE_PERMISSIONS,

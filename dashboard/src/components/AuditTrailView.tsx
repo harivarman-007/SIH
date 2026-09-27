@@ -79,7 +79,7 @@ function mapAuditEntryToBlock(entry: AuditLogEntry): AuditBlock {
       (entry.actor_id ? `Official (${entry.actor_id.slice(0, 8)})` : 'Autonomous Compliance Daemon'),
     actorRole:
       (payload.actor_role as string) ||
-      (entry.actor_id ? 'Field Official' : 'INTELLIFUSION Engine'),
+      (entry.actor_id ? 'Field Official' : 'MINEGOV-AI Engine'),
     mineSite: (payload.mine_site as string) || 'Jharia Coalfield Central • Sector 4',
     timestamp: entry.ts ? new Date(entry.ts).toUTCString() : 'Recent',
     entryHash: entry.entry_hash,

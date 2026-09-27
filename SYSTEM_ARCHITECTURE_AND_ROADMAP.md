@@ -1,7 +1,7 @@
-# Intellifusion — System Architecture, Gaps & Production Transformation Roadmap
+# MINEGOV-AI — System Architecture, Gaps & Production Transformation Roadmap
 
 > **Document Type:** Technical Architecture Specification & Production Roadmap  
-> **Project:** Intellifusion — AI-Based Smart Governance & Compliance Monitoring System for Coal Mines  
+> **Project:** MINEGOV-AI — AI-Based Smart Governance & Compliance Monitoring System for Coal Mines  
 > **Problem Statement:** SIH26024  
 > **Target Deployment:** Multi-subsidiary Coal Mine Operations (DGMS Compliant)
 
@@ -21,7 +21,7 @@
 
 ## 1. Executive Summary
 
-**Intellifusion** is an intelligent, offline-first compliance monitoring and risk management platform engineered specifically for harsh, underground, and remote industrial environments such as coal mines. 
+**MINEGOV-AI** is an intelligent, offline-first compliance monitoring and risk management platform engineered specifically for harsh, underground, and remote industrial environments such as coal mines. 
 
 The system operates across three tiers:
 - **Field Tier (Edge Mobile App):** React Native / Expo app operating in zero-connectivity tunnels, providing instant on-device hazard scoring via a pure TypeScript tree-traversal engine, local SQLite persistence, and store-and-forward batch synchronization.

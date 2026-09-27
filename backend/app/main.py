@@ -1,5 +1,5 @@
 """
-Intellifusion Backend — FastAPI entry point.
+MINEGOV-AI Backend — FastAPI entry point.
 Phase 0: minimal skeleton, routes added phase by phase.
 Phase 22: Added APScheduler background escalation + alerts router.
 """
@@ -66,7 +66,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Intellifusion API",
+    title="MINEGOV-AI API",
     description="AI-Based Smart Governance & Compliance Monitoring for Coal Mines",
     version="0.1.0",
     docs_url="/docs",
@@ -115,7 +115,7 @@ async def health():
 @app.get("/", tags=["system"])
 async def root():
     return {
-        "message": "Intellifusion API — Online",
+        "message": "MINEGOV-AI API — Online",
         "docs": "/docs",
         "endpoints": [
             "/auth/login",

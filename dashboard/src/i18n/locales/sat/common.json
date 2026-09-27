@@ -1,6 +1,6 @@
 {
   "brand": {
-    "title": "ᱤᱱᱴᱮᱞᱤᱯᱷᱤᱭᱩᱡᱚᱱ (Intellifusion)",
+    "title": "ᱢᱟᱭᱤᱱᱜᱚᱵᱽ-ᱮᱟᱭᱤ (MINEGOV-AI)",
     "subtitle": "ᱠᱩᱭᱞᱟᱹ ᱠᱷᱟᱫᱟᱱ ᱥᱟᱥᱚᱱ ᱟᱨ ᱱᱤᱭᱚᱢ ᱧᱮᱞᱛᱚᱫ",
     "gov_label": "ᱠᱩᱭᱞᱟᱹ ᱢᱚᱱᱛᱨᱟᱲᱚᱭ • DGMS ᱵᱟᱛᱟᱣ"
   },
@@ -75,7 +75,7 @@
     "reset_to_default": "ᱢᱩᱬ ᱯᱟᱹᱨᱥᱤ ᱨᱮ ᱨᱩᱣᱟᱹᱲ ᱢᱮ"
   },
   "auth": {
-    "login_title": "ᱤᱱᱴᱮᱞᱤᱯᱷᱤᱭᱩᱡᱚᱱ ᱵᱚᱞᱚᱱ ᱫᱩᱣᱟᱹᱨ",
+    "login_title": "ᱢᱟᱭᱤᱱᱜᱚᱵᱽ-ᱮᱟᱭᱤ ᱵᱚᱞᱚᱱ ᱫᱩᱣᱟᱹᱨ (MINEGOV-AI Portal)",
     "login_subtitle": "ᱵᱚᱞᱚᱱ ᱞᱟᱹᱜᱤᱫ ᱞᱚᱜᱤᱱ ᱢᱮ",
     "email_label": "ᱤᱢᱮᱞ",
     "password_label": "ᱫᱟᱱᱟᱝ ᱥᱟᱵᱟᱫ (Password)",

@@ -1,4 +1,4 @@
-# Intellifusion SafeMine — 6-Role Operational Flow Guide
+# MINEGOV-AI SafeMine — 6-Role Operational Flow Guide
 
 This explains **who does what, in what order**, and **how each role operates the site** — starting from setup, through daily field operations, to closure and audit.
 

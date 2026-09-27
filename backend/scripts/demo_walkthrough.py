@@ -70,7 +70,7 @@ def success(msg: str):
 
 
 async def main():
-    banner("INTELLIFUSION — CANONICAL JURY DEMONSTRATION WALKTHROUGH")
+    banner("MINEGOV-AI — CANONICAL JURY DEMONSTRATION WALKTHROUGH")
     print("Execution Mode : Pure ASGI In-Memory Transport against live FastAPI kernel")
     print("Specification  : Section 2 Canonical Flow (Spec §32 Acceptance Suite)")
     print("-" * 70)

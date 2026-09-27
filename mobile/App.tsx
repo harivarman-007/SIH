@@ -40,7 +40,7 @@ export default function App() {
   if (!appReady) {
     return (
       <View style={styles.splash}>
-        <Text style={styles.splashTitle}>⛏️ INTELLIFUSION</Text>
+        <Text style={styles.splashTitle}>⛏️ MINEGOV-AI</Text>
         <ActivityIndicator color="#2563EB" size="large" style={{ marginTop: 24 }} />
         <Text style={styles.splashSubtitle}>Initializing offline storage...</Text>
       </View>

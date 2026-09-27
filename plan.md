@@ -1,6 +1,6 @@
-﻿# Intellifusion — MVP Architecture Plan
+# MINEGOV-AI — MVP Architecture Plan
 **Project:** AI-Based Smart Governance & Compliance Monitoring System for Coal Mines
-**Problem Statement:** SIH26024 | **Team:** Intellifusion | **Target:** SIH 2026
+**Problem Statement:** SIH26024 | **Team:** MINEGOV-AI | **Target:** SIH 2026
 
 ---
 

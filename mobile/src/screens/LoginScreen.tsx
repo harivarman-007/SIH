@@ -115,7 +115,7 @@ export default function LoginScreen({ navigation }: Props) {
           <View style={styles.logoContainer}>
             <Ionicons name="shield-checkmark" size={36} color={colors.primary} />
           </View>
-          <Text style={styles.appName}>INTELLIFUSION</Text>
+          <Text style={styles.appName}>MINEGOV-AI</Text>
           <Text style={styles.tagline}>Directorate General of Mines Safety (DGMS)</Text>
         </View>
 

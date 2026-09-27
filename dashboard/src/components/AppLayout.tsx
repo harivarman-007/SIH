@@ -112,7 +112,7 @@ export const AppLayout: React.FC = () => {
                   : 'Sector 4 • Jharia Coalfield Operations'}
               </span>
               <span className="text-sm font-semibold text-zinc-900 truncate">
-                {t('brand.title', 'Intellifusion')} • {t('brand.subtitle', 'Mine Safety & Governance OS')}
+                {t('brand.title', 'MINEGOV-AI')} • {t('brand.subtitle', 'Mine Safety & Governance OS')}
               </span>
             </div>
           </div>

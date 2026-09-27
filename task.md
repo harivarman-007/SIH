@@ -1,4 +1,4 @@
-# Intellifusion — Task Checklist
+# MINEGOV-AI — Task Checklist
 
 > Rule: Mark [/] when starting, [x] only after verified. Never mark done without running/testing.
 > Re-read plan.md Section 10 (Assumptions) at every phase boundary.
@@ -231,7 +231,7 @@
 
 ## Phase 19 — Real Authentication & Explicit Demo Persona Switcher
 
-- [x] Present login UI/UX design proposal to owner (Design Checkpoint — Approved: plain Intellifusion branding, no government emblem)
+- [x] Present login UI/UX design proposal to owner (Design Checkpoint — Approved: plain MINEGOV-AI branding, no government emblem)
 - [x] Implement honest `LoginForm` component (`dashboard/src/components/LoginForm.tsx`) with Email + Password inputs, password mask/unmask toggle, and real submission against `POST /auth/login`
 - [x] Convert persona switcher into an explicitly labeled "Demo Persona Switcher (SIH Jury / Evaluation Only)" section directly below the form
 - [x] Prevent automatic login on initial app load; require explicit authentication (`dashboard/src/store/authStore.ts` & `dashboard/src/App.tsx`)

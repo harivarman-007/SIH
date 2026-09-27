@@ -1,6 +1,6 @@
 {
   "brand": {
-    "title": "इंटेलिफ्यूजन (Intellifusion)",
+    "title": "माइनगव्ह-एआय (MINEGOV-AI)",
     "subtitle": "कोळसा खाण स्मार्ट प्रशासन आणि अनुपालन देखरेख प्रणाली",
     "gov_label": "कोळसा मंत्रालय • DGMS अनुपालन"
   },
@@ -75,7 +75,7 @@
     "reset_to_default": "डीफॉल्ट भाषेवर रीसेट करा"
   },
   "auth": {
-    "login_title": "इंटेलिफ्यूजन पोर्टल",
+    "login_title": "माइनगव्ह-एआय पोर्टल (MINEGOV-AI Portal)",
     "login_subtitle": "लॉगिन करा",
     "email_label": "अधिकृत ईमेल",
     "password_label": "पासवर्ड",

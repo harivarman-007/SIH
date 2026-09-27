@@ -1,6 +1,6 @@
 {
   "brand": {
-    "title": "Intellifusion",
+    "title": "MINEGOV-AI",
     "subtitle": "AI-Powered Coal Mine Smart Governance & Compliance",
     "gov_label": "Ministry of Coal • DGMS Compliant"
   },
@@ -75,7 +75,7 @@
     "reset_to_default": "Reset to Mine Site Default"
   },
   "auth": {
-    "login_title": "Intellifusion Portal",
+    "login_title": "MINEGOV-AI Portal",
     "login_subtitle": "Sign in to access statutory governance and compliance monitoring",
     "email_label": "Official Email Address",
     "password_label": "Security Password",

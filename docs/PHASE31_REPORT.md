@@ -1,6 +1,6 @@
 # Phase 31 — Final Acceptance & Demo Hardening Report
 
-**System**: Intellifusion — AI-Based Smart Governance & Compliance Monitoring System for Coal Mines  
+**System**: MINEGOV-AI — AI-Based Smart Governance & Compliance Monitoring System for Coal Mines  
 **Problem Statement**: SIH26024  
 **Date**: 2026-09-22  
 **Commit Hash**: `0e464bad504e7c503917ef4bacf2e3bc8065119c`  
@@ -11,7 +11,7 @@
 
 ## 1. Executive Summary
 
-Phase 31 represents the culmination and final hardening of the Intellifusion platform. All 32 core phases (Phases 0 through 31) are fully implemented, verified, and integrated.
+Phase 31 represents the culmination and final hardening of the MINEGOV-AI platform. All 32 core phases (Phases 0 through 31) are fully implemented, verified, and integrated.
 
 Key milestones achieved in Phase 31:
 1. **Idempotent Demo Reset**: Created `backend/scripts/reset_demo.py` guarded by `DEMO_MODE=true` (or `--force`), restoring the canonical starting state with pristine seed data (`INS-DEMO-001`, zones, contractor profiles, and standard passwords).
@@ -29,14 +29,14 @@ Below is the complete, untruncated raw terminal output of the canonical 14-step 
 
 ```text
 ======================================================================
-INTELLIFUSION — CANONICAL JURY DEMONSTRATION WALKTHROUGH
+MINEGOV-AI — CANONICAL JURY DEMONSTRATION WALKTHROUGH
 ======================================================================
 Execution Mode : Pure ASGI In-Memory Transport against live FastAPI kernel
 Specification  : Section 2 Canonical Flow (Spec §32 Acceptance Suite)
 ----------------------------------------------------------------------
 [INIT] Resetting demo database to pristine story starting state...
 ============================================================
-INTELLIFUSION — IDEMPOTENT DEMO STORY DATASET RESET
+MINEGOV-AI — IDEMPOTENT DEMO STORY DATASET RESET
 ============================================================
 Environment : development
 DEMO_MODE   : False (Force override: True)
@@ -200,7 +200,7 @@ A comprehensive code-base grep confirmed:
 
 ## 6. Project Completion Declaration
 
-The Intellifusion development lifecycle across all **32 phases** is officially completed. The codebase meets all Smart India Hackathon statutory and architectural requirements:
+The MINEGOV-AI development lifecycle across all **32 phases** is officially completed. The codebase meets all Smart India Hackathon statutory and architectural requirements:
 - High-performance offline-first edge AI scoring
 - Mathematical proof against log tampering via SHA-256 hash chains
 - True 6-role RBAC with strict HARD_DENY and human-in-the-loop verification

@@ -1,5 +1,5 @@
 """
-All SQLAlchemy ORM models for Intellifusion.
+All SQLAlchemy ORM models for MINEGOV-AI.
 Tables: users, mine_sites, zones, observations, audit_log, ocr_review_queue
 """
 import enum

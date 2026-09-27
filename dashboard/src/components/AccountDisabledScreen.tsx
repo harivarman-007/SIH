@@ -31,7 +31,7 @@ export const AccountDisabledScreen: React.FC = () => {
         </h1>
 
         <p className="text-sm text-zinc-400 mb-6 leading-relaxed">
-          {error || 'Your account has been deactivated or revoked by platform governance. You cannot access Intellifusion resources.'}
+          {error || 'Your account has been deactivated or revoked by platform governance. You cannot access MINEGOV-AI resources.'}
         </p>
 
         <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-lg p-4 text-xs text-zinc-500 text-left mb-8 w-full">

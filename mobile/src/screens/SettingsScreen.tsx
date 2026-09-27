@@ -263,7 +263,7 @@ export default function SettingsScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         <View style={styles.footerNote}>
-          <Text style={styles.footerText}>Intellifusion SafeMine v1.0 • SIH26024</Text>
+          <Text style={styles.footerText}>MINEGOV-AI SafeMine v1.0 • SIH26024</Text>
         </View>
       </ScrollView>
 

@@ -1,6 +1,6 @@
 """
 backend/app/i18n/constants.py
-Multilingual configuration and state-to-language mappings for Intellifusion.
+Multilingual configuration and state-to-language mappings for MINEGOV-AI.
 
 Languages supported (8 total):
 - en: English (major / primary default system language)

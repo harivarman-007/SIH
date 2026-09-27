@@ -1,10 +1,10 @@
-# Intellifusion — Canonical Regulatory Governance & Operational Flow
+# MINEGOV-AI — Canonical Regulatory Governance & Operational Flow
 
 ## 1. Architectural Life-Cycle Diagram
 
 ```
  +---------------------------------------------------------------------------------------------------------+
- |                                  INTELLIFUSION STATE MACHINE ARCHITECTURE                               |
+ |                                  MINEGOV-AI STATE MACHINE ARCHITECTURE                                  |
  |                                          DGMS Statutory Workflow                                       |
  +---------------------------------------------------------------------------------------------------------+
 

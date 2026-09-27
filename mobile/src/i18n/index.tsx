@@ -1,6 +1,6 @@
 /**
  * i18n/index.tsx
- * Offline-first, reactive internationalization system for Intellifusion SafeMine Mobile.
+ * Offline-first, reactive internationalization system for MINEGOV-AI SafeMine Mobile.
  * Bundles all 8 languages (English, Sanskrit, Hindi, Bengali, Odia, Telugu, Marathi, Santali).
  * Supports automatic state-to-language derivation, manual override, parameter interpolation,
  * and fallback to English.

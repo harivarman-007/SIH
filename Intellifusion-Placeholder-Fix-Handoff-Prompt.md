@@ -1,6 +1,6 @@
 # Antigravity Continuation Prompt — Placeholder Fixes & Session Handoff Protocol
 
-**Project:** Intellifusion — SIH26024
+**Project:** MINEGOV-AI — SIH26024
 **Repo:** https://github.com/harivarman-007/SIH.git (`main`)
 **This prompt is self-contained.** It may be handed to a fresh Antigravity session on a different account with zero memory of prior conversations. Everything you need to orient yourself and behave correctly is in this document — do not assume a prior session's reports were accurate. Verify.
 

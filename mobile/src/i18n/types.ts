@@ -1,6 +1,6 @@
 /**
  * types.ts
- * Type definitions for Intellifusion Mobile Multilingual Support (8 languages).
+ * Type definitions for MINEGOV-AI Mobile Multilingual Support (8 languages).
  * System/Major: English (en - default), Sanskrit (sa - formal statutory register)
  * Regional: Hindi (hi), Bengali (bn), Odia (or), Telugu (te), Marathi (mr), Santali (sat)
  */

@@ -1,6 +1,6 @@
-# Intellifusion — Multilingual Support Plan (English + Sanskrit + 6 Indian Regional Languages)
+# MINEGOV-AI — Multilingual Support Plan (English + Sanskrit + 6 Indian Regional Languages)
 
-**Repo analyzed:** `harivarman-007/SIH` (Intellifusion — AI-Based Smart Governance & Compliance Monitoring System for Coal Mines, SIH26024)
+**Repo analyzed:** `harivarman-007/SIH` (MINEGOV-AI — AI-Based Smart Governance & Compliance Monitoring System for Coal Mines, SIH26024)
 
 This document specifies how to add **8 languages** to the dashboard, mobile app, and OCR pipeline:
 - **English** — the system's existing major/primary language (already the UI default; kept as the top-level fallback and the language every other translation is authored against).

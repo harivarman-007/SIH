@@ -1,6 +1,6 @@
-# Intellifusion SafeMine — Comprehensive Project Status & Claude Handoff Document
+# MINEGOV-AI SafeMine — Comprehensive Project Status & Claude Handoff Document
 
-**Project:** Intellifusion — Smart Mine Safety & Statutory Compliance Management System  
+**Project:** MINEGOV-AI — Smart Mine Safety & Statutory Compliance Management System  
 **Problem Statement ID:** SIH26024  
 **GitHub Repository:** [https://github.com/harivarman-007/SIH.git](https://github.com/harivarman-007/SIH.git) (`main`)  
 **Latest Git Commit:** `2d900a1`  
@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary & Purpose
 
-This document is a complete, authoritative status report and technical orientation guide intended for **Claude** (or any subsequent AI engineering agent / developer) resuming work on the **Intellifusion SafeMine** project. 
+This document is a complete, authoritative status report and technical orientation guide intended for **Claude** (or any subsequent AI engineering agent / developer) resuming work on the **MINEGOV-AI SafeMine** project. 
 
 It covers:
 1. Current running state of all services (backend, web, mobile, database).
