@@ -2,21 +2,39 @@
  * AppLayout — Primary application shell holding responsive Sidebar, header, and <Outlet />.
  * SHOULD #9: Surfaces RBAC spec section 25 "Access Restricted" alert toast on 403.
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Menu, ShieldAlert, X } from 'lucide-react';
+import { Menu, ShieldAlert, X, Globe, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { AlertBell } from './AlertBell';
 import { useAuthStore } from '../store/authStore';
 import { ROLE_LABELS } from '../types/permissions';
 import { fetchKPIs, KPISummary } from '../api/kpi';
 import { registerForbiddenHandler } from '../api/client';
+import { LANGUAGES } from '../i18n';
 
 export const AppLayout: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user, updateUserLanguagePreference } = useAuthStore();
+  const { t, i18n } = useTranslation();
   const [isOpenMobile, setIsOpenMobile] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const langMenuRef = useRef<HTMLDivElement>(null);
   const [kpis, setKpis] = useState<KPISummary | null>(null);
   const [forbiddenToast, setForbiddenToast] = useState<string | null>(null);
+
+  const currentLangOption = LANGUAGES.find((l) => l.code === i18n.language) || LANGUAGES[0];
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) {
+        setShowLangMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const refreshKpis = useCallback(async () => {
     try {
@@ -94,17 +112,68 @@ export const AppLayout: React.FC = () => {
                   : 'Sector 4 • Jharia Coalfield Operations'}
               </span>
               <span className="text-sm font-semibold text-zinc-900 truncate">
-                Intellifusion Operations Portal
+                {t('brand.title', 'Intellifusion')} • {t('brand.subtitle', 'Mine Safety & Governance OS')}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
+            {/* Top Bar Quick Language Switcher Dropdown */}
+            <div className="relative" ref={langMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowLangMenu((prev) => !prev)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 text-xs font-medium transition-colors cursor-pointer shadow-2xs"
+                title={t('settings.language_title', 'Language')}
+              >
+                <Globe className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span className="font-semibold text-zinc-900">{currentLangOption.nativeLabel}</span>
+                <span className="text-[10px] uppercase font-mono px-1 py-0.2 bg-zinc-200 text-zinc-700 rounded font-bold">
+                  {i18n.language}
+                </span>
+              </button>
+
+              {showLangMenu && (
+                <div className="absolute right-0 mt-2 w-64 bg-white border border-zinc-200 rounded-xl shadow-xl z-50 p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="px-2.5 py-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-100 flex items-center justify-between">
+                    <span>{t('settings.language_title', 'Interface Language')}</span>
+                    <span className="text-blue-600 font-mono">8 Languages</span>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto space-y-0.5 mt-1">
+                    {LANGUAGES.map((lang) => {
+                      const isActive = i18n.language === lang.code;
+                      return (
+                        <button
+                          key={lang.code}
+                          type="button"
+                          onClick={async () => {
+                            await updateUserLanguagePreference(lang.code);
+                            setShowLangMenu(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                            isActive
+                              ? 'bg-blue-50 text-blue-900 font-semibold'
+                              : 'text-zinc-700 hover:bg-zinc-100'
+                          }`}
+                        >
+                          <div>
+                            <div className="font-medium">{lang.nativeLabel}</div>
+                            <div className="text-[10px] text-zinc-400 font-normal">{lang.label} • {lang.region}</div>
+                          </div>
+                          {isActive && <Check className="w-4 h-4 text-blue-600 shrink-0 ml-2" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <AlertBell role={currentRole} />
 
             <div className="hidden sm:flex items-center gap-2 border-l border-zinc-200 pl-3">
               <span className="text-xs uppercase tracking-wider px-2.5 py-1 rounded bg-zinc-100 border border-zinc-300 text-zinc-800 font-medium">
-                {ROLE_LABELS[currentRole]}
+                {t(`roles.${currentRole}`, ROLE_LABELS[currentRole])}
               </span>
               {user && (
                 <span className="text-xs text-zinc-500 font-medium hidden md:inline truncate max-w-[140px]">
@@ -132,8 +201,8 @@ export const AppLayout: React.FC = () => {
           </div>
         )}
 
-        {/* Page Content Container */}
-        <main className="flex-1 p-6 sm:p-8 max-w-7xl w-full mx-auto">
+        {/* Page Content Container — remounts on language change to reflect new language across entire tree */}
+        <main key={i18n.language} className="flex-1 p-6 sm:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>
