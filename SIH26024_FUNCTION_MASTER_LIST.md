@@ -36,15 +36,15 @@ These are the functions the problem statement **explicitly requires** ("should" 
 | 10 | Centralized dashboard, real-time compliance + operational monitoring | ✅ Done | React + Vite dashboard, Leaflet GIS heatmaps, KPI command center |
 | 11 | AI/analytics engine — compliance risks, anomalies, recurring violations, **predictive** alerts | ✅ Done | Isolation Forest (edge) + cloud enrichment with prescriptive action recommendations |
 | 12 | Mobile app with **offline support** for field inspections, safety observations, attendance, incident reporting | ✅ Done | React Native + Expo, SQLite local queue, background store-and-forward sync worker |
-| 13 | Automated workflow — alerts, reminders, escalations, **digital approvals**, statutory report generation | ⚠️ Partial | Alerts/escalation exist; formal multi-step digital approval workflow (sign-off chain) is a build-out item |
+| 13 | Automated workflow — alerts, reminders, escalations, **digital approvals**, statutory report generation | ✅ Done | Full multi-step inspection & corrective action workflow (`ASSIGNED` → `IN_PROGRESS` → `PENDING_VERIFICATION` → `CLOSED`), HITL managerial verification & sign-off chain, and automated statutory report snapshots |
 | 14 | GIS mapping | ✅ Done | Leaflet-based GIS heatmaps + pins on the dashboard |
-| 15 | OCR-based document digitization | ✅ Done | Tesseract OCR pipeline (`backend/app/ocr/engine.py`) — safety log sheets & permits |
+| 15 | OCR-based document digitization | ✅ Done | Tesseract multilingual OCR pipeline (`backend/app/ocr/engine.py`) supporting 8 Indian mining languages, safety log sheets & permits |
 | 16 | Secure digital audit trail (paperless governance) | ✅ Done | SHA-256 hash-chained, block-style audit log — every write cryptographically linked to the previous entry |
 | 17 | Worker attendance tracking | ✅ Done | Mobile `LabourAttendanceScreen.tsx` |
 | 18 | *(Optional per PS)* Blockchain-based audit trails | ✅ Done (hash-chain, not full blockchain) | Cryptographic hash chain — same tamper-evidence guarantee as a private blockchain, without the infra overhead |
-| 19 | *(Optional per PS)* Multilingual conversational interfaces | ⚠️ In progress | OCR: English + Hindi today; full UI i18n for 8 languages specified in `MULTILINGUAL_SUPPORT_PLAN.md` (Phase A–E) |
+| 19 | *(Optional per PS)* Multilingual conversational & UI interfaces | ✅ Done | Complete 8-language localization (`en`, `sa`, `hi`, `bn`, `or`, `te`, `mr`, `sat`) across backend APIs, Tesseract OCR, web dashboard, and offline mobile app |
 
-**Coverage: 17/19 fully done, 2/19 in progress/partial** — i.e., the core platform already satisfies nearly everything the PS explicitly asks for; the two open items (digital approval chains, full multilingual UI) are scoped and planned, not missing from the architecture.
+**Coverage: 19/19 fully done (100% complete)** — the platform fully satisfies all required capabilities and optional extensions requested by the problem statement.
 
 ---
 
@@ -76,7 +76,7 @@ Functions that **aren't required** by SIH26024 but strengthen the submission as 
 | 6 | **Cryptographic hash-chain audit trail** (stronger than plain access-logged audit tables) | Gives regulators mathematical, not just procedural, proof against tampering |
 | 7 | **On-device (edge) + cloud (enrichment) two-tier AI pipeline** | Gets both instant offline triage *and* deeper cloud-side explainability — most solutions pick only one tier |
 | 8 | **Multi-subsidiary / multi-mine scalable data model** (`MineSite`, `CorporateMineAccess`) | Supports Corporate Manager and Regulator roles viewing across *many* mines at once — matches CIL's real organizational structure (multiple subsidiaries, not one mine) |
-| 9 | **Role-based access control across 4 distinct personas** (`inspector`, `mine_official`, `corporate`, `regulator`) | Matches the real-world stakeholder hierarchy named in the PS background exactly, rather than a generic "admin vs. user" model |
+| 9 | **Role-based access control across 6 distinct personas** (`super_admin`, `corporate_management`, `mine_official`, `inspector`, `contractor`, `regulator`) | Matches the real-world stakeholder hierarchy named in the PS background exactly, rather than a generic "admin vs. user" model |
 | 10 | **PostGIS-backed spatial storage** (not just lat/lng columns) | Enables proper geospatial querying (radius search, zone containment, heatmap aggregation) rather than app-side approximations |
 | 11 | **Verification & test scripts included in-repo** (`backend/scripts`) | Signals production-readiness and reproducibility for judges reviewing the codebase, not just the demo |
 | 12 | **Docker Compose reproducible environment** | Judges/evaluators can spin up the full stack in one command — reduces "works on my machine" risk during evaluation |
@@ -90,17 +90,17 @@ Functions that **aren't required** by SIH26024 but strengthen the submission as 
 - [x] Real-time inspection & observation monitoring
 - [x] AI/ML anomaly & high-risk detection
 - [x] Geo-tagged, timestamped mobile field reporting
-- [x] Role-based dashboards (Inspector, Mine Official, Corporate, Regulator)
+- [x] Role-based dashboards (Super Admin, Mine Official, Corporate HQ, Regulator, Inspector, Contractor)
 - [x] Automated alerts, reminders, escalations
 - [x] Contractor management
 - [x] Multi-mine / multi-subsidiary scalability
 - [x] GIS mapping & heatmaps
-- [x] OCR document digitization
-- [x] Secure, tamper-evident audit trail
+- [x] Multilingual OCR document digitization (8 languages)
+- [x] Secure, tamper-evident audit trail (SHA-256 hash-chained ledger)
 - [x] Worker attendance tracking
 - [x] Offline-first mobile operation
-- [ ] Full multi-step digital approval/sign-off chain *(planned)*
-- [ ] Full multilingual conversational UI *(planned — see `MULTILINGUAL_SUPPORT_PLAN.md`)*
+- [x] Full multi-step digital approval/sign-off chain (Inspection submission & Corrective Action HITL sign-off)
+- [x] Full multilingual UI & OCR across 8 languages (`en`, `sa`, `hi`, `bn`, `or`, `te`, `mr`, `sat`)
 
 **USP-driving:**
 - [x] On-device edge AI (zero-connectivity scoring)

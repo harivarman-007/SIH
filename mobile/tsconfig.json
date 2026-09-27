@@ -49,5 +49,6 @@
     "**/*.tsx",
     "src/types/**/*.d.ts",
     ".expo/types/**/*.d.ts"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }
