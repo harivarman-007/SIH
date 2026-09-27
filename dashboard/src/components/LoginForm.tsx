@@ -18,10 +18,13 @@ import {
   Settings,
   BarChart3,
   Clock,
+  Globe,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 import { isDemoMode, DEMO_CREDENTIALS, DemoCredential } from '../config/demoCredentials';
 import { sanitizeReturnTo } from '../lib/security';
+import { LANGUAGES } from '../i18n';
 
 const ROLE_ICONS: Record<string, React.ElementType> = {
   super_admin: Settings,
@@ -35,11 +38,18 @@ const ROLE_ICONS: Record<string, React.ElementType> = {
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t, i18n } = useTranslation();
   const { loginWithCredentials, isLoading, error, clearError, sessionExpired, clearSessionExpired } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  const handleLanguageChange = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+    localStorage.setItem('intellifusion_language', langCode);
+    localStorage.setItem('i18nextLng', langCode);
+  };
 
   const returnToParam = searchParams.get('returnTo');
 
@@ -83,7 +93,26 @@ export const LoginForm: React.FC = () => {
   const displayError = localError || error;
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-black selection:text-white">
+    <div className="relative min-h-screen bg-zinc-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-black selection:text-white">
+      {/* Top Bar Quick Language Switcher */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+        <div className="flex items-center gap-2 bg-white/90 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-zinc-200/90 shadow-2xs">
+          <Globe className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+          <select
+            value={i18n.language}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+            className="bg-transparent text-xs font-semibold text-zinc-800 focus:outline-hidden cursor-pointer"
+            aria-label="Select portal language"
+          >
+            {LANGUAGES.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+                {lang.nativeLabel} ({lang.label})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Team & System Branding (No Government Emblem) */}
         <div className="flex justify-center mb-4">
@@ -91,11 +120,11 @@ export const LoginForm: React.FC = () => {
             IF
           </div>
         </div>
-        <h1 className="text-center text-2xl font-bold tracking-tight text-zinc-900">
-          INTELLIFUSION
+        <h1 className="text-center text-2xl font-bold tracking-tight text-zinc-900 uppercase">
+          {t('brand.title', 'INTELLIFUSION')}
         </h1>
-        <p className="mt-1 text-center text-xs text-zinc-500 font-mono tracking-wide">
-          Smart Governance & Compliance Monitoring System • SIH26024
+        <p className="mt-1 text-center text-xs text-zinc-500 font-mono tracking-wide px-4">
+          {t('brand.subtitle', 'Smart Governance & Compliance Monitoring System • SIH26024')}
         </p>
       </div>
 
@@ -107,9 +136,11 @@ export const LoginForm: React.FC = () => {
             <div className="mb-5 p-3.5 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-start gap-3 text-amber-900 text-xs">
               <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-amber-900">Session Expired</p>
+                <p className="font-semibold text-amber-900">
+                  {t('settings.session_expired', 'Session Expired')}
+                </p>
                 <p className="text-amber-700 mt-0.5 leading-relaxed">
-                  Your session has expired. Please sign in again to continue.
+                  {t('settings.session_expired_desc', 'Your session has expired. Please sign in again to continue.')}
                 </p>
               </div>
             </div>
@@ -119,7 +150,7 @@ export const LoginForm: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
-                Work Email
+                {t('auth.email_label', 'Work Email')}
               </label>
               <div className="relative rounded-xl shadow-sm">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-400">
@@ -138,7 +169,7 @@ export const LoginForm: React.FC = () => {
 
             <div>
               <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
-                Password
+                {t('auth.password_label', 'Password')}
               </label>
               <div className="relative rounded-xl shadow-sm">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-400">
@@ -183,11 +214,11 @@ export const LoginForm: React.FC = () => {
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Verifying Credentials…
+                  {t('auth.logging_in', 'Verifying Credentials…')}
                 </>
               ) : (
                 <>
-                  Sign In
+                  {t('auth.sign_in', 'Sign In')}
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
@@ -200,7 +231,7 @@ export const LoginForm: React.FC = () => {
               <div className="flex items-center gap-2 mb-3">
                 <Users className="w-4 h-4 text-zinc-500" />
                 <span className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
-                  Demo Switcher (SIH Evaluation Only)
+                  {t('auth.demo_switcher', 'Demo Switcher (SIH Evaluation Only)')}
                 </span>
               </div>
               <p className="text-[11px] text-zinc-500 mb-4 leading-relaxed">
@@ -224,7 +255,7 @@ export const LoginForm: React.FC = () => {
                         </div>
                         <div className="truncate">
                           <div className="text-xs font-semibold text-zinc-900 truncate">
-                            {cred.title}
+                            {t(`roles.${key}`, cred.title)}
                           </div>
                           <div className="text-[10px] text-zinc-500 truncate">
                             {cred.subtitle}
