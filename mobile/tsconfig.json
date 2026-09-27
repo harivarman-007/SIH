@@ -12,7 +12,7 @@
     "allowJs": true,
     "jsx": "react-native",
     "noEmit": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
