@@ -290,18 +290,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setAccountDisabled: (val: boolean) => set({ accountDisabled: val }),
   setSessionExpired: (val: boolean) => set({ sessionExpired: val }),
   updateUserLanguagePreference: async (language: string | null) => {
-    if (language) {
-      await i18n.changeLanguage(language);
-      try {
-        localStorage.setItem('i18nextLng', language);
-      } catch {}
-    }
+    const langToUse = language || 'en';
+    await i18n.changeLanguage(langToUse);
+    try {
+      localStorage.setItem('i18nextLng', langToUse);
+      localStorage.setItem('intellifusion_language', langToUse);
+    } catch {}
     set((state) => ({
       user: state.user
         ? {
             ...state.user,
             preferred_language: language,
-            resolved_language: language || state.user.resolved_language,
+            resolved_language: langToUse,
           }
         : null,
     }));
